@@ -45,16 +45,20 @@ Contoh output:
   origin/april
 ```
 
-### 4. 🚀 Checkout ke Branch Masing-masing
+### 4. 🚀 Checkout ke Branch Masing-masing dan clone dari main ke branch masing masing
 
 ```bash
 git checkout -b [namamu] origin/[namamu]
+git fetch origin
+git merge origin/main
 ```
 
 Contoh:
 
 ```bash
 git checkout -b fadhi origin/fadhi
+git fetch origin
+git merge origin/main
 ```
 
 > Ini akan membuat branch lokal `fadhi` yang melacak remote `origin/fadhi`
