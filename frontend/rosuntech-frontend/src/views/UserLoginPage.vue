@@ -22,10 +22,6 @@
             </div>
           </form>
   
-          <!-- Register Link -->
-          <div class="text-center mt-3">
-            <p class="mb-0">Don't have an account? <router-link to="/register" class="text-primary">Sign Up</router-link></p>
-          </div>
         </div>
       </div>
     </div>
