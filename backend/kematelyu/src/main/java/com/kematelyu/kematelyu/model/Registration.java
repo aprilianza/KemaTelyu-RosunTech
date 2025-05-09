@@ -22,4 +22,48 @@ public class Registration {
     private boolean isVerified;
 
     public enum Status { PENDING, APPROVED, REJECTED }
+    public void approve() {
+        this.status = Status.APPROVED;
+        this.isVerified = true;
+    }
+    public void cancel() {
+        this.status = Status.REJECTED;
+        this.isVerified = false;
+    }
+    public boolean isActive() {
+        return this.status == Status.APPROVED && this.isVerified;
+    }
+    public Long getId() {
+        return id;
+    }
+    public Event getEvent() {
+        return event;
+    }
+    public Mahasiswa getMahasiswa() {
+        return mahasiswa;
+    }
+    public LocalDate getDate() {
+        return date;
+    }
+    public String getStatus() {
+        return status.name();
+    }
+    public boolean getIsVerified() {
+        return isVerified;
+    }
+    public void setEvent(Event event) {
+        this.event = event;
+    }
+    public void setMahasiswa(Mahasiswa mahasiswa) {
+        this.mahasiswa = mahasiswa;
+    }
+    public void setDate(LocalDate date) {
+        this.date = date;
+    }
+    public void setStatus(String status) {
+        this.status = Status.valueOf(status.toUpperCase());
+    }
+    public void setIsVerified(boolean isVerified) {
+        this.isVerified = isVerified;
+    }
 }
