@@ -1,4 +1,5 @@
 package com.kematelyu.kematelyu.model;
+import java.util.List;
 
 import jakarta.persistence.*;
 import lombok.*;

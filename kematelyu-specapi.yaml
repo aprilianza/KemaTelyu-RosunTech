@@ -1,0 +1,391 @@
+openapi: 3.0.3
+info:
+  title: KemaTelyu API
+  version: 1.0.0
+  description: |
+    RESTful API for the **Sistem E‑Ticketing dan Sertifikasi Digital KemaTelyu**.
+    Uses JWT bearer authentication. All secured endpoints require
+    `Authorization: Bearer <token>` header.
+servers:
+  - url: http://localhost:8080
+    description: Local development
+security:
+  - bearerAuth: []
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    User:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        name:
+          type: string
+        email:
+          type: string
+        role:
+          type: string
+      required: [id, name, email, role]
+    Mahasiswa:
+      allOf:
+        - $ref: '#/components/schemas/User'
+        - type: object
+          properties:
+            nim:
+              type: string
+            fakultas:
+              type: string
+          required: [nim, fakultas]
+    Staff:
+      allOf:
+        - $ref: '#/components/schemas/User'
+        - type: object
+          properties:
+            divisi:
+              type: string
+          required: [divisi]
+    Event:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        title:
+          type: string
+        description:
+          type: string
+        date:
+          type: string
+          format: date
+        createdBy:
+          $ref: '#/components/schemas/Staff'
+      required: [id, title, description, date, createdBy]
+    RegistrationStatus:
+      type: string
+      enum: [PENDING, APPROVED, REJECTED]
+    Registration:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        event:
+          $ref: '#/components/schemas/Event'
+        mahasiswa:
+          $ref: '#/components/schemas/Mahasiswa'
+        date:
+          type: string
+          format: date
+        status:
+          $ref: '#/components/schemas/RegistrationStatus'
+        isVerified:
+          type: boolean
+      required: [id, event, mahasiswa, date, status, isVerified]
+    Certificate:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        mahasiswa:
+          $ref: '#/components/schemas/Mahasiswa'
+        event:
+          $ref: '#/components/schemas/Event'
+        issueDate:
+          type: string
+          format: date
+      required: [id, mahasiswa, event, issueDate]
+    AuthRequest:
+      type: object
+      properties:
+        email:
+          type: string
+          example: user@kema.com
+        password:
+          type: string
+          format: password
+      required: [email, password]
+    AuthResponse:
+      type: object
+      properties:
+        token:
+          type: string
+        user:
+          $ref: '#/components/schemas/User'
+paths:
+  /api/auth/login:
+    post:
+      tags: [Auth]
+      summary: Login and obtain JWT token
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AuthRequest'
+      responses:
+        '200':
+          description: Successful login
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '401':
+          description: Invalid credentials
+  /api/auth/profile:
+    get:
+      tags: [Auth]
+      summary: Get current user profile (JWT)
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Current user data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+  /api/events:
+    get:
+      tags: [Event]
+      summary: List all events
+      responses:
+        '200':
+          description: Array of events
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Event'
+    post:
+      tags: [Event]
+      summary: Create new event
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Event'
+      responses:
+        '201':
+          description: Event created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Event'
+  /api/events/{id}:
+    parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: integer
+          format: int64
+    get:
+      tags: [Event]
+      summary: Get event by id
+      responses:
+        '200':
+          description: Event detail
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Event'
+        '404':
+          description: Event not found
+    put:
+      tags: [Event]
+      summary: Update event
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Event'
+      responses:
+        '200':
+          description: Updated event
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Event'
+    delete:
+      tags: [Event]
+      summary: Delete event
+      security:
+        - bearerAuth: []
+      responses:
+        '204':
+          description: Deleted
+  /api/events/{eventId}/register:
+    post:
+      tags: [Registration]
+      summary: Register current Mahasiswa to event
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: eventId
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '201':
+          description: Registration created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Registration'
+        '400':
+          description: Registration error
+  /api/events/{eventId}/registrations:
+    get:
+      tags: [Registration]
+      summary: List registrations for an event (staff only)
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: eventId
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Array of registrations
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Registration'
+  /api/registrations/{id}/approve:
+    put:
+      tags: [Registration]
+      summary: Approve registration
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Registration approved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Registration'
+  /api/registrations/{id}/reject:
+    put:
+      tags: [Registration]
+      summary: Reject registration
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Registration rejected
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Registration'
+  /api/registrations/{id}:
+    delete:
+      tags: [Registration]
+      summary: Cancel own registration
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '204':
+          description: Registration canceled
+  /api/certificates:
+    get:
+      tags: [Certificate]
+      summary: List certificates of current user
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Array of certificates
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Certificate'
+  /api/certificates/{id}/download:
+    get:
+      tags: [Certificate]
+      summary: Download certificate PDF
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: PDF file
+          content:
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+  /api/upload/image:
+    post:
+      tags: [Upload]
+      summary: Upload image for event cover
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+      responses:
+        '201':
+          description: Upload success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  path:
+                    type: string
