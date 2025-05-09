@@ -3,7 +3,8 @@
     <!-- User Profile Section -->
     <div class="row mb-4 d-flex justify-content-between align-items-center">
       <div class="col-12 col-md-4">
-        <img :src="require(`@/assets/img/Screenshot 2025-05-09 at 14.38.06.png`)" class="img-fluid rounded-circle" alt="User Photo" width="200" height="200"/>
+        <!-- Menggunakan 'require' untuk memuat gambar lokal -->
+        <img :src="require(`@/assets/img/${user.photo}`)" class="img-fluid rounded-circle" alt="User Photo" width="200" height="200"/>
       </div>
       <div class="col-12 col-md-8">
         <h3>{{ user.name }}</h3>
@@ -38,7 +39,7 @@ export default {
         name: 'Rahmat Widodo',
         nim: '123456789',
         faculty: 'Ilmu Komputer',
-        photo: 'assets/img/Screenshot 2025-05-09 at 14.38.06.png'
+        photo: 'Screenshot 2025-05-09 at 14.38.06.png'  // Nama file gambar saja
       },
       events: [
         {
