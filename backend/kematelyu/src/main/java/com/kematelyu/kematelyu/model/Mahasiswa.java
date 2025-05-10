@@ -25,11 +25,19 @@ public class Mahasiswa extends User {
         return nim;
     }
 
+    public String getFakultas() { 
+        return fakultas; 
+    }
+
     public void setNim(String nim) {
         if (nim == null || nim.trim().isEmpty()) {
             throw new IllegalArgumentException("NIM tidak boleh kosong.");
         }
         this.nim = nim;
+    }
+
+    public void setFakultas(String fakultas) { 
+        this.fakultas = fakultas; 
     }
 
     public String getFakultas() {

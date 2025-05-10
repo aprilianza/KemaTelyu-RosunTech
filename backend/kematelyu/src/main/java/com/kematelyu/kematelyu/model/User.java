@@ -20,6 +20,14 @@ public abstract class User {
 
     @Column(nullable = false) private String role;
 
+    public void setId(int id) { 
+        if (id == null || id.trim().isEmpty()) {
+            throw new IllegalArgumentException("Id tidak boleh kosong.");
+        }
+
+        this.id = id;
+    }
+
     public void setName(String name) {
         if (name == null || name.trim().isEmpty()) {
             throw new IllegalArgumentException("Nama tidak boleh kosong.");
@@ -69,5 +77,25 @@ public abstract class User {
         public PasswordSalahException(String message) {
             super(message);
         }
+    }
+
+    public int getId() { 
+        return id; 
+    }
+
+    public String getName() { 
+        return name; 
+    }
+
+    public String getEmail() { 
+        return email; 
+    }
+
+    public String getPassword() { 
+        return password; 
+    }
+
+    public String getRole() { 
+        return role; 
     }
 }
