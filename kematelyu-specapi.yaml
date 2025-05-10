@@ -7,7 +7,7 @@ info:
     Uses JWT bearer authentication. All secured endpoints require
     `Authorization: Bearer <token>` header.
 servers:
-  - url: http://localhost:8080
+  - url: http://localhost:8888
     description: Local development
 security:
   - bearerAuth: []
