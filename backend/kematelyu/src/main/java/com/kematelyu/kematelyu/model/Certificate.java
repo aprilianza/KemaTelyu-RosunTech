@@ -1,12 +1,9 @@
 package com.kematelyu.kematelyu.model;
 
 import jakarta.persistence.*;
-import lombok.*;
 
 import java.time.LocalDate;
 
-@Getter @Setter
-@NoArgsConstructor @AllArgsConstructor
 @Entity
 public class Certificate {
 
@@ -17,44 +14,27 @@ public class Certificate {
     @ManyToOne private Event event;
     private LocalDate issueDate;
 
-    public void setId(int id) { 
-        if (id == null || id.trim().isEmpty()) {
-            throw new IllegalArgumentException("Id tidak boleh kosong.");
-        }
+    public Certificate() {}
 
-        if (usedIds.contains(id) && this.id != id) {
-            throw new IllegalArgumentException("ID sudah digunakan! Harus unik.");
-        }
-
+    /* helper-constructor dipakai Event.generateCertificate */
+    public Certificate(Long id, Mahasiswa mahasiswa,
+                       Event event, LocalDate issueDate) {
         this.id = id;
-        usedIds.add(id);
+        this.mahasiswa = mahasiswa;
+        this.event = event;
+        this.issueDate = issueDate;
     }
 
-    public void setMahasiswa(Mahasiswa mahasiswa) { 
-        this.mahasiswa = mahasiswa; 
-    }
+    /* getters & setters */
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
 
-    public void setEvent(Event event) { 
-        this.event = event; 
-    }
+    public Mahasiswa getMahasiswa() { return mahasiswa; }
+    public void setMahasiswa(Mahasiswa mahasiswa) { this.mahasiswa = mahasiswa; }
 
-    public void setIssueDate(Date issueDate) { 
-        this.issueDate = issueDate; 
-    }
+    public Event getEvent() { return event; }
+    public void setEvent(Event event) { this.event = event; }
 
-    public int getId() { 
-        return id; 
-    }
-
-    public Mahasiswa getMahasiswa() { 
-        return mahasiswa; 
-    }
-
-    public Event getEvent() { 
-        return event; 
-    }
-
-    public Date getIssueDate() { 
-        return issueDate; 
-    }
+    public LocalDate getIssueDate() { return issueDate; }
+    public void setIssueDate(LocalDate issueDate) { this.issueDate = issueDate; }
 }
