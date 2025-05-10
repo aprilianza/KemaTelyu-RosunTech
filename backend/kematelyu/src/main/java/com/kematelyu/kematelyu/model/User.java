@@ -1,18 +1,29 @@
 package com.kematelyu.kematelyu.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 
 @Entity
 @Inheritance(strategy = InheritanceType.JOINED)
 public abstract class User {
 
-    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false) private String name;
-    @Column(nullable = false, unique = true) private String email;
-    @Column(nullable = false) private String password;
-    @Column(nullable = false) private String role;
+    @Column(nullable = false)
+    private String name;
+
+    @Column(nullable = false, unique = true)
+    private String email;
+
+    /*  <<< PASSWORD TIDAK DI-SERIALISE KE JSON >>>  */
+    @JsonIgnore
+    @Column(nullable = false)
+    private String password;
+
+    @Column(nullable = false)
+    private String role;
 
     public User() {}
 
@@ -25,19 +36,17 @@ public abstract class User {
         this.role = role;
     }
 
-    /* BASIC LOGIN VALIDATION */
+    /* ---------- BASIC LOGIN VALIDATION ---------- */
     public boolean login(String inputEmail, String inputPassword)
             throws AkunTidakTerdaftarException, PasswordSalahException {
         if (!this.email.equals(inputEmail))
             throw new AkunTidakTerdaftarException("Akun tidak terdaftar");
-
         if (!this.password.equals(inputPassword))
             throw new PasswordSalahException("Password salah");
-
         return true;
     }
 
-    /* custom exceptions */
+    /* ---------- CUSTOM EXCEPTIONS ---------- */
     public static class AkunTidakTerdaftarException extends Exception {
         public AkunTidakTerdaftarException(String msg) { super(msg); }
     }
@@ -45,7 +54,7 @@ public abstract class User {
         public PasswordSalahException(String msg) { super(msg); }
     }
 
-    /* getters & setters */
+    /* ---------- GETTERS & SETTERS ---------- */
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
 
