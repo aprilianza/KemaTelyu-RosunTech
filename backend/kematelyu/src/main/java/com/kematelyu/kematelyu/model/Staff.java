@@ -1,35 +1,27 @@
 package com.kematelyu.kematelyu.model;
 
-import jakarta.persistence.*;
-import lombok.*;
+import jakarta.persistence.Entity;
 
 import java.util.List;
 
-@Getter @Setter
-@NoArgsConstructor @AllArgsConstructor
 @Entity
 public class Staff extends User {
 
     private String divisi;
 
-    public void createEvent(Event event) {
-        if (event != null) {
-            event.setCreatedBy(this);
-        }
-    }
+    public Staff() {}
 
+    public Staff(String divisi) { this.divisi = divisi; }
+
+    /* util */
+    public void createEvent(Event event) {
+        if (event != null) event.setCreatedBy(this);
+    }
     public List<Mahasiswa> viewParticipant(Event event) {
         return event.getParticipants();
     }
 
-    public String getDivisi() {
-        return divisi;
-    }
-
-    public void setDivisi(String divisi) {
-        if (divisi == null || divisi.trim().isEmpty()) {
-            throw new IllegalArgumentException("Divisi tidak boleh kosong.");
-        }
-        this.divisi = divisi;
-    }
+    /* getters & setters */
+    public String getDivisi() { return divisi; }
+    public void setDivisi(String divisi) { this.divisi = divisi; }
 }
