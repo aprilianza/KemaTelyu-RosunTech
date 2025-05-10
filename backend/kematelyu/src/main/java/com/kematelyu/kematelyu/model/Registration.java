@@ -78,6 +78,14 @@ public class Registration {
         return isVerified;
     }
 
+    public void setId(int id) { 
+        if (id == null || id.trim().isEmpty()) {
+            throw new IllegalArgumentException("Id tidak boleh kosong.");
+        }
+
+        this.id = id;
+    }
+
     public void setEvent(Event event) {
         this.event = event;
     }

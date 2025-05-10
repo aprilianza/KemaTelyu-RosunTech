@@ -44,4 +44,48 @@ public class Event implements CertificateGenerator {
                 .map(Registration::getMahasiswa)
                 .collect(Collectors.toList());
     }
+
+    public void setId(int id) { 
+        if (id == null || id.trim().isEmpty()) {
+            throw new IllegalArgumentException("Id tidak boleh kosong.");
+        }
+
+        this.id = id;
+    }
+
+    public void setTitle(String title) { 
+        this.title = title; 
+    }
+
+    public void setDescription(String description) { 
+        this.description = description; 
+    }
+
+    public void setDate(Date date) { 
+        this.date = date; 
+    }
+
+    public void setCreatedBy(Staff createdBy) { 
+        this.createdBy = createdBy; 
+    }
+
+    public int getId() { 
+        return id; 
+    }
+
+    public String getTitle() { 
+        return title; 
+    }
+
+    public String getDescription() { 
+        return description; 
+    }
+
+    public Date getDate() { 
+        return date; 
+    }
+
+    public Staff getCreatedBy() { 
+        return createdBy; 
+    }
 }
