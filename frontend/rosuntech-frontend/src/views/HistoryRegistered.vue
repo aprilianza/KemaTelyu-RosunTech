@@ -1,17 +1,34 @@
 <template>
   <div class="container mt-5">
+    <!-- Tombol Back -->
+    <div class="mb-4">
+        <button @click="$router.push({ name: 'Home' })" class="btn btn-outline-secondary">
+        &larr; Back to Home
+        </button>
+    </div>
+
+    <!-- Judul Halaman -->
     <h4>Registered Events</h4>
+
+    <!-- Daftar Event -->
     <div class="row">
-      <div class="col-12 col-md-6 mb-3" v-for="event in historyEvents" :key="event.id">
+      <div
+        class="col-12 col-md-6 mb-3"
+        v-for="event in historyEvents"
+        :key="event.id"
+      >
         <div class="card bg-light">
           <div class="card-body d-flex flex-column">
             <h5 class="card-title">{{ event.title }}</h5>
             <p>{{ event.dateCreated }}</p>
 
             <!-- Baris untuk status dan tombol -->
-            <div class=" d-flex justify-content-between align-items-center">
+            <div class="d-flex justify-content-between align-items-center">
               <!-- Logo Approve berdasarkan status -->
-              <div v-if="event.status === 'Diterima'" class="d-flex align-items-center">
+              <div
+                v-if="event.status === 'Diterima'"
+                class="d-flex align-items-center"
+              >
                 ✅ <strong class="ms-1">Status:</strong> {{ event.status }}
               </div>
               <div v-else class="d-flex align-items-center">
@@ -19,7 +36,10 @@
               </div>
 
               <!-- Tombol Get!! hanya muncul jika status Diterima -->
-              <button v-if="event.status === 'Diterima'" class="btn btn-primary btn-sm">
+              <button
+                v-if="event.status === 'Diterima'"
+                class="btn btn-primary btn-sm"
+              >
                 Get!!
               </button>
             </div>
