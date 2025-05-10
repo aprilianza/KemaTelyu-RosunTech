@@ -63,7 +63,7 @@ export default {
 
         /* redirect sesuai role */
         if (data.user.role === 'MAHASISWA') {
-          this.$router.push('/dashboard-mahasiswa');
+          this.$router.push('/home');
         } else if (data.user.role === 'STAFF') {
           this.$router.push('/dashboard-staff');
         } else {
