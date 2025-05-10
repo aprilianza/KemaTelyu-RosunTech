@@ -1,11 +1,6 @@
 <template>
-  <div class="container mt-5">
-    <!-- Tombol Back -->
-    <div class="mb-4">
-        <button @click="$router.push({ name: 'Home' })" class="btn btn-outline-secondary">
-        &larr; Back to Home
-        </button>
-    </div>
+    <sidebar/>
+  <div class="content-wrapper container">
 
     <!-- Judul Halaman -->
     <h4>Registered Events</h4>
@@ -51,8 +46,13 @@
 </template>
 
 <script>
+import Sidebar from "@/components/Sidebar.vue";
+
 export default {
   name: 'HistoryRegisteredEvents',
+  components: {
+    Sidebar
+  },
   data() {
     return {
       historyEvents: [
@@ -84,5 +84,8 @@ export default {
 .card {
   border-radius: 12px;
   min-height: 140px;
+}
+.content-wrapper {
+  margin-top: 100px;
 }
 </style>
