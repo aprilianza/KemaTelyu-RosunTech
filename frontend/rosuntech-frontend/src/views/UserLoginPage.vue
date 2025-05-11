@@ -1,8 +1,16 @@
 <template>
-  <div class="container d-flex justify-content-center align-items-center min-vh-100">
-    <div class="card shadow-lg p-4" style="max-width: 400px; width: 100%; border-radius: 12px;">
+  <!-- Gambar Vector 1 - Pojok Kiri Atas -->
+  <img src="@/assets/img/Vector-landing1.png" class="vector-img vector-top" />
+
+  <!-- Card Login -->
+  <div class="login-container">
+    <div class="card shadow-lg p-4">
       <div class="card-body">
-        <h3 class="card-title text-center mb-4">Login to Your Account</h3>
+        <!-- Form Login -->
+        <h3 class="card-title text-center mb-1">Selamat Datang di </h3>
+        <h1 class="text-center mb-4 fw-bold">
+          <span class="kema-text">Kema</span><span class="telyu-text">Telyu</span>
+        </h1>
 
         <form @submit.prevent="login">
           <!-- Email -->
@@ -13,7 +21,7 @@
               id="email"
               class="form-control"
               v-model="email"
-              placeholder="Enter your email"
+              placeholder="Masukkan Email"
               required
             />
           </div>
@@ -26,7 +34,7 @@
               id="password"
               class="form-control"
               v-model="password"
-              placeholder="Enter your password"
+              placeholder="Masukkan Password"
               required
             />
           </div>
@@ -37,6 +45,9 @@
       </div>
     </div>
   </div>
+
+  <!-- Gambar Vector 2 - Pojok Kanan Bawah -->
+  <img src="@/assets/img/vector-landing2.png" class="vector-img vector-bottom" />
 </template>
 
 <script>
@@ -53,15 +64,10 @@ export default {
   methods: {
     async login() {
       try {
-        /* --- panggil backend --- */
         const { data } = await loginUser(this.email, this.password);
 
-        alert(data.message); // "Login berhasil"
-
-        /* simpan info user (tanpa password memang!) */
         localStorage.setItem('user', JSON.stringify(data.user));
 
-        /* redirect sesuai role */
         if (data.user.role === 'MAHASISWA') {
           this.$router.push('/home');
         } else if (data.user.role === 'STAFF') {
@@ -70,11 +76,19 @@ export default {
           this.$router.push('/');
         }
       } catch (err) {
+        let errorMessage = 'Terjadi kesalahan saat login.';
+
         if (err.response && err.response.status === 401) {
-          alert(err.response.data); // "Email tidak ditemukan" / "Password salah"
-        } else {
-          alert('Terjadi kesalahan saat login.');
+          errorMessage = err.response.data || 'Email atau password salah';
         }
+
+        // Tampilkan SweetAlert2
+        this.$swal.fire({
+          icon: 'error',
+          title: 'Login Failed',
+          text: errorMessage,
+          confirmButtonText: 'OK'
+        });
       }
     }
   }
@@ -82,20 +96,69 @@ export default {
 </script>
 
 <style scoped>
-.container {
+
+
+.login-container {
   display: flex;
   justify-content: center;
   align-items: center;
+  min-height: 100vh;
+  background-color: v-bind("$colors.secondary");
+  padding: 20px;
+  z-index: 1;
 }
+
 .card {
+  max-width: 400px;
+  width: 100%;
   border-radius: 12px;
+  background-color: #fff;
+  padding: 2rem;
+  z-index: 2;
+  position: relative;
 }
+
 .card-title {
   font-size: 1.5rem;
   font-weight: 500;
 }
-button {
+
+.kema-text {
+  color: v-bind("$colors.third");
+}
+
+.telyu-text {
+  color: v-bind("$colors.primary");
+}
+
+.btn-primary {
+  background-color: v-bind("$colors.primary");
+  border: none;
   border-radius: 30px;
   padding: 12px 20px;
+}
+
+.btn-primary:hover {
+  background-color: v-bind("$colors.fourth");
+}
+
+.vector-img {
+  position: absolute;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.vector-top {
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: auto;
+}
+
+.vector-bottom {
+  bottom: 0;
+  right: 0;
+  width: 100%;
+  height: auto;
 }
 </style>
