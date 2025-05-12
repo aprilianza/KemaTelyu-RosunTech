@@ -19,7 +19,7 @@
           <p><strong>NIM:</strong> {{ user.nim }}</p>
           <p><strong>Fakultas:</strong> {{ user.faculty }}</p>
           <button class="btn btn-primary" @click="$router.push({ name: 'History' })">
-            Get Certificate
+            Get Certificates
           </button>
         </div>
       </div>
