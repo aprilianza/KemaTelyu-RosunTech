@@ -4,7 +4,7 @@
     <div class="content-wrapper container py-5">
       <!-- Header Image -->
       <div class="header-image mb-4">
-        <img :src="require('@/assets/img/event-banner.png')" class="img-fluid rounded" alt="Event Banner" />
+        <img :src="require('@/assets/img/event-banner.jpg')" class="img-fluid rounded" alt="Event Banner" />
       </div>
 
       <!-- Event Title and Message -->
