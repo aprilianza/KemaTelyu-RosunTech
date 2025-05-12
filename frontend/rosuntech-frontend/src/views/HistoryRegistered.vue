@@ -35,7 +35,7 @@
                 v-if="event.status === 'Diterima'"
                 class="btn btn-primary btn-sm"
               >
-                Get!!
+                Download
               </button>
             </div>
           </div>
