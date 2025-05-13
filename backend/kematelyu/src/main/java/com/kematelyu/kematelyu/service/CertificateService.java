@@ -1,5 +1,10 @@
 package com.kematelyu.kematelyu.service;
 
+import java.util.List;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
 import com.kematelyu.kematelyu.dto.CertificateRequest;
 import com.kematelyu.kematelyu.model.Certificate;
 import com.kematelyu.kematelyu.model.Event;
@@ -7,10 +12,6 @@ import com.kematelyu.kematelyu.model.Mahasiswa;
 import com.kematelyu.kematelyu.repository.CertificateRepository;
 import com.kematelyu.kematelyu.repository.EventRepository;
 import com.kematelyu.kematelyu.repository.MahasiswaRepository;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
-
-import java.util.List;
 
 @Service
 public class CertificateService {
@@ -35,6 +36,9 @@ public class CertificateService {
     }
 
     public List<Certificate> getCertificatesByMahasiswaId(Long mahasiswaId) {
-        return certificateRepository.findByMahasiswa_Id(mahasiswaId);
+    Mahasiswa mahasiswa = mahasiswaRepository.findById(mahasiswaId)
+            .orElseThrow(() -> new IllegalArgumentException("Mahasiswa tidak ditemukan"));
+
+    return certificateRepository.findByMahasiswa(mahasiswa);
     }
 }
