@@ -46,4 +46,30 @@ public class EventController {
     public void delete(@PathVariable Long id) {
         service.delete(id);
     }
+
+    @PostMapping("/{id}/register")
+    public ResponseEntity<?> registerToEvent(
+        @PathVariable Long id,
+        @RequestParam String nim // atau ambil dari token
+    ) {
+        return ResponseEntity.ok(service.registerToEvent(id, nim));
+    }
+
+    @GetMapping("/{id}/participants")
+    public ResponseEntity<?> getParticipants(@PathVariable Long id) {
+        return ResponseEntity.ok(service.getParticipants(id));
+    }
+
+    @PutMapping("/participants/{registrationId}/approve")
+    public ResponseEntity<?> approveParticipant(@PathVariable Long registrationId) {
+        return ResponseEntity.ok(service.approveParticipant(registrationId));
+    }
+
+    @PostMapping("/{id}/generate-certificate")
+    public ResponseEntity<?> generateCertificate(
+        @PathVariable Long id,
+        @RequestParam String nim // atau ambil dari token
+    ) {
+        return ResponseEntity.ok(service.generateCertificate(id, nim));
+    }
 }
