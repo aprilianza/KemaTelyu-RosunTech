@@ -13,12 +13,13 @@
             <div class="card-body">
               <div class="row align-items-center">
                 <div class="col-auto">
-                  <img :src="require(`@/assets/img/${user.photo}`)" class="profile-photo rounded-circle" alt="Profile Photo" />
+                  <img :src="require(`@/assets/img/${user.photo || 'profile.png'}`)"
+                    class="profile-photo rounded-circle" alt="Profile Photo" />
                 </div>
                 <div class="col text-start">
                   <h3>{{ user.name }}</h3>
                   <p><strong>NIM:</strong> {{ user.nim }}</p>
-                  <p><strong>Fakultas:</strong> {{ user.faculty }}</p>
+                  <p><strong>Fakultas:</strong> {{ user.fakultas }}</p>
                 </div>
               </div>
             </div>
@@ -36,10 +37,10 @@
         </div>
 
         <!-- History Card -->
-        <div class="col-lg-3 col-md-6 mb-3">
-          <div class="card history-card h-100" @click="$router.push({ name: 'History' })">
+        <div class="col-lg-3 col-md-6 mb-3" @click="$router.push({ name: 'History' })">
+          <div class="card history-card h-100">
             <div class="card-body text-center d-flex flex-column justify-content-center">
-              <i class="bi bi-clock history-icon fs-1"><img src="@/assets/img/history.png" alt="" /></i>
+              <img src="@/assets/img/history.png" alt="History" class="history-icon" />
               <h5 class="mt-2">History</h5>
             </div>
           </div>
@@ -51,14 +52,13 @@
       <div class="row justify-content-center g-4 mb-5">
         <div class="col-12 col-md-6" v-for="event in events" :key="event.id">
           <div class="event-card d-flex flex-column">
-            <!-- Foto Event -->
             <div class="image-wrapper mb-3">
               <img :src="require(`@/assets/img/${event.image}`)" alt="Event Image" />
             </div>
-            <!-- Judul & See more -->
             <h5 class="event-title mb-1 text-truncate">{{ event.title }}</h5>
-            <a href="#" class="text-start see-more mb-3" @click.prevent="openModal(event)"> See more </a>
-            <!-- Tanggal & Waktu -->
+            <a href="#" class="text-start see-more mb-3" @click.prevent="openModal(event)">
+              See more
+            </a>
             <div class="d-flex justify-content-end gap-3 mt-auto">
               <span class="badge date-badge">{{ event.date }}</span>
               <span class="badge time-badge">{{ event.time }}</span>
@@ -73,82 +73,99 @@
           <div class="modal-content">
             <div class="modal-header text-white">
               <h5 class="modal-title">{{ selectedEvent.title }}</h5>
-              <button type="button" class="btn-close btn-close-white" @click="closeModal" aria-label="Close"></button>
+              <button type="button" class="btn-close btn-close-white" @click="closeModal" aria-label="Close" />
             </div>
             <div class="modal-body">
-              <img :src="require(`@/assets/img/${selectedEvent.image}`)" class="img-fluid mb-4 rounded" alt="Event Image" />
+              <img :src="require(`@/assets/img/${selectedEvent.image}`)" class="img-fluid mb-4 rounded"
+                alt="Event Image" />
               <p><strong>Description:</strong> {{ selectedEvent.description }}</p>
               <p><strong>Date:</strong> {{ selectedEvent.date }}</p>
               <p><strong>Time:</strong> {{ selectedEvent.time }}</p>
               <p><strong>Created by:</strong> {{ selectedEvent.createdBy }}</p>
             </div>
             <div class="modal-footer">
-              <button type="button" class="btn btn-secondary" @click="closeModal">Close</button>
+              <button type="button" class="btn btn-secondary" @click="closeModal">
+                Close
+              </button>
               <button type="button" class="btn btn-success">Register</button>
             </div>
           </div>
         </div>
       </div>
-      <div v-if="selectedEvent" class="modal-backdrop fade show"></div>
+      <div v-if="selectedEvent" class="modal-backdrop fade show" />
     </div>
   </div>
 </template>
 
 <script>
 import Sidebar from '@/components/Sidebar.vue';
+import api from '@/api/axios';
 
 export default {
   name: 'DashboardMahasiswa',
   components: { Sidebar },
   data() {
     return {
-      user: {
-        name: 'Rahmat Widodo',
-        nim: '123456789',
-        faculty: 'Ilmu Komputer',
-        photo: 'profile.png',
-      },
+      user: { name: '', nim: '', fakultas: '', photo: '' }, // data user di-load dari backend
+      totalEvents: 0,
       events: [
+        // dummy list event
         {
           id: 1,
-          title: 'Telkommetra Mengadakan Lomba Inovasi Digital untuk Mahasiswa Seluruh Indonesia',
-          image: 'placeholder.jpg', 
-          description: "Lomba inovasi digital bertema 'Smart Campus' dengan hadiah jutaan rupiah.",
+          title:
+            'Telkommetra Mengadakan Lomba Inovasi Digital untuk Mahasiswa Seluruh Indonesia',
+          image: 'placeholder.jpg',
+          description:
+            "Lomba inovasi digital bertema 'Smart Campus' dengan hadiah jutaan rupiah.",
           date: '21 Maret 2025',
           time: '09.00 WIB',
-          createdBy: 'Fakultas Ilmu Komputer',
+          createdBy: 'Fakultas Ilmu Komputer'
         },
         {
           id: 2,
-          title: 'Workshop UI/UX Design: Membangun Portofolio Profesional',
+          title:
+            'Workshop UI/UX Design: Membangun Portofolio Profesional',
           image: 'placeholder.jpg',
-          description: 'Pelatihan intensif desain antarmuka pengguna dengan studi kasus nyata.',
+          description:
+            'Pelatihan intensif desain antarmuka pengguna dengan studi kasus nyata.',
           date: '05 April 2025',
           time: '13.00 WIB',
-          createdBy: 'Prodi Desain Digital',
+          createdBy: 'Prodi Desain Digital'
         },
         {
           id: 3,
           title: 'Seminar Big Data & Analytics di Era Industri 4.0',
           image: 'placeholder.jpg',
-          description: 'Mendalami penerapan big data untuk pengambilan keputusan bisnis.',
+          description:
+            'Mendalami penerapan big data untuk pengambilan keputusan bisnis.',
           date: '18 April 2025',
           time: '10.00 WIB',
-          createdBy: 'Himpunan Mahasiswa TI',
-        },
+          createdBy: 'Himpunan Mahasiswa TI'
+        }
       ],
-      totalEvents: 10, // Example total events count
-      selectedEvent: null,
+      selectedEvent: null
     };
   },
+  mounted() {
+    this.fetchCurrentUser();
+  },
   methods: {
+    async fetchCurrentUser() {
+      try {
+        const res = await api.get('/api/auth/me');
+        this.user = res.data;
+      } catch (err) {
+        console.error('Gagal ambil data user:', err);
+        this.$router.push('/login');
+      }
+    },
     openModal(event) {
       this.selectedEvent = event;
     },
     closeModal() {
       this.selectedEvent = null;
-    },
-  },
+    }
+  }
 };
 </script>
 
@@ -176,7 +193,7 @@ export default {
 /* History & Total Event Card */
 .history-card,
 .total-event-card {
-  background-color: v-bind('$colors.primary'); /* Example primary color */
+  background-color: v-bind('$colors.primary');
   color: white;
   border-radius: 1rem;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
@@ -192,17 +209,19 @@ export default {
   text-align: center;
 }
 
-.history-icon,
-.total-event-icon {
-  font-size: 3rem;
+.history-icon {
+  width: 48px;
+  height: 48px;
 }
 
 h5 {
   font-size: 1.2rem;
 }
-h1{
+
+h1 {
   font-size: 125px;
 }
+
 /* Event Card */
 .event-card {
   background-color: v-bind('$colors.fourth');
@@ -219,6 +238,7 @@ h1{
   overflow: hidden;
   border-radius: 1rem;
 }
+
 .image-wrapper img {
   width: 100%;
   height: 180px;
