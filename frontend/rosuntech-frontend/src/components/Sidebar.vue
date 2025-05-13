@@ -8,7 +8,9 @@
         :aria-expanded="isOpen"
         v-html="sidebarButtonIcon"
       ></button>
-      <span class="sidebar-title">Kematelyu</span>
+      <span class="sidebar-title">
+        <span class="text-kema">Kema</span><span class="text-telyu">telyu</span>
+      </span>
     </div>
 
     <!-- Sidebar -->
@@ -31,38 +33,63 @@
 
       <!-- Logout di bagian bawah sidebar -->
       <div class="mt-auto p-3">
-        <router-link class="nav-link d-flex align-items-center text-danger" :to="{ name: 'Login' }">
+        <a href="#" @click.prevent="confirmLogout" class="nav-link d-flex align-items-center text-danger">
           <font-awesome-icon icon="sign-out-alt" class="me-2" />
           Logout
-        </router-link>
+        </a>
       </div>
     </div>
   </div>
 </template>
 
 <script>
+import Swal from 'sweetalert2';
+
 export default {
-  name: "SidebarAll",
+  name: 'SidebarAll',
   data() {
     return {
-      isOpen: false // Default state untuk sidebar (tertutup)
+      isOpen: false,
     };
   },
   computed: {
-    // Mengembalikan ikon sesuai status sidebar
     sidebarButtonIcon() {
       return this.isOpen ? '&laquo;' : '&#9776;';
-    }
+    },
   },
   methods: {
     toggleSidebar() {
       this.isOpen = !this.isOpen;
+    },
+    confirmLogout() {
+      Swal.fire({
+        title: 'Apakah anda yakin ingin logout?',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: 'Ya',
+        cancelButtonText: 'Batal',
+        customClass: {
+          confirmButton: 'btn btn-danger me-2',
+          cancelButton: 'btn btn-secondary'
+        },
+        buttonsStyling: false,
+        dangerMode: true,
+      }).then((result) => {
+        if (result.isConfirmed) {
+          // Redirect ke halaman login
+          this.$router.push({ name: 'Login' });
+
+          // Atau panggil action Vuex/Pinia jika perlu
+          // this.logout(); 
+        }
+      });
     }
   }
 };
 </script>
 
 <style scoped>
+
 /* Header dengan hamburger dan title */
 .sidebar-header {
   display: flex;
@@ -89,8 +116,15 @@ export default {
 .sidebar-title {
   margin-left: 10px;
   font-weight: bold;
-  font-size: 18px;
-  color: #007bff;
+  font-size: 30px;
+}
+
+.text-kema {
+  color: v-bind('$colors.primary');
+}
+
+.text-telyu {
+  color: v-bind('$colors.third');
 }
 
 /* Sidebar styles */
@@ -136,7 +170,7 @@ export default {
 .nav-link.router-link-exact-active,
 .nav-link.router-link-active {
   font-weight: bold;
-  color: #007bff !important;
+  color: v-bind('$colors.primary') !important;
   background-color: #e9ecef;
 }
 </style>

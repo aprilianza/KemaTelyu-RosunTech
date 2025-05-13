@@ -47,7 +47,7 @@
       </div>
 
       <!-- Events Section -->
-      <h4 class="mb-4">Events</h4>
+      <h2 class="mb-4">Events</h2>
       <div class="row justify-content-center g-4 mb-5">
         <div class="col-12 col-md-6" v-for="event in events" :key="event.id">
           <div class="event-card d-flex flex-column">

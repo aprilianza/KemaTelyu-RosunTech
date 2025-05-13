@@ -1,7 +1,6 @@
 <template>
-    <sidebar/>
+  <sidebar />
   <div class="content-wrapper container">
-
     <!-- Judul Halaman -->
     <h4>Registered Events</h4>
 
@@ -18,7 +17,7 @@
             <p>{{ event.dateCreated }}</p>
 
             <!-- Baris untuk status dan tombol -->
-            <div class="d-flex justify-content-between align-items-center">
+            <div class="d-flex justify-content-between align-items-center mt-auto">
               <!-- Logo Approve berdasarkan status -->
               <div
                 v-if="event.status === 'Diterima'"
@@ -30,13 +29,22 @@
                 ⚠️ <strong class="ms-1">Status:</strong> {{ event.status }}
               </div>
 
-              <!-- Tombol Get!! hanya muncul jika status Diterima -->
-              <button
-                v-if="event.status === 'Diterima'"
-                class="btn btn-primary btn-sm"
-              >
-                Download
-              </button>
+              <!-- Tombol Aksi -->
+              <div class="d-flex gap-2">
+                <button
+                  v-if="event.status === 'Diterima'"
+                  class="btn btn-success btn-sm"
+                >
+                  Download
+                </button>
+                <button
+                  v-if="event.status === 'Menunggu'"
+                  class="btn btn-sm text-white"
+                  :style="{ backgroundColor: $colors.primary }"
+                >
+                  Cancel
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -87,5 +95,8 @@ export default {
 }
 .content-wrapper {
   margin-top: 100px;
+}
+.gap-2 {
+  gap: 0.5rem;
 }
 </style>
