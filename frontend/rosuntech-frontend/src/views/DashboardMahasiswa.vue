@@ -39,9 +39,9 @@
         <!-- History Card -->
         <div class="col-lg-3 col-md-6 mb-3" @click="$router.push({ name: 'History' })">
           <div class="card history-card h-100">
-            <div class="card-body text-center d-flex flex-column justify-content-center">
+            <div class="card-body d-flex flex-column align-items-center justify-content-center">
               <img src="@/assets/img/history.png" alt="History" class="history-icon" />
-              <h5 class="mt-2">History</h5>
+              <h5 class="mt-3">History</h5>
             </div>
           </div>
         </div>
@@ -107,7 +107,6 @@ export default {
   data() {
     return {
       user: { name: '', nim: '', fakultas: '', photo: '' }, // data user di-load dari backend
-      totalEvents: 0,
       events: [
         // dummy list event
         {
@@ -143,7 +142,16 @@ export default {
           createdBy: 'Himpunan Mahasiswa TI'
         }
       ],
+      selectedEvent: null,
     };
+  },
+  computed: {
+    totalEvents() {
+      return this.events.length;
+    },
+  },
+  mounted() {
+    this.fetchCurrentUser();
   },
   methods: {
     async fetchCurrentUser() {
@@ -152,7 +160,6 @@ export default {
         this.user = res.data;
       } catch (err) {
         console.error('Gagal ambil data user:', err);
-        this.$router.push('/login');
       }
     },
     openModal(event) {
@@ -206,8 +213,8 @@ export default {
 }
 
 .history-icon {
-  width: 48px;
-  height: 48px;
+  width: 170px;
+  height: 140px;
 }
 
 h5 {
