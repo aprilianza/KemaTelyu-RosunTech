@@ -6,13 +6,23 @@ public class LoginResponse {
 
     private String message;
     private User user;
+    private String token;
 
-    public LoginResponse(String message, User user) {
+    public LoginResponse(String message, User user, String token) {
         this.message = message;
         this.user = user;
+        this.token = token;
     }
 
-    /* getters */
-    public String getMessage() { return message; }
-    public User getUser() { return user; }
+    public String getMessage() {
+        return message;
+    }
+
+    public User getUser() {
+        return user;
+    }
+
+    public String getToken() {
+        return token;
+    }
 }
