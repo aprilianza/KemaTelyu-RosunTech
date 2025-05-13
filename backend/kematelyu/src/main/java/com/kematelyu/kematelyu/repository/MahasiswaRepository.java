@@ -1,6 +1,10 @@
 package com.kematelyu.kematelyu.repository;
 
-import com.kematelyu.kematelyu.model.*;
+import com.kematelyu.kematelyu.model.Mahasiswa;
 import org.springframework.data.jpa.repository.JpaRepository;
 
-public interface MahasiswaRepository extends JpaRepository<Mahasiswa, Long> {}
+import java.util.Optional;
+
+public interface MahasiswaRepository extends JpaRepository<Mahasiswa, Long> {
+    Optional<Mahasiswa> findByNim(String nim);
+}
