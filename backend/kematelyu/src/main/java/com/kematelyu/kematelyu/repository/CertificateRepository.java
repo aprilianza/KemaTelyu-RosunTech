@@ -1,6 +1,11 @@
 package com.kematelyu.kematelyu.repository;
 
-import com.kematelyu.kematelyu.model.*;
+import java.util.List;
+
 import org.springframework.data.jpa.repository.JpaRepository;
 
-public interface CertificateRepository extends JpaRepository<Certificate, Long> {}
+import com.kematelyu.kematelyu.model.Certificate;
+
+public interface CertificateRepository extends JpaRepository<Certificate, Long> {
+    List<Certificate> findByRecipientEmail(String recipientEmail);
+}
