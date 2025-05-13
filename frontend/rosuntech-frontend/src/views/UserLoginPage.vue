@@ -87,7 +87,10 @@ export default {
           icon: 'error',
           title: 'Login Failed',
           text: errorMessage,
-          confirmButtonText: 'OK'
+          confirmButtonText: 'OK',
+          customClass: {
+            confirmButton: 'btn btn-secondary'
+          }
         });
       }
     }
