@@ -1,45 +1,36 @@
 package com.kematelyu.kematelyu.controller;
 
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.server.ResponseStatusException;
-
 import com.kematelyu.kematelyu.dto.LoginRequest;
 import com.kematelyu.kematelyu.dto.LoginResponse;
 import com.kematelyu.kematelyu.model.User;
 import com.kematelyu.kematelyu.repository.UserRepository;
+import com.kematelyu.kematelyu.util.JwtUtil;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
+
+import static org.springframework.http.HttpStatus.UNAUTHORIZED;
 
 @RestController
 @RequestMapping("/api/auth")
 public class AuthController {
 
-    private final UserRepository userRepository;
+    private final UserRepository userRepo;
+    private final JwtUtil jwt;
 
-    public AuthController(UserRepository userRepository) {
-        this.userRepository = userRepository;
+    public AuthController(UserRepository userRepo, JwtUtil jwt) {
+        this.userRepo = userRepo;
+        this.jwt = jwt;
     }
 
     @PostMapping("/login")
-    public ResponseEntity<?> login(@RequestBody LoginRequest request) {
-        try {
-            User user = userRepository.findByEmail(request.getEmail())
-                                      .orElse(null);
-
-            if (user == null) {
-                throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Email tidak ditemukan");
-            }
-
-            if (!user.getPassword().equals(request.getPassword())) {
-                throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Password salah");
-            }
-
-            return ResponseEntity.ok(new LoginResponse("Login berhasil", user));
-        } catch (Exception e) {
-            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Terjadi kesalahan server: " + e.getMessage(), e);
+    public ResponseEntity<LoginResponse> login(@RequestBody LoginRequest req) {
+        User user = userRepo.findByEmail(req.getEmail()).orElse(null);
+        if (user == null || !user.getPassword().equals(req.getPassword())) {
+            throw new ResponseStatusException(UNAUTHORIZED, "Email / password salah");
         }
+
+        String token = jwt.generateToken(user.getId(), user.getRole());
+        return ResponseEntity.ok(new LoginResponse("Login berhasil", user, token));
     }
 }
