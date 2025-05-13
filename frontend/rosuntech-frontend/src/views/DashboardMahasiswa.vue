@@ -137,9 +137,14 @@ export default {
           createdBy: 'Himpunan Mahasiswa TI',
         },
       ],
-      totalEvents: 10, // Example total events count
       selectedEvent: null,
     };
+  },
+  computed: {
+    totalEvents() {
+      // Menghitung jumlah event secara dinamis
+      return this.events.length;
+    },
   },
   methods: {
     openModal(event) {
