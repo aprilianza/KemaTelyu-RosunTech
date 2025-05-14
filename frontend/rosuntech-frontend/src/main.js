@@ -10,11 +10,17 @@ import {
   faHome, 
   faHistory, 
   faSignOutAlt,
+  faCalendarAlt,
+  faClock,
+  faUsers
 } from '@fortawesome/free-solid-svg-icons'
 library.add(
   faHome, 
   faHistory, 
   faSignOutAlt,
+  faCalendarAlt,
+  faClock,
+  faUsers
 )
 
 // Buat aplikasi Vue dan simpan ke dalam variabel app
