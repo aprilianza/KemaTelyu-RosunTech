@@ -1,16 +1,21 @@
 <template>
   <div>
-    <!-- Header dengan Hamburger + Judul -->
+    <!-- Header dengan Hamburger + Judul + Page Name -->
     <div class="sidebar-header">
-      <button
-        class="btn open-sidebar-btn"
-        @click="toggleSidebar"
-        :aria-expanded="isOpen"
-        v-html="sidebarButtonIcon"
-      ></button>
-      <span class="sidebar-title">
-        <span class="text-kema">Kema</span><span class="text-telyu">telyu</span>
-      </span>
+      <div class="d-flex align-items-center">
+        <button
+          class="btn open-sidebar-btn"
+          @click="toggleSidebar"
+          :aria-expanded="isOpen"
+          v-html="sidebarButtonIcon"
+        ></button>
+        <span class="sidebar-title">
+          <span class="text-kema">Kema</span><span class="text-telyu">telyu</span>
+        </span>
+      </div>
+      <div class="page-name">
+        <span class="page-name-text">{{ currentPageName }}</span>
+      </div>
     </div>
 
     <!-- Sidebar -->
@@ -19,29 +24,29 @@
       <ul class="nav flex-column mt-5">
         <li class="nav-item">
           <router-link class="nav-link d-flex align-items-center" :to="{ name: 'Home' }">
-            <font-awesome-icon icon="home" class="me-2" />
-            Home
+            <font-awesome-icon :icon="['fas', 'home']" class="menu-icon" />
+            <span>Home</span>
           </router-link>
         </li>
         <li class="nav-item">
           <router-link class="nav-link d-flex align-items-center" :to="{ name: 'History' }">
-            <font-awesome-icon icon="calendar-check" class="me-2" />
-            History
+            <font-awesome-icon :icon="['fas', 'history']" class="menu-icon" />
+            <span>History</span>
           </router-link>
         </li>
+        <!-- You can add more menu items here with icons -->
       </ul>
 
       <!-- Logout di bagian bawah sidebar -->
       <div class="mt-auto p-3">
         <a href="#" @click.prevent="confirmLogout" class="nav-link d-flex align-items-center text-danger">
-          <font-awesome-icon icon="sign-out-alt" class="me-2" />
-          Logout
+          <font-awesome-icon :icon="['fas', 'sign-out-alt']" class="menu-icon" />
+          <span>Logout</span>
         </a>
       </div>
     </div>
   </div>
 </template>
-
 <script>
 import Swal from 'sweetalert2';
 
@@ -56,6 +61,11 @@ export default {
     sidebarButtonIcon() {
       return this.isOpen ? '&laquo;' : '&#9776;';
     },
+    currentPageName() {
+      // Get current route name and format it
+      const routeName = this.$route.name || '';
+      return routeName;
+    }
   },
   methods: {
     toggleSidebar() {
@@ -89,11 +99,11 @@ export default {
 </script>
 
 <style scoped>
-
-/* Header dengan hamburger dan title */
+/* Header dengan hamburger, title, dan page name */
 .sidebar-header {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   padding: 15px 20px;
   background-color: #ffffff;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
@@ -125,6 +135,22 @@ export default {
 
 .text-telyu {
   color: v-bind('$colors.third');
+}
+
+/* Page Name Styling */
+.page-name {
+  display: flex;
+  align-items: center;
+}
+
+.page-name-text {
+  font-weight: bold;
+  font-size: 24px;
+  background: linear-gradient(90deg, v-bind('$colors.primary'), v-bind('$colors.third'));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  padding-right: 20px;
 }
 
 /* Sidebar styles */
@@ -172,5 +198,11 @@ export default {
   font-weight: bold;
   color: v-bind('$colors.primary') !important;
   background-color: #e9ecef;
+}
+.menu-icon {
+  font-size: 18px;
+  width: 25px;
+  margin-right: 12px;
+  text-align: center;
 }
 </style>

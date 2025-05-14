@@ -1,50 +1,42 @@
 <template>
-  <sidebar />
-  <div class="content-wrapper container">
-    <!-- Judul Halaman -->
-    <h4>Registered Events</h4>
+  <div id="app" class="d-flex">
+    <!-- Sidebar -->
+    <Sidebar />
 
-    <!-- Daftar Event -->
-    <div class="row">
-      <div
-        class="col-12 col-md-6 mb-3"
-        v-for="event in historyEvents"
-        :key="event.id"
-      >
-        <div class="card bg-light">
-          <div class="card-body d-flex flex-column">
-            <h5 class="card-title">{{ event.title }}</h5>
-            <p>{{ event.dateCreated }}</p>
+    <!-- Main Content -->
+    <div class="content-wrapper container">
+      <!-- Header Section -->
 
-            <!-- Baris untuk status dan tombol -->
-            <div class="d-flex justify-content-between align-items-center mt-auto">
-              <!-- Logo Approve berdasarkan status -->
-              <div
+
+      <!-- History Events Section -->
+      <div class="row justify-content-center g-4 mb-5">
+        <div class="col-12 col-md-6" v-for="event in historyEvents" :key="event.id">
+          <div class="event-card history-event-card d-flex flex-column">
+            <h5 class="event-title mb-3">{{ event.title }}</h5>
+            <p class="event-date mb-2">Registration Date: {{ event.dateCreated }}</p>
+            
+            <!-- Status Badge -->
+            <div class="d-flex align-items-center mb-3">
+              <span :class="['status-badge', 
+                event.status === 'Diterima' ? 'status-approved' : 'status-pending']">
+                {{ event.status }}
+              </span>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="d-flex justify-content-end gap-3 mt-auto">
+              <button
                 v-if="event.status === 'Diterima'"
-                class="d-flex align-items-center"
+                class="btn action-btn download-btn"
               >
-                ✅ <strong class="ms-1">Status:</strong> {{ event.status }}
-              </div>
-              <div v-else class="d-flex align-items-center">
-                ⚠️ <strong class="ms-1">Status:</strong> {{ event.status }}
-              </div>
-
-              <!-- Tombol Aksi -->
-              <div class="d-flex gap-2">
-                <button
-                  v-if="event.status === 'Diterima'"
-                  class="btn btn-success btn-sm"
-                >
-                  Download
-                </button>
-                <button
-                  v-if="event.status === 'Menunggu'"
-                  class="btn btn-sm text-white"
-                  :style="{ backgroundColor: $colors.primary }"
-                >
-                  Cancel
-                </button>
-              </div>
+                Download
+              </button>
+              <button
+                v-if="event.status === 'Menunggu'"
+                class="btn action-btn cancel-btn"
+              >
+                Cancel
+              </button>
             </div>
           </div>
         </div>
@@ -54,7 +46,7 @@
 </template>
 
 <script>
-import Sidebar from "@/components/Sidebar.vue";
+import Sidebar from '@/components/Sidebar.vue';
 
 export default {
   name: 'HistoryRegisteredEvents',
@@ -66,15 +58,21 @@ export default {
       historyEvents: [
         {
           id: 1,
-          title: 'Event 1',
-          dateCreated: '2023-05-09',
+          title: 'Workshop UI/UX Design: Membangun Portofolio Profesional',
+          dateCreated: '9 May 2023',
           status: 'Diterima'
         },
         {
           id: 2,
-          title: 'Event 2',
-          dateCreated: '2023-05-09',
+          title: 'Seminar Big Data & Analytics di Era Industri 4.0',
+          dateCreated: '9 May 2023',
           status: 'Menunggu'
+        },
+        {
+          id: 3,
+          title: 'Telkommetra Mengadakan Lomba Inovasi Digital untuk Mahasiswa Seluruh Indonesia',
+          dateCreated: '10 May 2023',
+          status: 'Diterima'
         }
       ]
     };
@@ -89,14 +87,77 @@ export default {
 </script>
 
 <style scoped>
-.card {
-  border-radius: 12px;
-  min-height: 140px;
-}
 .content-wrapper {
+  flex-grow: 1;
   margin-top: 100px;
 }
-.gap-2 {
-  gap: 0.5rem;
+
+/* Event Card for History */
+.event-card {
+  background-color: v-bind('$colors.fourth');
+  border-radius: 1.5rem;
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.history-event-card {
+  min-height: 180px;
+}
+
+.event-title {
+  color: #ffffff;
+  font-size: 1.2rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.event-date {
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 0.9rem;
+}
+
+/* Status Badge */
+.status-badge {
+  padding: 0.5rem 1.2rem;
+  border-radius: 2rem;
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.status-approved {
+  background-color: #28a745;
+  color: white;
+}
+
+.status-pending {
+  background-color: #ffc107;
+  color: #212529;
+}
+
+/* Action Buttons */
+.action-btn {
+  border-radius: 2rem;
+  padding: 0.5rem 1.2rem;
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.download-btn {
+  background-color: #ffffff;
+  color: v-bind('$colors.primary');
+}
+
+.cancel-btn {
+  background-color: #ffffff;
+  color: v-bind('$colors.primary');
+}
+
+/* Gap utility */
+.gap-3 {
+  gap: 1rem;
 }
 </style>
