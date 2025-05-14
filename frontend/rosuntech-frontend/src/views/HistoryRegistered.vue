@@ -7,11 +7,11 @@
     <div class="content-wrapper container">
       <!-- Header Section -->
 
-
       <!-- History Events Section -->
       <div class="row justify-content-center g-4 mb-5">
-        <div class="col-12 col-md-6" v-for="event in historyEvents" :key="event.id">
-          <div class="event-card history-event-card d-flex flex-column">
+        <div class="col-12 col-md-6" v-for="(event, index) in historyEvents" :key="event.id">
+          <div class="event-card history-event-card d-flex flex-column animate__animated animate__fadeIn"
+               :style="{'animation-delay': index * 0.1 + 's'}">
             <h5 class="event-title mb-3">{{ event.title }}</h5>
             <p class="event-date mb-2">Registration Date: {{ event.dateCreated }}</p>
             
@@ -27,7 +27,7 @@
             <div class="d-flex justify-content-end gap-3 mt-auto">
               <button
                 v-if="event.status === 'Diterima'"
-                class="btn action-btn download-btn"
+                class="btn action-btn download-btn "
               >
                 Download
               </button>
@@ -82,11 +82,29 @@ export default {
       const event = this.$route.params.event;
       this.historyEvents.push(event);
     }
+  },
+  mounted() {
+    // Make sure Animate.css is loaded
+    this.loadAnimateCSS();
+  },
+  methods: {
+    loadAnimateCSS() {
+      if (!document.getElementById('animate-css')) {
+        const link = document.createElement('link');
+        link.id = 'animate-css';
+        link.rel = 'stylesheet';
+        link.href = 'https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css';
+        document.head.appendChild(link);
+      }
+    }
   }
 };
 </script>
 
 <style scoped>
+/* Import Animate.css */
+@import 'https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css';
+
 .content-wrapper {
   flex-grow: 1;
   margin-top: 100px;
@@ -101,6 +119,24 @@ export default {
   flex-direction: column;
   height: 100%;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  animation: popupEffect 0.6s ease-out forwards;
+}
+
+@keyframes popupEffect {
+  0% {
+    transform: scale(0.5);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.event-card:hover {
+  transform: translateY(-7px);
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.15);
 }
 
 .history-event-card {
@@ -126,6 +162,11 @@ export default {
   border-radius: 2rem;
   font-weight: 600;
   font-size: 0.9rem;
+  transition: transform 0.3s ease;
+}
+
+.status-badge:hover {
+  transform: scale(1.05);
 }
 
 .status-approved {
@@ -144,6 +185,12 @@ export default {
   padding: 0.5rem 1.2rem;
   font-weight: 600;
   font-size: 0.9rem;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.action-btn:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
 }
 
 .download-btn {
@@ -160,4 +207,10 @@ export default {
 .gap-3 {
   gap: 1rem;
 }
+
+/* Animation settings */
+.animate__fadeIn {
+  --animate-duration: 0.8s;
+}
+
 </style>
