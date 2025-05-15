@@ -1,6 +1,6 @@
 <template>
   <!-- Gambar Vector 1 - Pojok Kiri Atas -->
-  <img src="@/assets/img/Vector-landing1.png" class="vector-img vector-top" />
+  <img src="@/assets/img/Vector-landing1.png" class="vector-img vector-top floating-animation" />
 
   <!-- Card Login -->
   <div class="login-container">
@@ -47,7 +47,7 @@
   </div>
 
   <!-- Gambar Vector 2 - Pojok Kanan Bawah -->
-  <img src="@/assets/img/vector-landing2.png" class="vector-img vector-bottom" />
+  <img src="@/assets/img/vector-landing2.png" class="vector-img vector-bottom wave-animation" />
 </template>
 
 <script>
@@ -99,8 +99,6 @@ export default {
 </script>
 
 <style scoped>
-
-
 .login-container {
   display: flex;
   justify-content: center;
@@ -163,5 +161,45 @@ export default {
   right: 0;
   width: 100%;
   height: auto;
+}
+
+/* Animasi Floating untuk Vector Atas */
+.floating-animation {
+  animation: floating 8s ease-in-out infinite;
+}
+
+@keyframes floating {
+  0% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-15px);
+  }
+  100% {
+    transform: translateY(0px);
+  }
+}
+
+/* Animasi Gelombang Air untuk Vector Bawah */
+.wave-animation {
+  animation: wave 5s ease-in-out infinite;
+}
+
+@keyframes wave {
+  0% {
+    transform: translateX(0) translateY(0);
+  }
+  25% {
+    transform: translateX(0px) translateY(10px);
+  }
+  50% {
+    transform: translateX(0) translateY(10px);
+  }
+  75% {
+    transform: translateX(10px) translateY(10px);
+  }
+  100% {
+    transform: translateX(0) translateY(0);
+  }
 }
 </style>
