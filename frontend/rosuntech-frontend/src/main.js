@@ -4,10 +4,29 @@ import 'bootstrap/dist/css/bootstrap.min.css'
 import router from './router'
 import Swal from 'sweetalert2'
 import colors from './utils/colors'
+import { library } from '@fortawesome/fontawesome-svg-core'
+import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
+import { 
+  faHome, 
+  faHistory, 
+  faSignOutAlt,
+  faCalendarAlt,
+  faClock,
+  faUsers
+} from '@fortawesome/free-solid-svg-icons'
+library.add(
+  faHome, 
+  faHistory, 
+  faSignOutAlt,
+  faCalendarAlt,
+  faClock,
+  faUsers
+)
+
 // Buat aplikasi Vue dan simpan ke dalam variabel app
 const app = createApp(App)
 app.config.globalProperties.$colors = colors
-
+app.component('font-awesome-icon', FontAwesomeIcon)
 // Tambahkan SweetAlert2 sebagai properti global
 app.config.globalProperties.$swal = Swal
 
