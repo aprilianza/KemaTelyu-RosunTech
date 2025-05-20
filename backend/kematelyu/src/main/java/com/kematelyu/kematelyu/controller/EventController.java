@@ -1,8 +1,11 @@
 package com.kematelyu.kematelyu.controller;
 
+import com.kematelyu.kematelyu.dto.CreateEventRequest;
 import com.kematelyu.kematelyu.model.Event;
 import com.kematelyu.kematelyu.service.EventService;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -18,6 +21,22 @@ public class EventController {
         this.service = service;
     }
 
+    /* ---------------------- CREATE EVENT (STAFF ONLY) ---------------------- */
+    @PostMapping
+    public ResponseEntity<?> createEvent(@RequestBody CreateEventRequest dto) {
+        Long userId = (Long) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        String role = SecurityContextHolder.getContext().getAuthentication()
+                .getAuthorities().iterator().next().getAuthority(); // ex: ROLE_STAFF
+
+        if (!"ROLE_STAFF".equals(role)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body("Hanya akun STAFF yang boleh membuat event");
+        }
+
+        return ResponseEntity.ok(service.createEvent(dto, userId));
+    }
+
+    /* ---------------------- BASIC CRUD ------------------------ */
     @GetMapping
     public List<Event> getAll() {
         return service.all();
@@ -28,18 +47,15 @@ public class EventController {
         return service.byId(id);
     }
 
-    @PostMapping
-    public ResponseEntity<Event> create(@RequestBody Event e) {
-        return ResponseEntity.ok(service.save(e));
-    }
-
     @PutMapping("/{id}")
-    public Event update(@PathVariable Long id, @RequestBody Event e) {
+    public Event update(@PathVariable Long id, @RequestBody CreateEventRequest dto) {
         Event old = service.byId(id);
-        old.setTitle(e.getTitle());
-        old.setDescription(e.getDescription());
-        old.setDate(e.getDate());
-        return service.save(old);
+        old.setTitle(dto.getTitle());
+        old.setDescription(dto.getDescription());
+        old.setDate(dto.getDate());
+        old.setMaxParticipant(dto.getMaxParticipant());
+        old.setFotoPath(dto.getFotoPath());
+        return service.createEvent(dto, old.getCreatedBy().getId()); // update pakai createEvent reuse
     }
 
     @DeleteMapping("/{id}")
@@ -47,11 +63,10 @@ public class EventController {
         service.delete(id);
     }
 
+    /* ---------------------- REGISTRATION ---------------------- */
     @PostMapping("/{id}/register")
-    public ResponseEntity<?> registerToEvent(
-        @PathVariable Long id,
-        @RequestParam String nim // atau ambil dari token
-    ) {
+    public ResponseEntity<?> registerToEvent(@PathVariable Long id,
+                                             @RequestParam String nim) {
         return ResponseEntity.ok(service.registerToEvent(id, nim));
     }
 
@@ -65,11 +80,10 @@ public class EventController {
         return ResponseEntity.ok(service.approveParticipant(registrationId));
     }
 
+    /* --------------------- CERTIFICATE ------------------------ */
     @PostMapping("/{id}/generate-certificate")
-    public ResponseEntity<?> generateCertificate(
-        @PathVariable Long id,
-        @RequestParam String nim // atau ambil dari token
-    ) {
+    public ResponseEntity<?> generateCertificate(@PathVariable Long id,
+                                                 @RequestParam String nim) {
         return ResponseEntity.ok(service.generateCertificate(id, nim));
     }
 }
