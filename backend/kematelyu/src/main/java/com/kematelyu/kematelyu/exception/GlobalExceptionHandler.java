@@ -10,4 +10,12 @@ public class GlobalExceptionHandler {
     public ResponseEntity<String> notFound(ResourceNotFoundException ex){
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ex.getMessage());
     }
+
+    @ExceptionHandler(InvalidCredentialsException.class)
+    public ResponseEntity<?> handleInvalidLogin(InvalidCredentialsException ex) {
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                            .body(new java.util.LinkedHashMap<>() {{
+                                put("message", ex.getMessage());
+                            }});
+    }
 }
