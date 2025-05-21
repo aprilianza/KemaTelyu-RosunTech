@@ -107,8 +107,34 @@ public class EventService {
         return regRepo.save(reg);
     }
 
+    public Registration registerToEventByUser(Long userId, Long eventId) {
+        User user = mahasiswaRepo.findById(userId)
+                    .orElseThrow(() -> new ResourceNotFoundException("Mahasiswa tidak ditemukan"));
+
+        if (!(user instanceof Mahasiswa mhs))
+            throw new IllegalStateException("Hanya mahasiswa yang dapat mendaftar");
+
+        Event event = byId(eventId);
+
+        if (regRepo.existsByEventAndMahasiswa(event, mhs))
+            throw new IllegalStateException("Sudah terdaftar di event ini.");
+
+        if (event.getRegistrations().size() >= event.getMaxParticipant())
+            throw new IllegalStateException("Kuota event sudah penuh.");
+
+        Registration reg = new Registration(mhs, event);
+        return regRepo.save(reg);
+    }
+
     public List<Registration> getParticipants(Long eventId) {
         return regRepo.findAllByEvent(byId(eventId));
+    }
+
+    public List<Registration> getParticipantsByStatus(Long eventId, String status) {
+        Event event = byId(eventId);
+        return regRepo.findAllByEvent(event).stream()
+                .filter(r -> r.getStatus().name().equalsIgnoreCase(status))
+                .toList();
     }
 
     public Registration approveParticipant(Long registrationId) {
