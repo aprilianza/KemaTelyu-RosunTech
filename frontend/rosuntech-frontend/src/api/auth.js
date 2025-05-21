@@ -1,6 +1,5 @@
 import axios from 'axios';
 
-// Login user dan langsung simpan token + user ke localStorage
 export async function loginUser(email, password) {
   try {
     const response = await axios.post('/api/auth/login', {
@@ -8,20 +7,19 @@ export async function loginUser(email, password) {
       password
     });
 
-    const token = response.data.token;
-    const user = response.data.user;
+    const { token, user } = response.data;
 
     if (token) {
-      localStorage.setItem('token', token); // simpan token
+      localStorage.setItem('token', token); // ✅ token untuk Authorization
     }
 
     if (user) {
-      localStorage.setItem('user', JSON.stringify(user)); // simpan data user
+      localStorage.setItem('user', JSON.stringify(user)); // ✅ user info kalau mau ditampilin
     }
 
-    return response; // kirim balik buat dipakai di komponen kalau perlu
+    return response;
   } catch (err) {
     console.error('Login gagal:', err);
-    throw err; // lempar error buat ditangani di komponen (alert, dll)
+    throw err;
   }
 }

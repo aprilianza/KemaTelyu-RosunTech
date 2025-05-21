@@ -13,32 +13,49 @@ import java.util.List;
 @Service
 public class EventService {
 
-    @Autowired private EventRepository repo;
-    @Autowired private StaffRepository staffRepo;
-    @Autowired private MahasiswaRepository mahasiswaRepo;
-    @Autowired private RegistrationRepository regRepo;
-    @Autowired private CertificateRepository certificateRepo;
+    @Autowired
+    private EventRepository repo;
+    @Autowired
+    private StaffRepository staffRepo;
+    @Autowired
+    private MahasiswaRepository mahasiswaRepo;
+    @Autowired
+    private RegistrationRepository regRepo;
+    @Autowired
+    private CertificateRepository certificateRepo;
 
     /* -------------------- CRUD -------------------- */
-    public List<Event> all() { return repo.findAll(); }
+    public List<Event> all() {
+        return repo.findAll();
+    }
 
     public Event byId(Long id) {
         return repo.findById(id)
-                   .orElseThrow(() -> new ResourceNotFoundException("Event id " + id + " not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Event id " + id + " not found"));
     }
 
-    public void delete(Long id) { repo.deleteById(id); }
+    public void delete(Long id) {
+        repo.deleteById(id);
+    }
 
-    /* -------------------- createEvent -------------------- */
+    /* -------------------- CREATE -------------------- */
     public Event createEvent(CreateEventRequest dto, Long staffId) {
         Staff staff = staffRepo.findById(staffId)
-                               .orElseThrow(() -> new ResourceNotFoundException("Staff not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Staff not found"));
 
         Event e = new Event();
         e.setTitle(dto.getTitle());
         e.setDescription(dto.getDescription());
         e.setDate(dto.getDate());
-        e.setFotoPath(dto.getFotoPath());
+        e.setTime(dto.getTime());
+
+        // auto-prefix uploads/events/
+        String fotoPath = dto.getFotoPath();
+        if (fotoPath != null && !fotoPath.startsWith("uploads/events/")) {
+            fotoPath = "uploads/events/" + fotoPath;
+        }
+        e.setFotoPath(fotoPath);
+
         e.setMaxParticipant(dto.getMaxParticipant());
         e.setCreatedBy(staff);
         return repo.save(e);
