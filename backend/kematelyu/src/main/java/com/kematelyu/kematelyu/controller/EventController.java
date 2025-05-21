@@ -1,6 +1,8 @@
 package com.kematelyu.kematelyu.controller;
 
 import com.kematelyu.kematelyu.dto.CreateEventRequest;
+import com.kematelyu.kematelyu.dto.EventDetailDTO;
+import com.kematelyu.kematelyu.dto.EventSummaryDTO;
 import com.kematelyu.kematelyu.model.Event;
 import com.kematelyu.kematelyu.service.EventService;
 import org.springframework.http.HttpStatus;
@@ -85,5 +87,19 @@ public class EventController {
     public ResponseEntity<?> generateCertificate(@PathVariable Long id,
                                                  @RequestParam String nim) {
         return ResponseEntity.ok(service.generateCertificate(id, nim));
+    }
+
+    /* --------------------- DTO ENDPOINTS ------------------------ */
+
+    // Untuk homepage: daftar event ringkas
+    @GetMapping("/summary")
+    public List<EventSummaryDTO> getEventSummaries() {
+        return service.getAllEvents();
+    }
+
+    // Untuk detail: detail lengkap 1 event
+    @GetMapping("/{id}/detail")
+    public EventDetailDTO getEventDetail(@PathVariable Long id) {
+        return service.getEventDetailById(id);
     }
 }
