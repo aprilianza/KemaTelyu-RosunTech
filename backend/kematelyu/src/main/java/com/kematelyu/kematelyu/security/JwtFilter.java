@@ -28,39 +28,45 @@ public class JwtFilter extends OncePerRequestFilter {
 
     @Override
     protected void doFilterInternal(HttpServletRequest req,
-            HttpServletResponse res,
-            FilterChain chain)
+                                    HttpServletResponse res,
+                                    FilterChain chain)
             throws ServletException, IOException {
 
         String path = req.getServletPath();
+        String method = req.getMethod();
 
-        // Bypass /api/auth/*
-        if (path.startsWith("/api/auth")) {
+        // ✅ BYPASS: Auth endpoints & GET /api/events
+        if (
+            path.startsWith("/api/auth") ||
+            (method.equals("GET") && path.startsWith("/api/events"))
+        ) {
             chain.doFilter(req, res);
             return;
         }
 
+        // ✅ Validasi token jika ada
         String header = req.getHeader(HttpHeaders.AUTHORIZATION);
-
         if (header != null && header.startsWith("Bearer ")) {
             String token = header.substring(7);
+
             try {
                 Claims claims = jwtUtil.parse(token).getBody();
                 Long userId = Long.parseLong(claims.getSubject());
-                String role = claims.get("role", String.class); // HARUS ADA
+                String role = claims.get("role", String.class);
 
-                UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(
-                        userId,
-                        null,
-                        List.of(new SimpleGrantedAuthority("ROLE_" + role)) // ← format: ROLE_STAFF
-                );
+                UsernamePasswordAuthenticationToken auth =
+                        new UsernamePasswordAuthenticationToken(
+                                userId,
+                                null,
+                                List.of(new SimpleGrantedAuthority("ROLE_" + role))
+                        );
 
                 auth.setDetails(new WebAuthenticationDetailsSource().buildDetails(req));
                 SecurityContextHolder.getContext().setAuthentication(auth);
 
             } catch (Exception e) {
-                System.out.println("[JWT] Error parsing token: " + e.getMessage());
-                // lanjut tanpa auth → akan ketolak oleh endpoint yang butuh
+                // Token tidak valid/expired → lanjutkan tanpa Auth
+                System.out.println("JWT invalid: " + e.getMessage());
             }
         }
 
