@@ -76,11 +76,7 @@ public class EventController {
 
     /* ---------------------- REGISTRATION ---------------------- */
     @PostMapping("/{id}/register")
-    public ResponseEntity<?> registerToEvent(@PathVariable Long id) {
-        var auth = SecurityContextHolder.getContext().getAuthentication();
-        System.out.println("Principal: " + auth.getPrincipal());
-        System.out.println("Authorities: " + auth.getAuthorities());
-        
+    public ResponseEntity<?> registerToEvent(@PathVariable Long id) {       
         Long userId = (Long) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
 
         try {
@@ -114,6 +110,24 @@ public class EventController {
         try {
             Registration approved = service.approveParticipant(registrationId);
             return ResponseEntity.ok("Berhasil approve peserta: " + approved.getMahasiswa().getName());
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    @PutMapping("/participants/{registrationId}/reject")
+    public ResponseEntity<?> rejectParticipant(@PathVariable Long registrationId) {
+        String role = SecurityContextHolder.getContext().getAuthentication()
+            .getAuthorities().iterator().next().getAuthority();
+
+        if (!"ROLE_STAFF".equals(role)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body("Hanya staff yang boleh menolak pendaftaran.");
+        }
+
+        try {
+            Registration rejected = service.rejectParticipant(registrationId);
+            return ResponseEntity.ok("Pendaftaran ditolak untuk: " + rejected.getMahasiswa().getName());
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(e.getMessage());
         }

@@ -145,6 +145,13 @@ public class EventService {
         return regRepo.save(reg);
     }
 
+    public Registration rejectParticipant(Long registrationId) {
+        Registration reg = regRepo.findById(registrationId)
+            .orElseThrow(() -> new ResourceNotFoundException("Registrasi tidak ditemukan"));
+        reg.cancel(); 
+        return regRepo.save(reg);
+    }
+
     public Certificate generateCertificate(Long eventId, String nim) {
         Event event = byId(eventId);
         Mahasiswa m = mahasiswaRepo.findByNim(nim)
