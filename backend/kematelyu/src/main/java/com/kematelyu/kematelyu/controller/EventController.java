@@ -42,8 +42,8 @@ public class EventController {
 
     /* -------- BASIC CRUD -------- */
     @GetMapping
-    public List<Event> getAll() {
-        return service.all();
+    public List<EventSummaryDTO> getAll() {
+        return service.getAllEvents(); // ✅ return DTO untuk hindari lazy proxy error
     }
 
     @GetMapping("/{id}")
