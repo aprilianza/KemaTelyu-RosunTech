@@ -7,36 +7,20 @@
     <div class="card shadow-lg p-4">
       <div class="card-body">
         <!-- Form Login -->
-        <h3 class="card-title text-center mb-1">Selamat Datang di </h3>
-        <h1 class="text-center mb-4 fw-bold">
-          <span class="kema-text">Kema</span><span class="telyu-text">Telyu</span>
-        </h1>
+        <h3 class="card-title text-center mb-1">Selamat Datang di</h3>
+        <h1 class="text-center mb-4 fw-bold"><span class="kema-text">Kema</span><span class="telyu-text">Telyu</span></h1>
 
         <form @submit.prevent="login">
           <!-- Email -->
           <div class="mb-3">
             <label for="email" class="form-label">Email</label>
-            <input
-              type="email"
-              id="email"
-              class="form-control"
-              v-model="email"
-              placeholder="Masukkan Email"
-              required
-            />
+            <input type="email" id="email" class="form-control" v-model="email" placeholder="Masukkan Email" required />
           </div>
 
           <!-- Password -->
           <div class="mb-3">
             <label for="password" class="form-label">Password</label>
-            <input
-              type="password"
-              id="password"
-              class="form-control"
-              v-model="password"
-              placeholder="Masukkan Password"
-              required
-            />
+            <input type="password" id="password" class="form-control" v-model="password" placeholder="Masukkan Password" required />
           </div>
 
           <!-- Button -->
@@ -58,7 +42,7 @@ export default {
   data() {
     return {
       email: '',
-      password: ''
+      password: '',
     };
   },
   methods: {
@@ -71,15 +55,33 @@ export default {
         if (data.user.role === 'MAHASISWA') {
           this.$router.push('/home');
         } else if (data.user.role === 'STAFF') {
-          this.$router.push('/dashboard-staff');
+          this.$router.push('/dashboardstaff');
         } else {
           this.$router.push('/');
         }
       } catch (err) {
         let errorMessage = 'Terjadi kesalahan saat login.';
 
-        if (err.response && err.response.status === 401) {
-          errorMessage = err.response.data || 'Email atau password salah';
+        if (err.response) {
+          if (err.response.status === 401) {
+            // Handle jika response.data adalah string
+            if (typeof err.response.data === 'string') {
+              errorMessage = err.response.data;
+            }
+            // Handle jika response.data adalah objek dengan property message
+            else if (err.response.data.message) {
+              errorMessage = err.response.data.message;
+            }
+            // Handle jika response.data adalah objek lain
+            else {
+              errorMessage = 'Email atau password salah';
+            }
+          } else if (err.response.data) {
+            // Handle error lainnya dari backend
+            errorMessage = err.response.data.message || JSON.stringify(err.response.data);
+          }
+        } else if (err.message) {
+          errorMessage = err.message;
         }
 
         // Tampilkan SweetAlert2
@@ -89,12 +91,12 @@ export default {
           text: errorMessage,
           confirmButtonText: 'OK',
           customClass: {
-            confirmButton: 'btn btn-secondary'
-          }
+            confirmButton: 'btn btn-secondary',
+          },
         });
       }
-    }
-  }
+    },
+  },
 };
 </script>
 
@@ -104,7 +106,7 @@ export default {
   justify-content: center;
   align-items: center;
   min-height: 100vh;
-  background-color: v-bind("$colors.secondary");
+  background-color: v-bind('$colors.secondary');
   padding: 20px;
   z-index: 1;
 }
@@ -125,22 +127,22 @@ export default {
 }
 
 .kema-text {
-  color: v-bind("$colors.third");
+  color: v-bind('$colors.third');
 }
 
 .telyu-text {
-  color: v-bind("$colors.primary");
+  color: v-bind('$colors.primary');
 }
 
 .btn-primary {
-  background-color: v-bind("$colors.primary");
+  background-color: v-bind('$colors.primary');
   border: none;
   border-radius: 30px;
   padding: 12px 20px;
 }
 
 .btn-primary:hover {
-  background-color: v-bind("$colors.fourth");
+  background-color: v-bind('$colors.fourth');
 }
 
 .vector-img {
