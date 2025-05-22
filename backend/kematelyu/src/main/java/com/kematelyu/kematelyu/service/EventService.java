@@ -44,14 +44,14 @@ public class EventService {
         Event event = repo.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Event id " + id + " not found"));
 
+        // pakai ctor 6-arg yang baru kita tambahkan di atas
         return new EventDetailDTO(
                 event.getId(),
                 event.getTitle(),
                 event.getDescription(),
                 event.getDate(),
                 event.getFotoPath(),
-                event.getMaxParticipant()
-        );
+                event.getMaxParticipant());
     }
 
     /* -------------------- CRUD -------------------- */
