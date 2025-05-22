@@ -3,15 +3,8 @@
     <!-- Header dengan Hamburger + Judul + Page Name -->
     <div class="sidebar-header">
       <div class="d-flex align-items-center">
-        <button
-          class="btn open-sidebar-btn"
-          @click="toggleSidebar"
-          :aria-expanded="isOpen"
-          v-html="sidebarButtonIcon"
-        ></button>
-        <span class="sidebar-title">
-          <span class="text-kema">Kema</span><span class="text-telyu">telyu</span>
-        </span>
+        <button class="btn open-sidebar-btn" @click="toggleSidebar" :aria-expanded="isOpen" v-html="sidebarButtonIcon"></button>
+        <span class="sidebar-title"> <span class="text-kema">Kema</span><span class="text-telyu">telyu</span> </span>
       </div>
       <div class="page-name">
         <span class="page-name-text">{{ currentPageName }}</span>
@@ -39,7 +32,7 @@
 
       <!-- Logout di bagian bawah sidebar -->
       <div class="mt-auto p-3">
-        <a href="#" @click.prevent="confirmLogout" class="nav-link d-flex align-items-center text-danger">
+        <a href="#" @click.prevent="logout" class="nav-link d-flex align-items-center text-danger">
           <font-awesome-icon :icon="['fas', 'sign-out-alt']" class="menu-icon" />
           <span>Logout</span>
         </a>
@@ -65,36 +58,51 @@ export default {
       // Get current route name and format it
       const routeName = this.$route.name || '';
       return routeName;
-    }
+    },
   },
   methods: {
     toggleSidebar() {
       this.isOpen = !this.isOpen;
     },
-    confirmLogout() {
-      Swal.fire({
-        title: 'Apakah anda yakin ingin logout?',
-        icon: 'warning',
-        showCancelButton: true,
-        confirmButtonText: 'Ya',
-        cancelButtonText: 'Batal',
-        customClass: {
-          confirmButton: 'btn btn-danger me-2',
-          cancelButton: 'btn btn-secondary'
-        },
-        buttonsStyling: false,
-        dangerMode: true,
-      }).then((result) => {
-        if (result.isConfirmed) {
-          // Redirect ke halaman login
-          this.$router.push({ name: 'Login' });
+    clearAuthData() {
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+    },
 
-          // Atau panggil action Vuex/Pinia jika perlu
-          // this.logout(); 
-        }
+    async logout() {
+      const result = await Swal.fire({
+        title: 'Logout Confirmation',
+        text: 'Are you sure you want to logout?',
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonColor: '#d33',
+        cancelButtonColor: '#3085d6',
+        confirmButtonText: 'Yes, logout',
+        cancelButtonText: 'Cancel',
       });
-    }
-  }
+
+      if (result.isConfirmed) {
+        this.clearAuthData();
+
+        const Toast = Swal.mixin({
+          toast: true,
+          position: 'top-end',
+          showConfirmButton: false,
+          timer: 2000,
+          timerProgressBar: true,
+        });
+
+        Toast.fire({
+          icon: 'success',
+          title: 'Logged out successfully',
+        });
+
+        setTimeout(() => {
+          this.$router.push('/');
+        }, 1000);
+      }
+    },
+  },
 };
 </script>
 

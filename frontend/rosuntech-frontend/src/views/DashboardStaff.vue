@@ -186,15 +186,19 @@
 
 <script>
 import SidebarStaff from "@/components/SidebarStaff.vue";
+import axios from 'axios';
+import Swal from 'sweetalert2';
 
 export default {
   name: "DashboardStaff",
   components: { SidebarStaff },
   data() {
     return {
+      isLoading: true,
+      isAuthenticated: false,
       user: {
-        name: "Aprilianza Muhammad Yusup",
-        division: "Divisi Kehumasan",
+        name: "",
+        division: "",
         photo: "profile.png"
       },
       events: [
@@ -224,7 +228,6 @@ export default {
         }
       ],
       selectedEvent: null,
-      // Sample participants data
       participants: [
         {
           eventTitle: "Telkommetra Mengadakan Lomba Inovasi Digital untuk Mahasiswa Seluruh Indonesia",
@@ -264,35 +267,226 @@ export default {
       return eventParticipantData ? eventParticipantData.data : [];
     }
   },
+  async mounted() {
+    await this.checkAuthentication();
+  },
   methods: {
+    async checkAuthentication() {
+      try {
+        const token = localStorage.getItem('token');
+        const userData = localStorage.getItem('user');
+        
+        // Cek token di localStorage
+        if (!token) {
+          await this.showAuthError('Autentikasi Diperlukan', 'Silakan login untuk mengakses halaman ini');
+          this.redirectToLogin();
+          return;
+        }
+
+        // Parse data user
+        let user = null;
+        if (userData) {
+          try {
+            user = JSON.parse(userData);
+          } catch (error) {
+            console.error('Error parsing user data:', error);
+            await this.showAuthError('Data User Tidak Valid', 'Data user tidak valid. Silakan login kembali');
+            this.redirectToLogin();
+            return;
+          }
+        }
+
+        // Cek role user
+        if (!user || !user.role || user.role.toUpperCase() !== 'STAFF') {
+          await this.showAuthError('Akses Ditolak', 'Anda memerlukan hak akses staff untuk membuka halaman ini');
+          this.redirectToLogin();
+          return;
+        }
+
+        // Verifikasi token ke backend
+        const response = await axios.get('/api/auth/me', {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+
+        if (response.status === 200) {
+          // Update data user dari response backend
+          this.user = {
+            ...this.user,
+            ...response.data,
+            name: response.data.name || this.user.name,
+            division: response.data.divisi || this.user.divisi
+          };
+          
+          this.isAuthenticated = true;
+          this.isLoading = false;
+
+        } else {
+          await this.showAuthError('Autentikasi Gagal', 'Gagal memverifikasi kredensial Anda');
+          this.redirectToLogin();
+        }
+
+      } catch (error) {
+        console.error('Authentication failed:', error);
+        
+        // Handle error response dari API
+        if (error.response) {
+          if (error.response.status === 401) {
+            await this.showAuthError('Sesi Habis', 'Sesi login Anda telah habis. Silakan login kembali');
+          } else if (error.response.status === 403) {
+            await this.showAuthError('Akses Ditolak', 'Anda tidak memiliki izin untuk mengakses halaman ini');
+          } else {
+            await this.showAuthError('Kesalahan Server', 'Terjadi kesalahan pada server. Silakan coba lagi nanti');
+          }
+        } else if (error.request) {
+          // Tidak ada response dari server
+          await this.showAuthError('Koneksi Gagal', 'Tidak dapat terhubung ke server. Periksa koneksi internet Anda');
+        } else {
+          // Error lainnya
+          await this.showAuthError('Kesalahan', 'Terjadi kesalahan saat memverifikasi autentikasi');
+        }
+        
+        this.clearAuthData();
+        this.redirectToLogin();
+      }
+    },
+
+    async showAuthError(title, message) {
+      await Swal.fire({
+        icon: 'error',
+        title: title,
+        text: message,
+        confirmButtonText: 'Ke Halaman Login',
+        allowOutsideClick: false,
+        customClass: {
+          confirmButton: 'btn btn-danger'
+        }
+      });
+    },
+
+    clearAuthData() {
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+    },
+
+    redirectToLogin() {
+      this.isLoading = false;
+      this.isAuthenticated = false;
+      this.$router.push('/');
+    },
+
     openModal(event) {
       this.selectedEvent = event;
       document.body.classList.add('modal-open');
     },
+
     closeModal() {
       this.selectedEvent = null;
       document.body.classList.remove('modal-open');
     },
-    deleteEvent(index) {
-      if (confirm('Are you sure you want to delete this event?')) {
+
+    async deleteEvent(index) {
+      const result = await Swal.fire({
+        title: 'Hapus Event',
+        text: 'Apakah Anda yakin ingin menghapus event ini? Tindakan ini tidak dapat dibatalkan.',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#d33',
+        cancelButtonColor: '#3085d6',
+        confirmButtonText: 'Ya, hapus!',
+        cancelButtonText: 'Batal'
+      });
+
+      if (result.isConfirmed) {
         this.events.splice(index, 1);
+        
+        const Toast = Swal.mixin({
+          toast: true,
+          position: 'top-end',
+          showConfirmButton: false,
+          timer: 3000,
+          timerProgressBar: true
+        });
+        
+        Toast.fire({
+          icon: 'success',
+          title: 'Event berhasil dihapus'
+        });
       }
     },
-    deleteSelectedEvent() {
-      if (confirm('Are you sure you want to delete this event?')) {
+
+    async deleteSelectedEvent() {
+      const result = await Swal.fire({
+        title: 'Hapus Event',
+        text: `Apakah Anda yakin ingin menghapus "${this.selectedEvent.title}"? Tindakan ini tidak dapat dibatalkan.`,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#d33',
+        cancelButtonColor: '#3085d6',
+        confirmButtonText: 'Ya, hapus!',
+        cancelButtonText: 'Batal'
+      });
+
+      if (result.isConfirmed) {
         const index = this.events.findIndex(e => e.title === this.selectedEvent.title);
         if (index !== -1) {
           this.events.splice(index, 1);
           this.closeModal();
+          
+          const Toast = Swal.mixin({
+            toast: true,
+            position: 'top-end',
+            showConfirmButton: false,
+            timer: 3000,
+            timerProgressBar: true
+          });
+          
+          Toast.fire({
+            icon: 'success',
+            title: 'Event berhasil dihapus'
+          });
         }
       }
     },
-    updateParticipantStatus(participantIndex, newStatus) {
+
+    async updateParticipantStatus(participantIndex, newStatus) {
       const eventIndex = this.participants.findIndex(p => p.eventTitle === this.selectedEvent.title);
       if (eventIndex !== -1) {
-        this.participants[eventIndex].data[participantIndex].status = newStatus;
+        const participant = this.participants[eventIndex].data[participantIndex];
+        const oldStatus = participant.status;
+        
+        // Tampilkan konfirmasi perubahan status
+        const result = await Swal.fire({
+          title: 'Perbarui Status',
+          text: `Ubah status untuk ${participant.name} dari "${oldStatus}" menjadi "${newStatus}"?`,
+          icon: 'question',
+          showCancelButton: true,
+          confirmButtonColor: '#3085d6',
+          cancelButtonColor: '#6c757d',
+          confirmButtonText: 'Ya, perbarui',
+          cancelButtonText: 'Batal'
+        });
+
+        if (result.isConfirmed) {
+          this.participants[eventIndex].data[participantIndex].status = newStatus;
+          
+          const Toast = Swal.mixin({
+            toast: true,
+            position: 'top-end',
+            showConfirmButton: false,
+            timer: 3000,
+            timerProgressBar: true
+          });
+          
+          Toast.fire({
+            icon: 'success',
+            title: `Status diperbarui ke ${newStatus}`
+          });
+        }
       }
     },
+
     getStatusBadgeClass(status) {
       switch (status) {
         case 'Accepted':
@@ -305,6 +499,32 @@ export default {
           return 'badge bg-secondary';
       }
     }
+  },
+
+  // Route guard untuk proteksi tambahan
+  beforeRouteEnter(to, from, next) {
+    const token = localStorage.getItem('token');
+    const userData = localStorage.getItem('user');
+    
+    if (!token) {
+      next('/');
+      return;
+    }
+
+    if (userData) {
+      try {
+        const user = JSON.parse(userData);
+        if (!user.role || user.role.toUpperCase() !== 'STAFF') {
+          next('/');
+          return;
+        }
+      } catch (error) {
+        next('/');
+        return;
+      }
+    }
+
+    next();
   }
 };
 </script>
