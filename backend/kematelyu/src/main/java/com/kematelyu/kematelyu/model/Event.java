@@ -2,106 +2,133 @@ package com.kematelyu.kematelyu.model;
 
 import jakarta.persistence.*;
 import java.time.LocalDate;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.time.LocalTime;
+import java.util.*;
 import java.util.stream.Collectors;
 
-/**
- * Entity  : Event
- * Author  : Konogok (rev 2025-05-20)
- *
- * Tambahan:
- *   • fotoPath        – path file gambar poster/foto event (disimpan di DB sebagai text)
- *   • maxParticipant  – kuota maksimal peserta
- *   • certificates    – relasi 1-to-many ke Certificate
- */
 @Entity
 public class Event implements CertificateGenerator {
 
-    /* ---------- primary ---------- */
+    /* ---------- PK ---------- */
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    /* ---------- basic info ---------- */
+    /* ---------- basic ---------- */
     private String title;
 
-    @Column(length = 8_000)
+    @Column(length = 8000)
     private String description;
 
     private LocalDate date;
+    private LocalTime time;
 
-    /* ---------- NEW fields ---------- */
-    private String fotoPath;          // contoh: /uploads/events/ai-ethics.jpg
-    private Integer maxParticipant;   // kuota
+    /* ---------- extras ---------- */
+    private String fotoPath;
+    private Integer maxParticipant;
 
     /* ---------- relations ---------- */
     @ManyToOne(fetch = FetchType.LAZY)
     private Staff createdBy;
 
-    @OneToMany(mappedBy = "event",
-               cascade = CascadeType.ALL,
-               orphanRemoval = true)
+    @OneToMany(mappedBy = "event", cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<Registration> registrations = new HashSet<>();
 
-    @OneToMany(mappedBy = "event",
-               cascade = CascadeType.ALL,
-               orphanRemoval = true)
+    @OneToMany(mappedBy = "event", cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<Certificate> certificates = new HashSet<>();
 
     /* ---------- ctor ---------- */
-    public Event() {}
-
-    public Event(Long id, String title, String description,
-                 LocalDate date, String fotoPath,
-                 Integer maxParticipant, Staff createdBy) {
-        this.id = id;
-        this.title = title;
-        this.description = description;
-        this.date = date;
-        this.fotoPath = fotoPath;
-        this.maxParticipant = maxParticipant;
-        this.createdBy = createdBy;
+    public Event() {
     }
 
-    /* ---------- business logic ---------- */
+    /* ---------- business ---------- */
     @Override
     public Certificate generateCertificate(Mahasiswa mhs) {
         return new Certificate(null, mhs, this, LocalDate.now());
     }
 
     public List<Mahasiswa> getParticipants() {
-        return registrations.stream()
-                            .map(Registration::getMahasiswa)
-                            .collect(Collectors.toList());
+        return registrations.stream().map(Registration::getMahasiswa).collect(Collectors.toList());
     }
 
     /* ---------- getters & setters ---------- */
-    public Long getId()                       { return id; }
-    public void setId(Long id)                { this.id = id; }
+    public Long getId() {
+        return id;
+    }
 
-    public String getTitle()                  { return title; }
-    public void setTitle(String title)        { this.title = title; }
+    public void setId(Long id) {
+        this.id = id;
+    }
 
-    public String getDescription()            { return description; }
-    public void setDescription(String d)      { this.description = d; }
+    public String getTitle() {
+        return title;
+    }
 
-    public LocalDate getDate()                { return date; }
-    public void setDate(LocalDate date)       { this.date = date; }
+    public void setTitle(String title) {
+        this.title = title;
+    }
 
-    public String getFotoPath()               { return fotoPath; }
-    public void setFotoPath(String fotoPath)  { this.fotoPath = fotoPath; }
+    public String getDescription() {
+        return description;
+    }
 
-    public Integer getMaxParticipant()        { return maxParticipant; }
-    public void setMaxParticipant(Integer m)  { this.maxParticipant = m; }
+    public void setDescription(String description) {
+        this.description = description;
+    }
 
-    public Staff getCreatedBy()               { return createdBy; }
-    public void setCreatedBy(Staff createdBy) { this.createdBy = createdBy; }
+    public LocalDate getDate() {
+        return date;
+    }
 
-    public Set<Registration> getRegistrations() { return registrations; }
-    public void setRegistrations(Set<Registration> regs) { this.registrations = regs; }
+    public void setDate(LocalDate date) {
+        this.date = date;
+    }
 
-    public Set<Certificate> getCertificates()   { return certificates; }
-    public void setCertificates(Set<Certificate> certs) { this.certificates = certs; }
+    public LocalTime getTime() {
+        return time;
+    }
+
+    public void setTime(LocalTime time) {
+        this.time = time;
+    }
+
+    public String getFotoPath() {
+        return fotoPath;
+    }
+
+    public void setFotoPath(String fotoPath) {
+        this.fotoPath = fotoPath;
+    }
+
+    public Integer getMaxParticipant() {
+        return maxParticipant;
+    }
+
+    public void setMaxParticipant(Integer maxParticipant) {
+        this.maxParticipant = maxParticipant;
+    }
+
+    public Staff getCreatedBy() {
+        return createdBy;
+    }
+
+    public void setCreatedBy(Staff createdBy) {
+        this.createdBy = createdBy;
+    }
+
+    public Set<Registration> getRegistrations() {
+        return registrations;
+    }
+
+    public void setRegistrations(Set<Registration> registrations) {
+        this.registrations = registrations;
+    }
+
+    public Set<Certificate> getCertificates() {
+        return certificates;
+    }
+
+    public void setCertificates(Set<Certificate> certificates) {
+        this.certificates = certificates;
+    }
 }
