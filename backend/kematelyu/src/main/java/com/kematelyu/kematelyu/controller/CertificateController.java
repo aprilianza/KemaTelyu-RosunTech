@@ -1,49 +1,44 @@
 package com.kematelyu.kematelyu.controller;
 
-import java.util.List;
-import java.util.stream.Collectors;
-
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
-
-import com.kematelyu.kematelyu.dto.CertificateRequest;
-import com.kematelyu.kematelyu.dto.CertificateResponse;
+import com.kematelyu.kematelyu.dto.CertificateDTO;
 import com.kematelyu.kematelyu.model.Certificate;
 import com.kematelyu.kematelyu.service.CertificateService;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
+/**
+ * Endpoint:
+ * GET /api/certificates -> List sertifikat user login
+ */
 @RestController
 @RequestMapping("/api/certificates")
 public class CertificateController {
 
-    @Autowired
-    private CertificateService certificateService;
+    private final CertificateService certService;
 
-    @PostMapping
-    public CertificateResponse createCertificate(@RequestBody CertificateRequest request) {
-        Certificate cert = certificateService.createCertificate(request);
-        return new CertificateResponse(
-                cert.getId(),
-                cert.getMahasiswa().getName(),
-                cert.getEvent().getTitle(),
-                cert.getIssueDate()
-        );
+    public CertificateController(CertificateService certService) {
+        this.certService = certService;
     }
 
-    @GetMapping("/mahasiswa/{mahasiswaId}")
-    public List<CertificateResponse> getCertificatesByMahasiswa(@PathVariable Long mahasiswaId) {
-        List<Certificate> certs = certificateService.getCertificatesByMahasiswaId(mahasiswaId);
-        return certs.stream()
-                .map(cert -> new CertificateResponse(
-                        cert.getId(),
-                        cert.getMahasiswa().getName(),
-                        cert.getEvent().getTitle(),
-                        cert.getIssueDate()))
-                .collect(Collectors.toList());
+    @GetMapping
+    public ResponseEntity<List<CertificateDTO>> getMyCertificates(Authentication auth) {
+
+        Long userId = (Long) auth.getPrincipal(); // principal di-set JwtFilter
+        List<Certificate> raw = certService.getCertificatesByMahasiswaId(userId);
+
+        // 🔄 Map ke DTO → hindari serialisasi proxy Hibernate
+        List<CertificateDTO> dto = raw.stream()
+                .map(c -> new CertificateDTO(
+                        c.getId(),
+                        c.getEvent().getId(),
+                        c.getEvent().getTitle(),
+                        c.getEvent().getFotoPath(),
+                        c.getIssueDate()))
+                .toList();
+
+        return ResponseEntity.ok(dto);
     }
-    
 }
