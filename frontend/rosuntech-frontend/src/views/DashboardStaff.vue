@@ -186,7 +186,6 @@
 
 <script>
 import SidebarStaff from "@/components/SidebarStaff.vue";
-import axios from 'axios';
 import Swal from 'sweetalert2';
 
 export default {
@@ -194,8 +193,6 @@ export default {
   components: { SidebarStaff },
   data() {
     return {
-      isLoading: true,
-      isAuthenticated: false,
       user: {
         name: "",
         division: "",
@@ -267,90 +264,7 @@ export default {
       return eventParticipantData ? eventParticipantData.data : [];
     }
   },
-  async mounted() {
-    await this.checkAuthentication();
-  },
   methods: {
-    async checkAuthentication() {
-      try {
-        const token = localStorage.getItem('token');
-        const userData = localStorage.getItem('user');
-        
-        // Cek token di localStorage
-        if (!token) {
-          await this.showAuthError('Autentikasi Diperlukan', 'Silakan login untuk mengakses halaman ini');
-          this.redirectToLogin();
-          return;
-        }
-
-        // Parse data user
-        let user = null;
-        if (userData) {
-          try {
-            user = JSON.parse(userData);
-          } catch (error) {
-            console.error('Error parsing user data:', error);
-            await this.showAuthError('Data User Tidak Valid', 'Data user tidak valid. Silakan login kembali');
-            this.redirectToLogin();
-            return;
-          }
-        }
-
-        // Cek role user
-        if (!user || !user.role || user.role.toUpperCase() !== 'STAFF') {
-          await this.showAuthError('Akses Ditolak', 'Anda memerlukan hak akses staff untuk membuka halaman ini');
-          this.redirectToLogin();
-          return;
-        }
-
-        // Verifikasi token ke backend
-        const response = await axios.get('/api/auth/me', {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        });
-
-        if (response.status === 200) {
-          // Update data user dari response backend
-          this.user = {
-            ...this.user,
-            ...response.data,
-            name: response.data.name || this.user.name,
-            division: response.data.divisi || this.user.divisi
-          };
-          
-          this.isAuthenticated = true;
-          this.isLoading = false;
-
-        } else {
-          await this.showAuthError('Autentikasi Gagal', 'Gagal memverifikasi kredensial Anda');
-          this.redirectToLogin();
-        }
-
-      } catch (error) {
-        console.error('Authentication failed:', error);
-        
-        // Handle error response dari API
-        if (error.response) {
-          if (error.response.status === 401) {
-            await this.showAuthError('Sesi Habis', 'Sesi login Anda telah habis. Silakan login kembali');
-          } else if (error.response.status === 403) {
-            await this.showAuthError('Akses Ditolak', 'Anda tidak memiliki izin untuk mengakses halaman ini');
-          } else {
-            await this.showAuthError('Kesalahan Server', 'Terjadi kesalahan pada server. Silakan coba lagi nanti');
-          }
-        } else if (error.request) {
-          // Tidak ada response dari server
-          await this.showAuthError('Koneksi Gagal', 'Tidak dapat terhubung ke server. Periksa koneksi internet Anda');
-        } else {
-          // Error lainnya
-          await this.showAuthError('Kesalahan', 'Terjadi kesalahan saat memverifikasi autentikasi');
-        }
-        
-        this.clearAuthData();
-        this.redirectToLogin();
-      }
-    },
 
     async showAuthError(title, message) {
       await Swal.fire({
@@ -371,8 +285,6 @@ export default {
     },
 
     redirectToLogin() {
-      this.isLoading = false;
-      this.isAuthenticated = false;
       this.$router.push('/');
     },
 
