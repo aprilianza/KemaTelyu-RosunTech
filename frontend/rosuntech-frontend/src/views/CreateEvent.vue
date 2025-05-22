@@ -2,7 +2,7 @@
   <div>
     <SidebarStaff />
     <div class="content-container">
-      <div class="container py-4" style="min-height: 100vh;">
+      <div class="container py-4" style="min-height: 100vh">
         <div class="text-center mb-4 mt-5">
           <h2 class="fw-bold">Create Event</h2>
           <p class="text-muted">Buat acara baru untuk mahasiswa Telkom University</p>
@@ -54,9 +54,7 @@
 
               <!-- Submit Button -->
               <div class="text-center mt-4">
-                <button class="btn btn-danger px-5 py-2 rounded-pill">
-                  <i class="fas fa-plus-circle me-2"></i>Buat Event
-                </button>
+                <button class="btn btn-danger px-5 py-2 rounded-pill"><i class="fas fa-plus-circle me-2"></i>Buat Event</button>
               </div>
             </form>
           </div>
@@ -82,10 +80,10 @@ export default {
         date: '',
         time: '',
         maxParticipant: '',
-        fotoFile: null
+        fotoFile: null,
       },
       preview: null,
-      isLoading: false
+      isLoading: false,
     };
   },
   methods: {
@@ -97,7 +95,7 @@ export default {
           this.showErrorAlert('Ukuran file terlalu besar. Maksimal 2MB.');
           return;
         }
-        
+
         // Validasi tipe file
         if (!['image/jpeg', 'image/png'].includes(file.type)) {
           this.showErrorAlert('Format file tidak didukung. Gunakan JPG/PNG.');
@@ -106,13 +104,13 @@ export default {
 
         this.form.fotoFile = file;
         const reader = new FileReader();
-        reader.onload = ev => (this.preview = ev.target.result);
+        reader.onload = (ev) => (this.preview = ev.target.result);
         reader.readAsDataURL(file);
       }
     },
     async submitEvent() {
       this.isLoading = true;
-      
+
       try {
         // Validasi form
         if (!this.validateForm()) return;
@@ -122,8 +120,8 @@ export default {
         formData.append('file', this.form.fotoFile);
         const uploadResponse = await api.post('/api/upload', formData, {
           headers: {
-            'Content-Type': 'multipart/form-data'
-          }
+            'Content-Type': 'multipart/form-data',
+          },
         });
 
         // 2️⃣ Build JSON payload
@@ -133,21 +131,17 @@ export default {
           date: this.form.date,
           time: this.form.time,
           maxParticipant: parseInt(this.form.maxParticipant),
-          fotoPath: uploadResponse.data.filePath || 'uploads/events/' + this.form.fotoFile.name
+          fotoPath: uploadResponse.data.filePath || 'uploads/events/' + this.form.fotoFile.name,
         };
 
         // 3️⃣ Kirim data ke backend (tidak perlu simpan response jika tidak digunakan)
         await createEvent(payload);
 
         // 4️⃣ Tampilkan notifikasi sukses
-        await this.showSuccessAlert(
-          'Event Berhasil Dibuat!', 
-          'Event baru telah berhasil ditambahkan ke sistem.'
-        );
-        
+        await this.showSuccessAlert('Event Berhasil Dibuat!', 'Event baru telah berhasil ditambahkan ke sistem.');
+
         // Reset form setelah berhasil
         this.reset();
-        
       } catch (err) {
         this.handleError(err);
       } finally {
@@ -159,13 +153,12 @@ export default {
         this.showErrorAlert('Foto wajib di-upload');
         return false;
       }
-      
-      if (!this.form.title || !this.form.description || 
-          !this.form.date || !this.form.time || !this.form.maxParticipant) {
+
+      if (!this.form.title || !this.form.description || !this.form.date || !this.form.time || !this.form.maxParticipant) {
         this.showErrorAlert('Semua field wajib diisi');
         return false;
       }
-      
+
       return true;
     },
     reset() {
@@ -175,7 +168,7 @@ export default {
         date: '',
         time: '',
         maxParticipant: '',
-        fotoFile: null
+        fotoFile: null,
       };
       this.preview = null;
     },
@@ -199,9 +192,9 @@ export default {
     },
     handleError(error) {
       console.error('Error creating event:', error);
-      
+
       let errorMessage = 'Terjadi kesalahan saat membuat event';
-      
+
       if (error.response) {
         // Error dari server
         if (error.response.data && error.response.data.message) {
@@ -219,12 +212,39 @@ export default {
         // Tidak ada response dari server
         errorMessage = 'Tidak dapat terhubung ke server';
       }
-      
+
       this.showErrorAlert(errorMessage);
+    },
+  },
+
+  // Route guard untuk proteksi tambahan
+  beforeRouteEnter(to, from, next) {
+    const token = localStorage.getItem('token');
+    const userData = localStorage.getItem('user');
+    
+    if (!token) {
+      next('/');
+      return;
     }
+
+    if (userData) {
+      try {
+        const user = JSON.parse(userData);
+        if (!user.role || user.role.toUpperCase() !== 'STAFF') {
+          next('/');
+          return;
+        }
+      } catch (error) {
+        next('/');
+        return;
+      }
+    }
+
+    next();
   }
 };
 </script>
+
 
 <style scoped>
 .content-container {
