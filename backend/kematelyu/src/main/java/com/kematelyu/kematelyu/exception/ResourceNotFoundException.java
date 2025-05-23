@@ -1,5 +1,9 @@
 package com.kematelyu.kematelyu.exception;
 
-public class ResourceNotFoundException extends RuntimeException {
-    public ResourceNotFoundException(String msg){ super(msg); }
+import org.springframework.http.HttpStatus;
+
+public class ResourceNotFoundException extends BaseException {
+    public ResourceNotFoundException(String message) {
+        super(HttpStatus.NOT_FOUND, message == null ? "Resource not found" : message);
+    }
 }
