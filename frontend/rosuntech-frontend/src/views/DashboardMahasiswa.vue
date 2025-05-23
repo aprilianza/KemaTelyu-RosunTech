@@ -13,8 +13,7 @@
             <div class="card-body">
               <div class="row align-items-center">
                 <div class="col-auto">
-                  <img :src="require(`@/assets/img/${user.photo || 'profile.png'}`)"
-                    class="profile-photo rounded-circle" alt="Profile Photo" />
+                  <img :src="profilePhoto" class="profile-photo rounded-circle" alt="Profile Photo" />
                 </div>
                 <div class="col text-start">
                   <h3>{{ user.name }}</h3>
@@ -122,44 +121,29 @@ export default {
   name: 'DashboardMahasiswa',
   components: { Sidebar },
   data() {
-    return {
-      user: { name: '', nim: '', fakultas: '', photo: '' }, // data user di-load dari backend
-      events: [
-        {
-          id: 1,
-          title: 'Telkommetra Mengadakan Lomba Inovasi Digital untuk Mahasiswa Seluruh Indonesia',
-          image: 'placeholder.jpg',
-          description: "Lomba inovasi digital bertema 'Smart Campus' dengan hadiah jutaan rupiah.",
-          date: '21 Maret 2025',
-          time: '09.00 WIB',
-          createdBy: 'Fakultas Ilmu Komputer'
-        },
-        {
-          id: 2,
-          title: 'Workshop UI/UX Design: Membangun Portofolio Profesional',
-          image: 'placeholder.jpg',
-          description: 'Pelatihan intensif desain antarmuka pengguna dengan studi kasus nyata.',
-          date: '05 April 2025',
-          time: '13.00 WIB',
-          createdBy: 'Prodi Desain Digital'
-        },
-        {
-          id: 3,
-          title: 'Seminar Big Data & Analytics di Era Industri 4.0',
-          image: 'placeholder.jpg',
-          description: 'Mendalami penerapan big data untuk pengambilan keputusan bisnis.',
-          date: '18 April 2025',
-          time: '10.00 WIB',
-          createdBy: 'Himpunan Mahasiswa TI'
-        }
-      ],
-      selectedEvent: null,
-    };
-  },
+  return {
+    user: JSON.parse(localStorage.getItem('user')) || {
+      name: '',
+      nim: '',
+      fakultas: '',
+      fotoPath: ''
+    },
+    events: [],
+    selectedEvent: null
+  };
+},
   computed: {
     totalEvents() {
       return this.events.length;
     },
+     profilePhoto() {
+    if (this.user.fotoPath?.startsWith('http')) return this.user.fotoPath;
+    if (this.user.fotoPath) {
+      return `http://localhost:8888/${this.user.fotoPath}`;
+    }
+    return require('@/assets/img/profile.png');
+  }
+
   },
   mounted() {
     // ⬇️ Redirect ke /login kalau token tidak ada
