@@ -37,7 +37,7 @@ public class JwtFilter extends OncePerRequestFilter {
 
         // ✅ BYPASS: Auth endpoints & GET /api/events
         if (path.startsWith("/api/auth") ||
-                (method.equals("GET") && path.startsWith("/api/events"))) {
+                (method.equals("GET") && path.equals("/api/events"))) {
             chain.doFilter(req, res);
             return;
         }

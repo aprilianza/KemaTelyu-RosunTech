@@ -161,4 +161,17 @@ public class EventController {
     public EventDetailDTO getEventDetail(@PathVariable Long id) {
         return service.getEventDetailById(id);
     }
+
+    @GetMapping("/staff/myevents")
+    public ResponseEntity<?> getEventsByStaff() {
+        Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+
+        if (principal instanceof String && principal.equals("anonymousUser")) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Token tidak valid atau tidak ditemukan.");
+        }
+
+        Long userId = Long.parseLong(principal.toString());
+        List<EventSummaryDTO> events = service.getEventsByStaff(userId);
+        return ResponseEntity.ok(events);
+    }
 }
