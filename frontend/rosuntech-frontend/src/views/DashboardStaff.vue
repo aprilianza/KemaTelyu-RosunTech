@@ -1,7 +1,7 @@
 <template>
   <div class="d-flex">
     <!-- Sidebar -->
-    <SidebarStaff/>
+    <SidebarStaff />
     <!-- Main Content -->
     <div class="content-wrapper container py-5">
       <!-- User Info + Create Button -->
@@ -9,24 +9,16 @@
         <div class="row g-4 align-items-center">
           <div class="col-12 col-md-4 text-center">
             <div class="profile-photo-container">
-              <img
-                :src="require(`@/assets/img/${user.photo}`)"
-                class="img-fluid rounded-circle profile-photo shadow"
-                alt="User Photo"
-              />
+              <img :src="`http://localhost:8888/${user.photo}`" class="img-fluid rounded-circle profile-photo shadow" alt="User Photo" />
             </div>
           </div>
           <div class="col-12 col-md-8">
             <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center">
               <div class="user-info mb-3 mb-md-0">
                 <h3 class="fw-bold mb-2">{{ user.name }}</h3>
-                <div class="division-badge">
-                  <i class="bi bi-building me-2"></i>{{ user.division }}
-                </div>
+                <div class="division-badge"><i class="bi bi-building me-2"></i>{{ user.division }}</div>
               </div>
-              <router-link to="/CreateEvent" class="btn btn-lg create-event-btn">
-                <i class="bi bi-plus-circle me-2"></i>Create Event
-              </router-link>
+              <router-link to="/CreateEvent" class="btn btn-lg create-event-btn"> <i class="bi bi-plus-circle me-2"></i>Create Event </router-link>
             </div>
           </div>
         </div>
@@ -35,12 +27,10 @@
       <!-- Event List -->
       <div class="events-section">
         <div class="section-header d-flex justify-content-between align-items-center mb-4">
-          <h5 class="section-title mb-0">
-            <i class="bi bi-calendar-event me-2"></i>Current Events You Created
-          </h5>
+          <h5 class="section-title mb-0"><i class="bi bi-calendar-event me-2"></i>Current Events You Created</h5>
           <div class="event-counter badge bg-light text-primary">{{ events.length }} Events</div>
         </div>
-        
+
         <div class="row justify-content-center g-4 mb-5">
           <div class="col-12 col-md-6 col-lg-4" v-for="(event, index) in events" :key="index">
             <div class="event-card d-flex flex-column h-100">
@@ -53,22 +43,14 @@
               </div>
               <div class="card-body d-flex flex-column">
                 <div class="badges-container mb-2">
-                  <span class="badge time-badge me-2">
-                    <i class="bi bi-clock me-1"></i>{{ event.time }}
-                  </span>
-                  <span class="badge participant-badge">
-                    <i class="bi bi-people me-1"></i>Max {{ event.maxParticipants || 50 }}
-                  </span>
+                  <span class="badge time-badge me-2"> <i class="bi bi-clock me-1"></i>{{ event.time }} </span>
+                  <span class="badge participant-badge"> <i class="bi bi-people me-1"></i>Max {{ event.maxParticipants || 50 }} </span>
                 </div>
                 <h5 class="event-title mb-2">{{ event.title }}</h5>
                 <p class="event-description text-truncate mb-3">{{ event.message }}</p>
                 <div class="mt-auto d-flex justify-content-between">
-                  <button class="btn btn-outline-light btn-sm" @click="deleteEvent(index)">
-                    <i class="bi bi-trash me-1"></i> Delete Event
-                  </button>
-                  <button class="btn btn-light btn-sm" @click="openModal(event)">
-                    <i class="bi bi-eye me-1"></i> Details
-                  </button>
+                  <button class="btn btn-outline-light btn-sm" @click="deleteEvent(index)"><i class="bi bi-trash me-1"></i> Delete Event</button>
+                  <button class="btn btn-light btn-sm" @click="openModal(event)"><i class="bi bi-eye me-1"></i> Details</button>
                 </div>
               </div>
             </div>
@@ -83,7 +65,7 @@
           <button type="button" class="modern-modal-close" @click="closeModal">
             <span class="close-icon">&times;</span>
           </button>
-          
+
           <div class="modern-modal-image">
             <img :src="require(`@/assets/img/${selectedEvent.image}`)" alt="Event Image" />
             <div class="event-date-badge">
@@ -94,10 +76,10 @@
               </div>
             </div>
           </div>
-          
+
           <div class="modern-modal-content">
             <h2 class="modal-event-title">{{ selectedEvent.title }}</h2>
-            
+
             <div class="modal-event-metadata">
               <div class="metadata-item">
                 <span class="metadata-icon calendar-icon"></span>
@@ -112,7 +94,7 @@
                 <span>Max {{ selectedEvent.maxParticipants || 50 }} Participants</span>
               </div>
             </div>
-            
+
             <div class="modal-event-description">
               <p>{{ selectedEvent.message }}</p>
             </div>
@@ -123,7 +105,7 @@
                 <i class="bi bi-people-fill me-2"></i>Participants
                 <span class="participant-count">({{ eventParticipants.length }})</span>
               </h4>
-              
+
               <div class="table-responsive mt-3">
                 <table class="table table-hover">
                   <thead>
@@ -168,14 +150,10 @@
                 </table>
               </div>
             </div>
-            
+
             <div class="modern-modal-actions">
-              <button class="btn btn-outline-danger" @click="closeModal">
-                <i class="bi bi-x-circle me-2"></i>Close
-              </button>
-              <button class="btn btn-danger" @click="deleteSelectedEvent">
-                <i class="bi bi-trash me-2"></i>Delete Event
-              </button>
+              <button class="btn btn-outline-danger" @click="closeModal"><i class="bi bi-x-circle me-2"></i>Close</button>
+              <button class="btn btn-danger" @click="deleteSelectedEvent"><i class="bi bi-trash me-2"></i>Delete Event</button>
             </div>
           </div>
         </div>
@@ -184,87 +162,85 @@
   </div>
 </template>
 <script>
-import SidebarStaff from "@/components/SidebarStaff.vue";
+import SidebarStaff from '@/components/SidebarStaff.vue';
 import axios from 'axios';
 import Swal from 'sweetalert2';
 
 export default {
-  name: "DashboardStaff",
+  name: 'DashboardStaff',
   components: { SidebarStaff },
   data() {
     return {
       isLoading: true,
       isAuthenticated: false,
       user: {
-        name: "",
-        division: "",
-        photo: "profile.png"
+        name: '',
+        division: '',
+        photo: 'profile.png',
       },
       events: [
         {
-          title: "Telkommetra Mengadakan Lomba Inovasi Digital untuk Mahasiswa Seluruh Indonesia",
-          date: "21 Maret 2025",
-          time: "09.00 WIB",
-          image: "placeholder.jpg",
+          title: 'Telkommetra Mengadakan Lomba Inovasi Digital untuk Mahasiswa Seluruh Indonesia',
+          date: '21 Maret 2025',
+          time: '09.00 WIB',
+          image: 'placeholder.jpg',
           message: "Lomba inovasi digital bertema 'Smart Campus' dengan hadiah jutaan rupiah.",
-          maxParticipants: 100
+          maxParticipants: 100,
         },
         {
-          title: "Workshop UI/UX Design: Membangun Portofolio Profesional",
-          date: "05 April 2025",
-          time: "13.00 WIB",
-          image: "placeholder.jpg",
-          message: "Pelatihan intensif desain antarmuka pengguna dengan studi kasus nyata.",
-          maxParticipants: 30
+          title: 'Workshop UI/UX Design: Membangun Portofolio Profesional',
+          date: '05 April 2025',
+          time: '13.00 WIB',
+          image: 'placeholder.jpg',
+          message: 'Pelatihan intensif desain antarmuka pengguna dengan studi kasus nyata.',
+          maxParticipants: 30,
         },
         {
-          title: "Seminar Big Data & Analytics di Era Industri 4.0",
-          date: "18 April 2025",
-          time: "10.00 WIB",
-          image: "placeholder.jpg",
-          message: "Mendalami penerapan big data untuk pengambilan keputusan bisnis.",
-          maxParticipants: 50
-        }
+          title: 'Seminar Big Data & Analytics di Era Industri 4.0',
+          date: '18 April 2025',
+          time: '10.00 WIB',
+          image: 'placeholder.jpg',
+          message: 'Mendalami penerapan big data untuk pengambilan keputusan bisnis.',
+          maxParticipants: 50,
+        },
       ],
       selectedEvent: null,
       participants: [
         {
-          eventTitle: "Telkommetra Mengadakan Lomba Inovasi Digital untuk Mahasiswa Seluruh Indonesia",
+          eventTitle: 'Telkommetra Mengadakan Lomba Inovasi Digital untuk Mahasiswa Seluruh Indonesia',
           data: [
-            { name: "Budi Santoso", email: "budi.santoso@gmail.com", registerDate: "15 Maret 2025", status: "Accepted" },
-            { name: "Dewi Lestari", email: "dewi.l@yahoo.com", registerDate: "16 Maret 2025", status: "Processing" },
-            { name: "Andi Nugraha", email: "andi.nugraha@outlook.com", registerDate: "17 Maret 2025", status: "Rejected" },
-            { name: "Siti Rahayu", email: "siti.r@gmail.com", registerDate: "17 Maret 2025", status: "Processing" }
-          ]
+            { name: 'Budi Santoso', email: 'budi.santoso@gmail.com', registerDate: '15 Maret 2025', status: 'Accepted' },
+            { name: 'Dewi Lestari', email: 'dewi.l@yahoo.com', registerDate: '16 Maret 2025', status: 'Processing' },
+            { name: 'Andi Nugraha', email: 'andi.nugraha@outlook.com', registerDate: '17 Maret 2025', status: 'Rejected' },
+            { name: 'Siti Rahayu', email: 'siti.r@gmail.com', registerDate: '17 Maret 2025', status: 'Processing' },
+          ],
         },
         {
-          eventTitle: "Workshop UI/UX Design: Membangun Portofolio Profesional",
+          eventTitle: 'Workshop UI/UX Design: Membangun Portofolio Profesional',
           data: [
-            { name: "Fajar Ramadhan", email: "fajar.r@gmail.com", registerDate: "01 April 2025", status: "Accepted" },
-            { name: "Maya Putri", email: "maya.p@yahoo.com", registerDate: "02 April 2025", status: "Accepted" }
-          ]
+            { name: 'Fajar Ramadhan', email: 'fajar.r@gmail.com', registerDate: '01 April 2025', status: 'Accepted' },
+            { name: 'Maya Putri', email: 'maya.p@yahoo.com', registerDate: '02 April 2025', status: 'Accepted' },
+          ],
         },
         {
-          eventTitle: "Seminar Big Data & Analytics di Era Industri 4.0",
+          eventTitle: 'Seminar Big Data & Analytics di Era Industri 4.0',
           data: [
-            { name: "Ricky Harun", email: "ricky.h@gmail.com", registerDate: "10 April 2025", status: "Processing" },
-            { name: "Dina Surya", email: "dina.s@gmail.com", registerDate: "11 April 2025", status: "Processing" },
-            { name: "Rizki Pratama", email: "rizki.p@yahoo.com", registerDate: "12 April 2025", status: "Accepted" }
-          ]
-        }
-      ]
+            { name: 'Ricky Harun', email: 'ricky.h@gmail.com', registerDate: '10 April 2025', status: 'Processing' },
+            { name: 'Dina Surya', email: 'dina.s@gmail.com', registerDate: '11 April 2025', status: 'Processing' },
+            { name: 'Rizki Pratama', email: 'rizki.p@yahoo.com', registerDate: '12 April 2025', status: 'Accepted' },
+          ],
+        },
+      ],
     };
   },
   computed: {
     eventParticipants() {
       if (!this.selectedEvent) return [];
-      
-      const eventParticipantData = this.participants.find(p => 
-        p.eventTitle === this.selectedEvent.title
-      );
-      
+
+      const eventParticipantData = this.participants.find((p) => p.eventTitle === this.selectedEvent.title);
+
       return eventParticipantData ? eventParticipantData.data : [];
-    }
+    },
   },
   async mounted() {
     await this.checkAuthentication();
@@ -274,7 +250,7 @@ export default {
       try {
         const token = localStorage.getItem('token');
         const userData = localStorage.getItem('user');
-        
+
         // Cek token di localStorage
         if (!token) {
           await this.showAuthError('Autentikasi Diperlukan', 'Silakan login untuk mengakses halaman ini');
@@ -305,8 +281,8 @@ export default {
         // Verifikasi token ke backend
         const response = await axios.get('/api/auth/me', {
           headers: {
-            'Authorization': `Bearer ${token}`
-          }
+            Authorization: `Bearer ${token}`,
+          },
         });
 
         if (response.status === 200) {
@@ -315,20 +291,19 @@ export default {
             ...this.user,
             ...response.data,
             name: response.data.name || this.user.name,
-            division: response.data.divisi || this.user.divisi
+            division: response.data.divisi || this.user.divisi,
+            photo: response.data.fotoPath || this.user.fotoPath,
           };
-          
+
           this.isAuthenticated = true;
           this.isLoading = false;
-
         } else {
           await this.showAuthError('Autentikasi Gagal', 'Gagal memverifikasi kredensial Anda');
           this.redirectToLogin();
         }
-
       } catch (error) {
         console.error('Authentication failed:', error);
-        
+
         // Handle error response dari API
         if (error.response) {
           if (error.response.status === 401) {
@@ -345,7 +320,7 @@ export default {
           // Error lainnya
           await this.showAuthError('Kesalahan', 'Terjadi kesalahan saat memverifikasi autentikasi');
         }
-        
+
         this.clearAuthData();
         this.redirectToLogin();
       }
@@ -359,8 +334,8 @@ export default {
         confirmButtonText: 'Ke Halaman Login',
         allowOutsideClick: false,
         customClass: {
-          confirmButton: 'btn btn-danger'
-        }
+          confirmButton: 'btn btn-danger',
+        },
       });
     },
 
@@ -394,23 +369,23 @@ export default {
         confirmButtonColor: '#d33',
         cancelButtonColor: '#3085d6',
         confirmButtonText: 'Ya, hapus!',
-        cancelButtonText: 'Batal'
+        cancelButtonText: 'Batal',
       });
 
       if (result.isConfirmed) {
         this.events.splice(index, 1);
-        
+
         const Toast = Swal.mixin({
           toast: true,
           position: 'top-end',
           showConfirmButton: false,
           timer: 3000,
-          timerProgressBar: true
+          timerProgressBar: true,
         });
-        
+
         Toast.fire({
           icon: 'success',
-          title: 'Event berhasil dihapus'
+          title: 'Event berhasil dihapus',
         });
       }
     },
@@ -424,37 +399,37 @@ export default {
         confirmButtonColor: '#d33',
         cancelButtonColor: '#3085d6',
         confirmButtonText: 'Ya, hapus!',
-        cancelButtonText: 'Batal'
+        cancelButtonText: 'Batal',
       });
 
       if (result.isConfirmed) {
-        const index = this.events.findIndex(e => e.title === this.selectedEvent.title);
+        const index = this.events.findIndex((e) => e.title === this.selectedEvent.title);
         if (index !== -1) {
           this.events.splice(index, 1);
           this.closeModal();
-          
+
           const Toast = Swal.mixin({
             toast: true,
             position: 'top-end',
             showConfirmButton: false,
             timer: 3000,
-            timerProgressBar: true
+            timerProgressBar: true,
           });
-          
+
           Toast.fire({
             icon: 'success',
-            title: 'Event berhasil dihapus'
+            title: 'Event berhasil dihapus',
           });
         }
       }
     },
 
     async updateParticipantStatus(participantIndex, newStatus) {
-      const eventIndex = this.participants.findIndex(p => p.eventTitle === this.selectedEvent.title);
+      const eventIndex = this.participants.findIndex((p) => p.eventTitle === this.selectedEvent.title);
       if (eventIndex !== -1) {
         const participant = this.participants[eventIndex].data[participantIndex];
         const oldStatus = participant.status;
-        
+
         // Tampilkan konfirmasi perubahan status
         const result = await Swal.fire({
           title: 'Perbarui Status',
@@ -464,23 +439,23 @@ export default {
           confirmButtonColor: '#3085d6',
           cancelButtonColor: '#6c757d',
           confirmButtonText: 'Ya, perbarui',
-          cancelButtonText: 'Batal'
+          cancelButtonText: 'Batal',
         });
 
         if (result.isConfirmed) {
           this.participants[eventIndex].data[participantIndex].status = newStatus;
-          
+
           const Toast = Swal.mixin({
             toast: true,
             position: 'top-end',
             showConfirmButton: false,
             timer: 3000,
-            timerProgressBar: true
+            timerProgressBar: true,
           });
-          
+
           Toast.fire({
             icon: 'success',
-            title: `Status diperbarui ke ${newStatus}`
+            title: `Status diperbarui ke ${newStatus}`,
           });
         }
       }
@@ -497,14 +472,14 @@ export default {
         default:
           return 'badge bg-secondary';
       }
-    }
+    },
   },
 
   // Route guard untuk proteksi tambahan
   beforeRouteEnter(to, from, next) {
     const token = localStorage.getItem('token');
     const userData = localStorage.getItem('user');
-    
+
     if (!token) {
       next('/');
       return;
@@ -524,7 +499,7 @@ export default {
     }
 
     next();
-  }
+  },
 };
 </script>
 <style scoped>
@@ -538,7 +513,7 @@ export default {
   display: inline-block;
   padding: 4px;
   border-radius: 50%;
-  background-image: linear-gradient(45deg, #B30202, #DD3232);
+  background-image: linear-gradient(45deg, #b30202, #dd3232);
 }
 
 .profile-photo {
@@ -556,7 +531,7 @@ export default {
 .division-badge {
   display: inline-block;
   background-color: rgba(179, 2, 2, 0.1);
-  color: #B30202;
+  color: #b30202;
   padding: 0.5rem 1rem;
   border-radius: 2rem;
   font-weight: 500;
@@ -566,8 +541,8 @@ export default {
   border-radius: 50px;
   padding: 0.75rem 1.5rem;
   font-weight: 600;
-  background-color: #B30202;
-  color: #FFF1F1;
+  background-color: #b30202;
+  color: #fff1f1;
   box-shadow: 0 4px 10px rgba(179, 2, 2, 0.3);
   transition: all 0.3s ease;
   border: none;
@@ -576,7 +551,7 @@ export default {
 .create-event-btn:hover {
   transform: translateY(-2px);
   box-shadow: 0 6px 12px rgba(179, 2, 2, 0.4);
-  background-color: #DD3232;
+  background-color: #dd3232;
   color: white;
 }
 
@@ -587,7 +562,7 @@ export default {
 }
 
 .section-title {
-  color: #B30202;
+  color: #b30202;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.5px;
@@ -602,14 +577,14 @@ export default {
   top: 0;
   height: 100%;
   width: 4px;
-  background-color: #B30202;
+  background-color: #b30202;
   border-radius: 4px;
 }
 
 .event-counter {
   font-size: 0.85rem;
   padding: 0.4rem 0.8rem;
-  color: #B30202 !important;
+  color: #b30202 !important;
 }
 
 /* Event Cards */
@@ -678,7 +653,8 @@ export default {
   gap: 0.5rem;
 }
 
-.time-badge, .participant-badge {
+.time-badge,
+.participant-badge {
   background-color: rgba(255, 255, 255, 0.15);
   color: rgba(255, 255, 255, 0.9);
   border-radius: 50px;
@@ -813,7 +789,7 @@ export default {
 .date-content .day {
   font-size: 1.5rem;
   font-weight: 700;
-  color: #B30202;
+  color: #b30202;
 }
 
 .date-content .month {
@@ -928,23 +904,23 @@ export default {
 }
 
 .btn-outline-danger {
-  color: #B30202;
-  border-color: #B30202;
+  color: #b30202;
+  border-color: #b30202;
 }
 
 .btn-outline-danger:hover {
-  background-color: #B30202;
+  background-color: #b30202;
   color: white;
 }
 
 .btn-danger {
-  background-color: #B30202;
-  border-color: #B30202;
+  background-color: #b30202;
+  border-color: #b30202;
 }
 
 .btn-danger:hover {
-  background-color: #DD3232;
-  border-color: #DD3232;
+  background-color: #dd3232;
+  border-color: #dd3232;
 }
 
 /* Animation delays for staggered effect */

@@ -26,6 +26,10 @@ public class SecurityConfig {
             .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
 
+                .requestMatchers("/certificate/**").permitAll()
+                .requestMatchers("/events/**").permitAll()
+                .requestMatchers("/user_image/**").permitAll()
+                
                 // 💡 IZINKAN GET TANPA TOKEN
                 .requestMatchers(HttpMethod.GET, "/api/events").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/events/**").permitAll()
