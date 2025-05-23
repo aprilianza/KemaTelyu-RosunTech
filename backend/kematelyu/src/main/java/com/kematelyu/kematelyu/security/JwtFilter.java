@@ -32,22 +32,27 @@ public class JwtFilter extends OncePerRequestFilter {
                                     FilterChain chain)
             throws ServletException, IOException {
 
-        /* ---------- BYPASS AUTH ENDPOINT ---------- */
-        String path = req.getServletPath();       // ex: /api/auth/login
-        if (path.startsWith("/api/auth")) {
+        String path = req.getServletPath();
+        String method = req.getMethod();
+
+        // ✅ BYPASS: Auth endpoints & GET /api/events
+        if (
+            path.startsWith("/api/auth") ||
+            (method.equals("GET") && path.startsWith("/api/events"))
+        ) {
             chain.doFilter(req, res);
             return;
         }
 
-        /* ---------- VALIDATE JWT (kalau ada) ---------- */
+        // ✅ Validasi token jika ada
         String header = req.getHeader(HttpHeaders.AUTHORIZATION);
         if (header != null && header.startsWith("Bearer ")) {
             String token = header.substring(7);
 
             try {
                 Claims claims = jwtUtil.parse(token).getBody();
-                Long   userId = Long.parseLong(claims.getSubject());
-                String role   = claims.get("role", String.class);   // ex: ADMIN / MAHASISWA
+                Long userId = Long.parseLong(claims.getSubject());
+                String role = claims.get("role", String.class);
 
                 UsernamePasswordAuthenticationToken auth =
                         new UsernamePasswordAuthenticationToken(
@@ -60,7 +65,8 @@ public class JwtFilter extends OncePerRequestFilter {
                 SecurityContextHolder.getContext().setAuthentication(auth);
 
             } catch (Exception e) {
-                // token invalid / expired → biarkan lanjut tanpa Auth (akan jadi 403 di endpoint protected)
+                // Token tidak valid/expired → lanjutkan tanpa Auth
+                System.out.println("JWT invalid: " + e.getMessage());
             }
         }
 

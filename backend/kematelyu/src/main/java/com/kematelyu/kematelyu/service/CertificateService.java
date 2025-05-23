@@ -34,6 +34,12 @@ public class CertificateService {
 
         return certificateRepository.save(certificate);
     }
+    
+    // tambahkan method di bawah method getCertificatesByMahasiswaId
+    public Certificate findById(Long id) {
+            return certificateRepository.findById(id)
+                            .orElseThrow(() -> new IllegalArgumentException("Certificate not found"));
+    }    
 
     public List<Certificate> getCertificatesByMahasiswaId(Long mahasiswaId) {
     Mahasiswa mahasiswa = mahasiswaRepository.findById(mahasiswaId)
@@ -41,4 +47,5 @@ public class CertificateService {
 
     return certificateRepository.findByMahasiswa(mahasiswa);
     }
+    
 }

@@ -31,7 +31,7 @@
         <li class="nav-item">
           <router-link class="nav-link d-flex align-items-center" :to="{ name: 'History' }">
             <font-awesome-icon :icon="['fas', 'history']" class="menu-icon" />
-            <span>History</span>
+            <span>Riwayat</span>
           </router-link>
         </li>
         <!-- You can add more menu items here with icons -->

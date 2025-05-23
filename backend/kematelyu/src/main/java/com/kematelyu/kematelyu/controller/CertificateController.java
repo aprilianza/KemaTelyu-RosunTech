@@ -1,48 +1,74 @@
 package com.kematelyu.kematelyu.controller;
 
-import java.util.List;
-import java.util.stream.Collectors;
-
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
-
-import com.kematelyu.kematelyu.dto.CertificateRequest;
-import com.kematelyu.kematelyu.dto.CertificateResponse;
+import com.kematelyu.kematelyu.dto.CertificateDTO;
 import com.kematelyu.kematelyu.model.Certificate;
 import com.kematelyu.kematelyu.service.CertificateService;
+import com.kematelyu.kematelyu.util.CertificatePdfGenerator;
+import org.springframework.http.*;
+import org.springframework.security.core.Authentication;
+import org.springframework.web.bind.annotation.*;
 
+import java.io.IOException;
+import java.util.List;
+
+/**
+ * GET /api/certificates -> list sertifikat user login
+ * GET /api/certificates/{id}/download -> download PDF (owner only)
+ */
 @RestController
 @RequestMapping("/api/certificates")
 public class CertificateController {
 
-    @Autowired
-    private CertificateService certificateService;
+    private final CertificateService certService;
 
-    @PostMapping
-    public CertificateResponse createCertificate(@RequestBody CertificateRequest request) {
-        Certificate cert = certificateService.createCertificate(request);
-        return new CertificateResponse(
-                cert.getId(),
-                cert.getMahasiswa().getName(),
-                cert.getEvent().getTitle(),
-                cert.getIssueDate()
-        );
+    public CertificateController(CertificateService certService) {
+        this.certService = certService;
     }
 
-    @GetMapping("/mahasiswa/{mahasiswaId}")
-    public List<CertificateResponse> getCertificatesByMahasiswa(@PathVariable Long mahasiswaId) {
-        List<Certificate> certs = certificateService.getCertificatesByMahasiswaId(mahasiswaId);
-        return certs.stream()
-                .map(cert -> new CertificateResponse(
-                        cert.getId(),
-                        cert.getMahasiswa().getName(),
-                        cert.getEvent().getTitle(),
-                        cert.getIssueDate()))
-                .collect(Collectors.toList());
+    /* ---------- LIST ---------- */
+    @GetMapping
+    public ResponseEntity<List<CertificateDTO>> getMyCertificates(Authentication auth) {
+
+        Long userId = (Long) auth.getPrincipal(); // principal di-set JwtFilter
+        List<Certificate> raw = certService.getCertificatesByMahasiswaId(userId);
+
+        List<CertificateDTO> dto = raw.stream()
+                .map(c -> new CertificateDTO(
+                        c.getId(),
+                        c.getEvent().getId(),
+                        c.getEvent().getTitle(),
+                        c.getEvent().getFotoPath(),
+                        c.getIssueDate()))
+                .toList();
+
+        return ResponseEntity.ok(dto);
+    }
+
+    /* ---------- DOWNLOAD PDF ---------- */
+    @GetMapping("/{id}/download")
+    public ResponseEntity<byte[]> download(
+            @PathVariable Long id,
+            Authentication auth) throws IOException {
+
+        Long userId = (Long) auth.getPrincipal();
+        Certificate cert = certService.findById(id);
+
+        // ✅ hanya pemilik yg boleh download
+        if (!cert.getMahasiswa().getId().equals(userId)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(("Forbidden – certificate does not belong to current user").getBytes());
+        }
+
+        // generate PDF bytes
+        byte[] pdf = CertificatePdfGenerator.generate(cert);
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_PDF);
+        headers.setContentDisposition(
+                ContentDisposition.attachment()
+                        .filename("sertifikat-" + cert.getId() + ".pdf")
+                        .build());
+
+        return new ResponseEntity<>(pdf, headers, HttpStatus.OK);
     }
 }

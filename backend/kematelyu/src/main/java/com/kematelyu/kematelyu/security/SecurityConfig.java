@@ -2,6 +2,7 @@ package com.kematelyu.kematelyu.security;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -24,17 +25,28 @@ public class SecurityConfig {
             .csrf(csrf -> csrf.disable())
             .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
-                    .requestMatchers("/api/auth/**").permitAll()   // login & register bebas
-                    .anyRequest().authenticated()                 // sisanya butuh token
+
+                .requestMatchers("/certificate/**").permitAll()
+                .requestMatchers("/events/**").permitAll()
+                .requestMatchers("/user_image/**").permitAll()
+                
+                // 💡 IZINKAN GET TANPA TOKEN
+                .requestMatchers(HttpMethod.GET, "/api/events").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/events/**").permitAll()
+
+                // 💡 Bebaskan endpoint login/register
+                .requestMatchers("/api/auth/**").permitAll()
+
+                // 🔒 Sisanya tetap perlu autentikasi
+                .anyRequest().authenticated()
             )
             .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)
-            .formLogin(form -> form.disable())    // matikan HTML login page
-            .httpBasic(basic -> basic.disable()); // matikan basic-auth popup
+            .formLogin(form -> form.disable())
+            .httpBasic(basic -> basic.disable());
 
         return http.build();
     }
 
-    /*  Inject AuthenticationManager untuk AuthController (jika nanti mau pakai) */
     @Bean
     public AuthenticationManager authenticationManager(
             AuthenticationConfiguration config) throws Exception {

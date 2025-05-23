@@ -13,6 +13,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -23,33 +24,33 @@ public class AuthController {
 
     private final UserRepository userRepo;
     private final JwtUtil jwt;
+    private final BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
 
     public AuthController(UserRepository userRepo, JwtUtil jwt) {
         this.userRepo = userRepo;
         this.jwt = jwt;
     }
 
-    // ---------- LOGIN ----------
+    /* ---------- LOGIN ---------- */
     @PostMapping("/login")
     public ResponseEntity<LoginResponse> login(@RequestBody LoginRequest req) {
 
         User user = userRepo.findByEmail(req.getEmail()).orElse(null);
-        if (user == null || !user.getPassword().equals(req.getPassword())) {
+        if (user == null || !encoder.matches(req.getPassword(), user.getPassword())) {
             throw new InvalidCredentialsException();
         }
 
-        UsernamePasswordAuthenticationToken auth =
-                new UsernamePasswordAuthenticationToken(
-                        user.getId(), null,
-                        List.of(new SimpleGrantedAuthority("ROLE_" + user.getRole()))
-                );
+        UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(
+                user.getId(),
+                null,
+                List.of(new SimpleGrantedAuthority("ROLE_" + user.getRole())));
         SecurityContextHolder.getContext().setAuthentication(auth);
 
         String token = jwt.generateToken(user.getId(), user.getRole());
         return ResponseEntity.ok(new LoginResponse("Login berhasil", user, token));
     }
 
-    // ---------- CURRENT USER ----------
+    /* ---------- CURRENT USER ---------- */
     @GetMapping("/me")
     public ResponseEntity<?> getCurrentUser(HttpServletRequest request) {
         String authHeader = request.getHeader("Authorization");

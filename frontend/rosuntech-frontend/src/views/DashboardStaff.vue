@@ -1,7 +1,7 @@
 <template>
   <div class="d-flex">
     <!-- Sidebar -->
-    <SidebarStaff/>
+    <SidebarStaff />
     <!-- Main Content -->
     <div class="content-wrapper container py-5">
       <!-- User Info + Create Button -->
@@ -9,10 +9,11 @@
         <div class="row g-4 align-items-center">
           <div class="col-12 col-md-4 text-center">
             <div class="profile-photo-container">
+              <!-- Load image dynamically from backend -->
               <img
-                :src="require(`@/assets/img/${user.photo}`)"
+                :src="`http://localhost:8888/${user.photo}`"
                 class="img-fluid rounded-circle profile-photo shadow"
-                alt="User Photo"
+                alt="Foto Pengguna"
               />
             </div>
           </div>
@@ -25,7 +26,7 @@
                 </div>
               </div>
               <router-link to="/CreateEvent" class="btn btn-lg create-event-btn">
-                <i class="bi bi-plus-circle me-2"></i>Create Event
+                <i class="bi bi-plus-circle me-2"></i>Buat Event
               </router-link>
             </div>
           </div>
@@ -36,16 +37,16 @@
       <div class="events-section">
         <div class="section-header d-flex justify-content-between align-items-center mb-4">
           <h5 class="section-title mb-0">
-            <i class="bi bi-calendar-event me-2"></i>Current Events You Created
+            <i class="bi bi-calendar-event me-2"></i>Event yang Anda Buat
           </h5>
-          <div class="event-counter badge bg-light text-primary">{{ events.length }} Events</div>
+          <div class="event-counter badge bg-light text-primary">{{ events.length }} Event</div>
         </div>
         
         <div class="row justify-content-center g-4 mb-5">
           <div class="col-12 col-md-6 col-lg-4" v-for="(event, index) in events" :key="index">
             <div class="event-card d-flex flex-column h-100">
               <div class="image-wrapper mb-3 position-relative">
-                <img :src="require(`@/assets/img/${event.image}`)" alt="Event Image" class="rounded-top" />
+                <img :src="`http://localhost:8888/${event.fotoPath}`" alt="Gambar Event" class="rounded-top" />
                 <div class="event-date-overlay">
                   <span class="date">{{ event.date.split(' ')[0] }}</span>
                   <span class="month">{{ event.date.split(' ')[1] }}</span>
@@ -57,17 +58,17 @@
                     <i class="bi bi-clock me-1"></i>{{ event.time }}
                   </span>
                   <span class="badge participant-badge">
-                    <i class="bi bi-people me-1"></i>Max {{ event.maxParticipants || 50 }}
+                    <i class="bi bi-people me-1"></i>Max {{ event.maxParticipant || 50 }}
                   </span>
                 </div>
                 <h5 class="event-title mb-2">{{ event.title }}</h5>
                 <p class="event-description text-truncate mb-3">{{ event.message }}</p>
                 <div class="mt-auto d-flex justify-content-between">
                   <button class="btn btn-outline-light btn-sm" @click="deleteEvent(index)">
-                    <i class="bi bi-trash me-1"></i> Delete Event
+                    <i class="bi bi-trash me-1"></i> Hapus Event
                   </button>
                   <button class="btn btn-light btn-sm" @click="openModal(event)">
-                    <i class="bi bi-eye me-1"></i> Details
+                    <i class="bi bi-eye me-1"></i> Detail
                   </button>
                 </div>
               </div>
@@ -85,7 +86,7 @@
           </button>
           
           <div class="modern-modal-image">
-            <img :src="require(`@/assets/img/${selectedEvent.image}`)" alt="Event Image" />
+            <img :src="`http://localhost:8888/${selectedEvent.fotoPath}`" alt="Gambar Event" />
             <div class="event-date-badge">
               <div class="date-content">
                 <span class="day">{{ selectedEvent.date.split(' ')[0] }}</span>
@@ -109,7 +110,7 @@
               </div>
               <div class="metadata-item">
                 <span class="metadata-icon users-icon"></span>
-                <span>Max {{ selectedEvent.maxParticipants || 50 }} Participants</span>
+                <span>Max {{ selectedEvent.maxParticipant || 50 }} Peserta</span>
               </div>
             </div>
             
@@ -120,7 +121,7 @@
             <!-- Participants Section -->
             <div class="participants-section mt-4">
               <h4 class="participants-title">
-                <i class="bi bi-people-fill me-2"></i>Participants
+                <i class="bi bi-people-fill me-2"></i>Peserta
                 <span class="participant-count">({{ eventParticipants.length }})</span>
               </h4>
               
@@ -129,11 +130,11 @@
                   <thead>
                     <tr>
                       <th scope="col">#</th>
-                      <th scope="col">Name</th>
+                      <th scope="col">Nama</th>
                       <th scope="col">Email</th>
-                      <th scope="col">Registration Date</th>
+                      <th scope="col">Tanggal Pendaftaran</th>
                       <th scope="col">Status</th>
-                      <th scope="col">Actions</th>
+                      <th scope="col">Aksi</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -162,7 +163,7 @@
                       </td>
                     </tr>
                     <tr v-if="eventParticipants.length === 0">
-                      <td colspan="6" class="text-center py-3">No participants registered yet</td>
+                      <td colspan="6" class="text-center py-3">Belum ada peserta yang terdaftar</td>
                     </tr>
                   </tbody>
                 </table>
@@ -171,10 +172,10 @@
             
             <div class="modern-modal-actions">
               <button class="btn btn-outline-danger" @click="closeModal">
-                <i class="bi bi-x-circle me-2"></i>Close
+                <i class="bi bi-x-circle me-2"></i>Tutup
               </button>
               <button class="btn btn-danger" @click="deleteSelectedEvent">
-                <i class="bi bi-trash me-2"></i>Delete Event
+                <i class="bi bi-trash me-2"></i>Hapus Event
               </button>
             </div>
           </div>
@@ -186,126 +187,231 @@
 
 <script>
 import SidebarStaff from "@/components/SidebarStaff.vue";
+import axios from "axios";
+import Swal from "sweetalert2";
+import { getEvents } from "@/api/event"; // Menambahkan API event
 
 export default {
   name: "DashboardStaff",
   components: { SidebarStaff },
   data() {
     return {
+      isLoading: true,
+      isAuthenticated: false,
       user: {
-        name: "Aprilianza Muhammad Yusup",
-        division: "Divisi Kehumasan",
-        photo: "profile.png"
+        name: "",
+        division: "",
+        photo: "profile.png", // Default photo path
       },
-      events: [
-        {
-          title: "Telkommetra Mengadakan Lomba Inovasi Digital untuk Mahasiswa Seluruh Indonesia",
-          date: "21 Maret 2025",
-          time: "09.00 WIB",
-          image: "placeholder.jpg",
-          message: "Lomba inovasi digital bertema 'Smart Campus' dengan hadiah jutaan rupiah.",
-          maxParticipants: 100
-        },
-        {
-          title: "Workshop UI/UX Design: Membangun Portofolio Profesional",
-          date: "05 April 2025",
-          time: "13.00 WIB",
-          image: "placeholder.jpg",
-          message: "Pelatihan intensif desain antarmuka pengguna dengan studi kasus nyata.",
-          maxParticipants: 30
-        },
-        {
-          title: "Seminar Big Data & Analytics di Era Industri 4.0",
-          date: "18 April 2025",
-          time: "10.00 WIB",
-          image: "placeholder.jpg",
-          message: "Mendalami penerapan big data untuk pengambilan keputusan bisnis.",
-          maxParticipants: 50
-        }
-      ],
+      events: [], // Menginisialisasi daftar event kosong
       selectedEvent: null,
-      // Sample participants data
-      participants: [
-        {
-          eventTitle: "Telkommetra Mengadakan Lomba Inovasi Digital untuk Mahasiswa Seluruh Indonesia",
-          data: [
-            { name: "Budi Santoso", email: "budi.santoso@gmail.com", registerDate: "15 Maret 2025", status: "Accepted" },
-            { name: "Dewi Lestari", email: "dewi.l@yahoo.com", registerDate: "16 Maret 2025", status: "Processing" },
-            { name: "Andi Nugraha", email: "andi.nugraha@outlook.com", registerDate: "17 Maret 2025", status: "Rejected" },
-            { name: "Siti Rahayu", email: "siti.r@gmail.com", registerDate: "17 Maret 2025", status: "Processing" }
-          ]
-        },
-        {
-          eventTitle: "Workshop UI/UX Design: Membangun Portofolio Profesional",
-          data: [
-            { name: "Fajar Ramadhan", email: "fajar.r@gmail.com", registerDate: "01 April 2025", status: "Accepted" },
-            { name: "Maya Putri", email: "maya.p@yahoo.com", registerDate: "02 April 2025", status: "Accepted" }
-          ]
-        },
-        {
-          eventTitle: "Seminar Big Data & Analytics di Era Industri 4.0",
-          data: [
-            { name: "Ricky Harun", email: "ricky.h@gmail.com", registerDate: "10 April 2025", status: "Processing" },
-            { name: "Dina Surya", email: "dina.s@gmail.com", registerDate: "11 April 2025", status: "Processing" },
-            { name: "Rizki Pratama", email: "rizki.p@yahoo.com", registerDate: "12 April 2025", status: "Accepted" }
-          ]
-        }
-      ]
     };
   },
   computed: {
     eventParticipants() {
       if (!this.selectedEvent) return [];
-      
-      const eventParticipantData = this.participants.find(p => 
-        p.eventTitle === this.selectedEvent.title
+      const eventParticipantData = this.participants.find(
+        (p) => p.eventTitle === this.selectedEvent.title
       );
-      
       return eventParticipantData ? eventParticipantData.data : [];
-    }
+    },
+  },
+  async mounted() {
+    await this.checkAuthentication();
+    await this.fetchEvents(); // Mengambil event dari backend
   },
   methods: {
+    async fetchEvents() {
+      try {
+        const response = await getEvents(); // Mengambil event menggunakan API
+        this.events = response.data; // Menyimpan event yang diambil ke dalam array events
+      } catch (error) {
+        console.error("Error fetching events:", error);
+      }
+    },
+    async checkAuthentication() {
+      try {
+        const token = localStorage.getItem("token");
+        const userData = localStorage.getItem("user");
+
+        if (!token) {
+          this.redirectToLogin();
+          return;
+        }
+
+        let user = null;
+        if (userData) {
+          user = JSON.parse(userData);
+        }
+
+        if (!user || !user.role || user.role.toUpperCase() !== "STAFF") {
+          this.redirectToLogin();
+          return;
+        }
+
+        const response = await axios.get("/api/auth/me", {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        if (response.status === 200) {
+          this.user = {
+            ...this.user,
+            ...response.data,
+            name: response.data.name || this.user.name,
+            division: response.data.divisi || this.user.divisi,
+            photo: response.data.fotoPath || this.user.photo,
+          };
+
+          this.isAuthenticated = true;
+          this.isLoading = false;
+        } else {
+          this.redirectToLogin();
+        }
+      } catch (error) {
+        this.redirectToLogin();
+      }
+    },
+    async showAuthError(title, message) {
+      await Swal.fire({
+        icon: "error",
+        title: title,
+        text: message,
+        confirmButtonText: "Ke Halaman Login",
+        allowOutsideClick: false,
+        customClass: {
+          confirmButton: "btn btn-danger",
+        },
+      });
+    },
+    clearAuthData() {
+      localStorage.removeItem("token");
+      localStorage.removeItem("user");
+    },
+    redirectToLogin() {
+      this.isLoading = false;
+      this.isAuthenticated = false;
+      this.$router.push("/");
+    },
     openModal(event) {
       this.selectedEvent = event;
-      document.body.classList.add('modal-open');
+      document.body.classList.add("modal-open");
     },
     closeModal() {
       this.selectedEvent = null;
-      document.body.classList.remove('modal-open');
+      document.body.classList.remove("modal-open");
     },
-    deleteEvent(index) {
-      if (confirm('Are you sure you want to delete this event?')) {
+    async deleteEvent(index) {
+      const result = await Swal.fire({
+        title: "Hapus Event",
+        text: "Apakah Anda yakin ingin menghapus event ini? Tindakan ini tidak dapat dibatalkan.",
+        icon: "warning",
+        showCancelButton: true,
+        confirmButtonColor: "#d33",
+        cancelButtonColor: "#3085d6",
+        confirmButtonText: "Ya, hapus!",
+        cancelButtonText: "Batal",
+      });
+
+      if (result.isConfirmed) {
         this.events.splice(index, 1);
+
+        const Toast = Swal.mixin({
+          toast: true,
+          position: "top-end",
+          showConfirmButton: false,
+          timer: 3000,
+          timerProgressBar: true,
+        });
+
+        Toast.fire({
+          icon: "success",
+          title: "Event berhasil dihapus",
+        });
       }
     },
-    deleteSelectedEvent() {
-      if (confirm('Are you sure you want to delete this event?')) {
-        const index = this.events.findIndex(e => e.title === this.selectedEvent.title);
+    async deleteSelectedEvent() {
+      const result = await Swal.fire({
+        title: "Hapus Event",
+        text: `Apakah Anda yakin ingin menghapus "${this.selectedEvent.title}"? Tindakan ini tidak dapat dibatalkan.`,
+        icon: "warning",
+        showCancelButton: true,
+        confirmButtonColor: "#d33",
+        cancelButtonColor: "#3085d6",
+        confirmButtonText: "Ya, hapus!",
+        cancelButtonText: "Batal",
+      });
+
+      if (result.isConfirmed) {
+        const index = this.events.findIndex((e) => e.title === this.selectedEvent.title);
         if (index !== -1) {
           this.events.splice(index, 1);
           this.closeModal();
+
+          const Toast = Swal.mixin({
+            toast: true,
+            position: "top-end",
+            showConfirmButton: false,
+            timer: 3000,
+            timerProgressBar: true,
+          });
+
+          Toast.fire({
+            icon: "success",
+            title: "Event berhasil dihapus",
+          });
         }
       }
     },
-    updateParticipantStatus(participantIndex, newStatus) {
-      const eventIndex = this.participants.findIndex(p => p.eventTitle === this.selectedEvent.title);
+    async updateParticipantStatus(participantIndex, newStatus) {
+      const eventIndex = this.participants.findIndex((p) => p.eventTitle === this.selectedEvent.title);
       if (eventIndex !== -1) {
-        this.participants[eventIndex].data[participantIndex].status = newStatus;
+        const participant = this.participants[eventIndex].data[participantIndex];
+        const oldStatus = participant.status;
+
+        const result = await Swal.fire({
+          title: "Perbarui Status",
+          text: `Ubah status untuk ${participant.name} dari "${oldStatus}" menjadi "${newStatus}"?`,
+          icon: "question",
+          showCancelButton: true,
+          confirmButtonColor: "#3085d6",
+          cancelButtonColor: "#6c757d",
+          confirmButtonText: "Ya, perbarui",
+          cancelButtonText: "Batal",
+        });
+
+        if (result.isConfirmed) {
+          this.participants[eventIndex].data[participantIndex].status = newStatus;
+
+          const Toast = Swal.mixin({
+            toast: true,
+            position: "top-end",
+            showConfirmButton: false,
+            timer: 3000,
+            timerProgressBar: true,
+          });
+
+          Toast.fire({
+            icon: "success",
+            title: `Status diperbarui ke ${newStatus}`,
+          });
+        }
       }
     },
     getStatusBadgeClass(status) {
       switch (status) {
-        case 'Accepted':
-          return 'badge bg-success';
-        case 'Processing':
-          return 'badge bg-secondary';
-        case 'Rejected':
-          return 'badge bg-danger';
+        case "Accepted":
+          return "badge bg-success";
+        case "Processing":
+          return "badge bg-secondary";
+        case "Rejected":
+          return "badge bg-danger";
         default:
-          return 'badge bg-secondary';
+          return "badge bg-secondary";
       }
-    }
-  }
+    },
+  },
 };
 </script>
 
@@ -320,7 +426,7 @@ export default {
   display: inline-block;
   padding: 4px;
   border-radius: 50%;
-  background-image: linear-gradient(45deg, #B30202, #DD3232);
+  background-image: linear-gradient(45deg, #b30202, #dd3232);
 }
 
 .profile-photo {
@@ -338,7 +444,7 @@ export default {
 .division-badge {
   display: inline-block;
   background-color: rgba(179, 2, 2, 0.1);
-  color: #B30202;
+  color: #b30202;
   padding: 0.5rem 1rem;
   border-radius: 2rem;
   font-weight: 500;
@@ -348,8 +454,8 @@ export default {
   border-radius: 50px;
   padding: 0.75rem 1.5rem;
   font-weight: 600;
-  background-color: #B30202;
-  color: #FFF1F1;
+  background-color: #b30202;
+  color: #fff1f1;
   box-shadow: 0 4px 10px rgba(179, 2, 2, 0.3);
   transition: all 0.3s ease;
   border: none;
@@ -358,7 +464,7 @@ export default {
 .create-event-btn:hover {
   transform: translateY(-2px);
   box-shadow: 0 6px 12px rgba(179, 2, 2, 0.4);
-  background-color: #DD3232;
+  background-color: #dd3232;
   color: white;
 }
 
@@ -369,7 +475,7 @@ export default {
 }
 
 .section-title {
-  color: #B30202;
+  color: #b30202;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.5px;
@@ -384,14 +490,14 @@ export default {
   top: 0;
   height: 100%;
   width: 4px;
-  background-color: #B30202;
+  background-color: #b30202;
   border-radius: 4px;
 }
 
 .event-counter {
   font-size: 0.85rem;
   padding: 0.4rem 0.8rem;
-  color: #B30202 !important;
+  color: #b30202 !important;
 }
 
 /* Event Cards */
@@ -460,7 +566,8 @@ export default {
   gap: 0.5rem;
 }
 
-.time-badge, .participant-badge {
+.time-badge,
+.participant-badge {
   background-color: rgba(255, 255, 255, 0.15);
   color: rgba(255, 255, 255, 0.9);
   border-radius: 50px;
@@ -595,7 +702,7 @@ export default {
 .date-content .day {
   font-size: 1.5rem;
   font-weight: 700;
-  color: #B30202;
+  color: #b30202;
 }
 
 .date-content .month {
@@ -710,23 +817,23 @@ export default {
 }
 
 .btn-outline-danger {
-  color: #B30202;
-  border-color: #B30202;
+  color: #b30202;
+  border-color: #b30202;
 }
 
 .btn-outline-danger:hover {
-  background-color: #B30202;
+  background-color: #b30202;
   color: white;
 }
 
 .btn-danger {
-  background-color: #B30202;
-  border-color: #B30202;
+  background-color: #b30202;
+  border-color: #b30202;
 }
 
 .btn-danger:hover {
-  background-color: #DD3232;
-  border-color: #DD3232;
+  background-color: #dd3232;
+  border-color: #dd3232;
 }
 
 /* Animation delays for staggered effect */

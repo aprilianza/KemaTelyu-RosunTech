@@ -18,7 +18,8 @@ public class Registration {
     private LocalDate date;
     @Enumerated(EnumType.STRING)
     private Status status;
-    private boolean verified;
+    @Column(name = "is_verified", nullable = false)
+    private boolean verified = false;
 
     public Registration() {}
 

@@ -31,7 +31,7 @@
           <div class="card total-event-card h-100 animate__animated animate__fadeInRight">
             <div class="card-body text-center d-flex flex-column justify-content-center">
               <h1 class="total-events">{{ totalEvents }}</h1>
-              <h5>Total Events</h5>
+              <h5>Total Event</h5>
             </div>
           </div>
         </div>
@@ -41,7 +41,7 @@
           <div class="card history-card h-100 animate__animated animate__fadeInRight">
             <div class="card-body d-flex flex-column align-items-center justify-content-center">
               <img src="@/assets/img/history.png" alt="History" class="history-icon" />
-              <h5 class="mt-3">History</h5>
+              <h5 class="mt-3">Riwayat</h5>
             </div>
           </div>
         </div>
@@ -162,9 +162,15 @@ export default {
     },
   },
   mounted() {
+    // ⬇️ Redirect ke /login kalau token tidak ada
+    const token = localStorage.getItem('token');
+    if (!token) {
+      this.$router.push('/');
+      return;
+    }
+
+    // Lanjut proses normal
     this.fetchCurrentUser();
-    // Make sure FontAwesome is loaded if you're using it via CDN
-    // If you're not using it via main.js or index.html already
     this.loadFontAwesome();
   },
   methods: {
