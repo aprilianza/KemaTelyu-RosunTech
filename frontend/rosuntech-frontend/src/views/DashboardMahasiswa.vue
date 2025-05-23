@@ -116,6 +116,7 @@
 <script>
 import Sidebar from '@/components/Sidebar.vue';
 import api from '@/api/axios';
+import { getEvents } from '@/api/event';
 
 export default {
   name: 'DashboardMahasiswa',
@@ -166,6 +167,14 @@ export default {
         link.rel = 'stylesheet';
         link.href = 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css';
         document.head.appendChild(link);
+      }
+    },
+    async fetchEvents() {
+      try {
+        const response = await getEvents(); // Mengambil event menggunakan API
+        this.events = response.data; // Menyimpan event yang diambil ke dalam array events
+      } catch (error) {
+        console.error("Error fetching events:", error);
       }
     },
     async fetchCurrentUser() {
