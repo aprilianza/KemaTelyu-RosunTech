@@ -245,12 +245,14 @@ export default {
   async mounted() {
     await this.checkAuthentication();
   },
+  async mounted() {
+    await this.checkAuthentication();
+  },
   methods: {
     async checkAuthentication() {
       try {
         const token = localStorage.getItem('token');
         const userData = localStorage.getItem('user');
-
         // Cek token di localStorage
         if (!token) {
           await this.showAuthError('Autentikasi Diperlukan', 'Silakan login untuk mengakses halaman ini');
@@ -320,7 +322,6 @@ export default {
           // Error lainnya
           await this.showAuthError('Kesalahan', 'Terjadi kesalahan saat memverifikasi autentikasi');
         }
-
         this.clearAuthData();
         this.redirectToLogin();
       }
