@@ -7,22 +7,25 @@ public class EventSummaryDTO {
 
     private Long id;
     private String title;
+    private String description; // ✅ Tambahan
     private LocalDate date;
-    private LocalTime time;     // ✅ field baru
+    private LocalTime time;
     private String fotoPath;
 
     public EventSummaryDTO() {}
 
-    // ✅ Constructor lengkap dengan time
-    public EventSummaryDTO(Long id, String title, LocalDate date, LocalTime time, String fotoPath) {
+    // ✅ Constructor lengkap
+    public EventSummaryDTO(Long id, String title, String description, LocalDate date, LocalTime time, String fotoPath) {
         this.id = id;
         this.title = title;
+        this.description = description;
         this.date = date;
         this.time = time;
         this.fotoPath = fotoPath;
     }
 
     /* ---------- GETTERS & SETTERS ---------- */
+
     public Long getId() {
         return id;
     }
@@ -37,6 +40,14 @@ public class EventSummaryDTO {
 
     public void setTitle(String title) {
         this.title = title;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
     }
 
     public LocalDate getDate() {
