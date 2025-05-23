@@ -28,12 +28,14 @@
               <button
                 v-if="event.status === 'Diterima'"
                 class="btn action-btn download-btn "
+                 @click="downloadCertificate(event)"
               >
                 Download
               </button>
               <button
                 v-if="event.status === 'Menunggu'"
                 class="btn action-btn cancel-btn"
+                @click="cancelRegistration(event.id)"
               >
                 Batal
               </button>
@@ -47,6 +49,9 @@
 
 <script>
 import Sidebar from '@/components/Sidebar.vue';
+import api from '@/api/axios';
+import jsPDF from 'jspdf';
+import html2canvas from 'html2canvas';
 
 export default {
   name: 'HistoryRegisteredEvents',
@@ -55,29 +60,20 @@ export default {
   },
   data() {
     return {
-      historyEvents: [
-        {
-          id: 1,
-          title: 'Workshop UI/UX Design: Membangun Portofolio Profesional',
-          dateCreated: '9 May 2023',
-          status: 'Diterima'
-        },
-        {
-          id: 2,
-          title: 'Seminar Big Data & Analytics di Era Industri 4.0',
-          dateCreated: '9 May 2023',
-          status: 'Menunggu'
-        },
-        {
-          id: 3,
-          title: 'Telkommetra Mengadakan Lomba Inovasi Digital untuk Mahasiswa Seluruh Indonesia',
-          dateCreated: '10 May 2023',
-          status: 'Diterima'
-        }
-      ]
+      historyEvents: [],
+      
     };
   },
   created() {
+    const savedHistory = localStorage.getItem('historyEvents');
+    if (savedHistory) {
+      try {
+        this.historyEvents = JSON.parse(savedHistory);
+      } catch {
+        this.historyEvents = [];
+      }
+    }
+
     if (this.$route.params.event) {
       const event = this.$route.params.event;
       this.historyEvents.push(event);
@@ -88,7 +84,12 @@ export default {
     this.loadAnimateCSS();
   },
   methods: {
-    loadAnimateCSS() {
+
+    saveHistoryToLocalStorage() {
+    localStorage.setItem('historyEvents', JSON.stringify(this.historyEvents));
+  },
+
+     loadAnimateCSS() {
       if (!document.getElementById('animate-css')) {
         const link = document.createElement('link');
         link.id = 'animate-css';
@@ -96,6 +97,70 @@ export default {
         link.href = 'https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css';
         document.head.appendChild(link);
       }
+    },
+    async downloadCertificate(event) {
+      try {
+        // Misalnya ambil data sertifikat dari backend
+        const response = await api.get(`/certificates/${event.id}`);
+        const certificateData = response.data;
+
+        // Buat elemen sertifikat yang tersembunyi untuk dijadikan canvas
+        const container = document.createElement('div');
+        container.style.width = '800px';
+        container.style.padding = '20px';
+        container.style.backgroundColor = '#fff';
+
+        // Contoh layout sertifikat sederhana (bisa kustom sesuai kebutuhan)
+        container.innerHTML = `
+          <div style="text-align: center; font-family: Arial, sans-serif;">
+            <h1>SERTIFIKAT</h1>
+            <p>Dengan bangga diberikan kepada:</p>
+            <h2>${certificateData.name}</h2>
+            <p>Untuk partisipasi dalam event:</p>
+            <h3>${certificateData.eventTitle}</h3>
+            <p>Tanggal: ${certificateData.eventDate}</p>
+            <img src="${certificateData.photoUrl}" style="width: 200px; margin-top: 20px;" />
+            <p>Telkom University</p>
+          </div>
+        `;
+
+        document.body.appendChild(container);
+
+        // Generate canvas dari elemen
+        const canvas = await html2canvas(container, { scale: 2 });
+        const imgData = canvas.toDataURL('image/png');
+
+        // Buat PDF
+        const pdf = new jsPDF({
+          orientation: 'landscape',
+          unit: 'px',
+          format: [canvas.width, canvas.height]
+        });
+
+        pdf.addImage(imgData, 'PNG', 0, 0, canvas.width, canvas.height);
+
+        // Download PDF
+        pdf.save(`sertifikat_${certificateData.name}.pdf`);
+
+        // Hapus elemen sementara
+        document.body.removeChild(container);
+
+      } catch (error) {
+        console.error('Gagal download sertifikat:', error);
+        this.$swal.fire({
+          icon: 'error',
+          title: 'Gagal Download',
+          text: 'Tidak dapat mengunduh sertifikat saat ini. Silakan coba lagi.',
+          confirmButtonText: 'OK'
+        });
+      }
+    },
+    cancelRegistration(eventId) {
+      // Hapus event dengan id = eventId yang statusnya 'Menunggu'
+      this.historyEvents = this.historyEvents.filter(
+        event => !(event.id === eventId && event.status === 'Menunggu')
+      );
+      this.saveHistoryToLocalStorage();
     }
   }
 };
