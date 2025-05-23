@@ -23,22 +23,21 @@ public class EventController {
         this.service = service;
     }
 
-    /* ---------------------- CREATE EVENT (STAFF ONLY) ---------------------- */
+    /* --------- CREATE (STAFF ONLY) --------- */
     @PostMapping
     public ResponseEntity<?> createEvent(@RequestBody CreateEventRequest dto) {
         Long userId = (Long) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         String role = SecurityContextHolder.getContext().getAuthentication()
-                .getAuthorities().iterator().next().getAuthority(); // ex: ROLE_STAFF
+                .getAuthorities().iterator().next().getAuthority(); // ROLE_STAFF
 
         if (!"ROLE_STAFF".equals(role)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body("Hanya akun STAFF yang boleh membuat event");
         }
-
         return ResponseEntity.ok(service.createEvent(dto, userId));
     }
 
-    /* ---------------------- BASIC CRUD ------------------------ */
+    /* -------- BASIC CRUD -------- */
     @GetMapping
     public List<EventSummaryDTO> getAll() {
         return service.getAllEvents(); // ✅ return DTO untuk hindari lazy proxy error
@@ -55,9 +54,16 @@ public class EventController {
         old.setTitle(dto.getTitle());
         old.setDescription(dto.getDescription());
         old.setDate(dto.getDate());
+        old.setTime(dto.getTime());
         old.setMaxParticipant(dto.getMaxParticipant());
-        old.setFotoPath(dto.getFotoPath());
-        return service.createEvent(dto, old.getCreatedBy().getId()); // update pakai createEvent reuse
+
+        String fotoPath = dto.getFotoPath();
+        if (fotoPath != null && !fotoPath.startsWith("uploads/events/")) {
+            fotoPath = "uploads/events/" + fotoPath;
+        }
+        old.setFotoPath(fotoPath);
+
+        return service.createEvent(dto, old.getCreatedBy().getId());
     }
 
     @DeleteMapping("/{id}")
