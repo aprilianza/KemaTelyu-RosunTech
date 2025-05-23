@@ -9,6 +9,9 @@ import com.kematelyu.kematelyu.repository.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -31,25 +34,25 @@ public class EventService {
 
     public List<EventSummaryDTO> getAllEvents() {
         return repo.findAll().stream()
-                .map(event -> new EventSummaryDTO(
-                        event.getId(),
-                        event.getTitle(),
-                        event.getDate(),
-                        event.getFotoPath()))
+                .map(e -> new EventSummaryDTO(
+                        e.getId(),
+                        e.getTitle(),
+                        e.getDate(),
+                        e.getFotoPath()))
                 .collect(Collectors.toList());
     }
 
     public EventDetailDTO getEventDetailById(Long id) {
-        Event event = repo.findById(id)
+        Event e = repo.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Event id " + id + " not found"));
 
         return new EventDetailDTO(
-                event.getId(),
-                event.getTitle(),
-                event.getDescription(),
-                event.getDate(),
-                event.getFotoPath(),
-                event.getMaxParticipant());
+                e.getId(),
+                e.getTitle(),
+                e.getDescription(),
+                e.getDate(),
+                e.getFotoPath(),
+                e.getMaxParticipant());
     }
 
     /* -------------------- CRUD -------------------- */
@@ -73,6 +76,8 @@ public class EventService {
         Staff staff = staffRepo.findById(staffId)
                 .orElseThrow(() -> new ResourceNotFoundException("Staff not found"));
 
+        ensureStaticEventsDir(); // pastikan folder ada
+
         Event e = new Event();
         e.setTitle(dto.getTitle());
         e.setDescription(dto.getDescription());
@@ -80,8 +85,8 @@ public class EventService {
         e.setTime(dto.getTime());
 
         String fotoPath = dto.getFotoPath();
-        if (fotoPath != null && !fotoPath.startsWith("uploads/events/")) {
-            fotoPath = "uploads/events/" + fotoPath;
+        if (fotoPath != null && !fotoPath.startsWith("events/")) {
+            fotoPath = "events/" + fotoPath;
         }
         e.setFotoPath(fotoPath);
 
@@ -143,7 +148,7 @@ public class EventService {
         reg.setVerified(true);
         regRepo.save(reg);
 
-        // 🔥 otomatis generate sertifikat saat di-approve
+        /* otomatis generate sertifikat */
         Event event = reg.getEvent();
         Mahasiswa mhs = reg.getMahasiswa();
 
@@ -162,10 +167,7 @@ public class EventService {
         return regRepo.save(reg);
     }
 
-    /**
-     * Generate sertifikat manual (fallback).
-     * Dipakai kalau butuh regenerate via service lain.
-     */
+    /* Manual generate sertifikat (fallback) */
     public Certificate generateCertificate(Long eventId, String nim) {
         Event event = byId(eventId);
         Mahasiswa m = mahasiswaRepo.findByNim(nim)
@@ -181,5 +183,17 @@ public class EventService {
 
         Certificate c = event.generateCertificate(m);
         return certificateRepo.save(c);
+    }
+
+    /* -------------------- util -------------------- */
+
+    /** Pastikan resources/static/events/ ada (dev-time). */
+    private void ensureStaticEventsDir() {
+        try {
+            Path p = Paths.get("src/main/resources/static/events");
+            if (Files.notExists(p))
+                Files.createDirectories(p);
+        } catch (Exception ignored) {
+        }
     }
 }

@@ -6,18 +6,17 @@ import com.kematelyu.kematelyu.repository.MahasiswaRepository;
 import com.kematelyu.kematelyu.repository.StaffRepository;
 import com.kematelyu.kematelyu.repository.UserRepository;
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Component;
 
 import java.text.Normalizer;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Locale;
-import java.util.Random;
+import java.util.*;
 
 /**
- * Dev seeder – masukkan puluhan Mahasiswa & Staff Bardaks.
- * Jalan otomatis saat aplikasi start (kalau tabel user masih kosong).
+ * Dev seeder – 40 Mahasiswa & 15 Staff Bardaks + foto avatar acak.
+ * Berjalan sekali saat tabel user masih kosong.
  */
 @Component
 public class DummySeeder implements CommandLineRunner {
@@ -25,8 +24,12 @@ public class DummySeeder implements CommandLineRunner {
     private final UserRepository userRepo;
     private final MahasiswaRepository mhsRepo;
     private final StaffRepository staffRepo;
+
     private final BCryptPasswordEncoder enc = new BCryptPasswordEncoder();
     private final Random rand = new Random();
+
+    /* -------- avatar pool (terisi di ctor) -------- */
+    private final List<String> avatarPool = new ArrayList<>();
 
     public DummySeeder(UserRepository userRepo,
             MahasiswaRepository mhsRepo,
@@ -34,6 +37,27 @@ public class DummySeeder implements CommandLineRunner {
         this.userRepo = userRepo;
         this.mhsRepo = mhsRepo;
         this.staffRepo = staffRepo;
+
+        /* scan resources/static/user_image/*.(png|jpg|jpeg|webp) */
+        PathMatchingResourcePatternResolver r = new PathMatchingResourcePatternResolver();
+        String[] patterns = {
+                "classpath:/static/user_image/*.png",
+                "classpath:/static/user_image/*.jpg",
+                "classpath:/static/user_image/*.jpeg",
+                "classpath:/static/user_image/*.webp"
+        };
+        try {
+            for (String p : patterns) {
+                for (Resource res : r.getResources(p)) {
+                    String filename = Objects.requireNonNull(res.getFilename());
+                    avatarPool.add("user_image/" + filename); // simpan relative path
+                }
+            }
+        } catch (Exception e) {
+            System.out.println("Avatar scan error: " + e.getMessage());
+        }
+        if (avatarPool.isEmpty())
+            avatarPool.add("user_image/default.png"); // fallback
     }
 
     @Override
@@ -44,10 +68,10 @@ public class DummySeeder implements CommandLineRunner {
             return;
         }
 
-        System.out.println("DummySeeder ➜ seeding data…");
+        System.out.println("DummySeeder ➜ seeding data… (avatar pool " + avatarPool.size() + " file)");
         String hash = enc.encode("password123");
 
-        /* ---------- Mahasiswa list ---------- */
+        /* ---------- Mahasiswa ---------- */
         List<String[]> mahasiswaData = List.of(
                 new String[] { "103012300231", "AHMAD REFI WIDI KATIBIN" },
                 new String[] { "103012300425", "AL MADINATUL MUNAWARA" },
@@ -98,16 +122,12 @@ public class DummySeeder implements CommandLineRunner {
             m.setEmail(buildEmail(arr[1]));
             m.setPassword(hash);
             m.setRole("MAHASISWA");
+            m.setFotoPath(randomAvatar());
             mhsRepo.save(m);
         });
 
         /* ---------- Staff Bardaks ---------- */
-        List<String> divisiList = Arrays.asList(
-                "Ketua", "Wakil", "Sekretaris", "Bendahara",
-                "Humas", "Publikasi", "Kreatif", "Acara",
-                "Sponsorship", "Logistik");
-
-        List<String> staffRaw = List.of(
+        List<String> staffNames = List.of(
                 "Azhar alauddin S.T",
                 "Rangga Pratama S.T",
                 "Gifan Tattt S.Komedi",
@@ -123,23 +143,26 @@ public class DummySeeder implements CommandLineRunner {
                 "Vanisa Pricillia S.Desain",
                 "Aliya Zahra S.Gizi",
                 "Azka Rahadian S.Kom");
+        List<String> divisi = List.of(
+                "Ketua", "Wakil", "Sekretaris", "Bendahara",
+                "Humas", "Publikasi", "Kreatif", "Acara",
+                "Sponsorship", "Logistik");
 
-        staffRaw.forEach(fullName -> {
-            String divisi = divisiList.get(rand.nextInt(divisiList.size()));
-            Staff s = new Staff(divisi);
-            s.setName(fullName);
-            s.setEmail(buildEmail(fullName));
+        staffNames.forEach(n -> {
+            Staff s = new Staff(divisi.get(rand.nextInt(divisi.size())));
+            s.setName(n);
+            s.setEmail(buildEmail(n));
             s.setPassword(hash);
             s.setRole("STAFF");
+            s.setFotoPath(randomAvatar());
             staffRepo.save(s);
         });
 
-        System.out.println("DummySeeder ➜ SELESAI. total user: " + userRepo.count());
+        System.out.println("DummySeeder ➜ selesai. total user: " + userRepo.count());
     }
 
     /* ---------- util ---------- */
 
-    /** Convert nama → email lowcamel + @telyu.ac.id */
     private String buildEmail(String nama) {
         String slug = Normalizer.normalize(nama, Normalizer.Form.NFD)
                 .replaceAll("[^\\p{Alnum} ]", "")
@@ -147,5 +170,9 @@ public class DummySeeder implements CommandLineRunner {
                 .replaceAll("\\s+", ".")
                 .toLowerCase(Locale.ROOT);
         return slug + "@telyu.ac.id";
+    }
+
+    private String randomAvatar() {
+        return avatarPool.get(rand.nextInt(avatarPool.size()));
     }
 }

@@ -3,11 +3,9 @@ package com.kematelyu.kematelyu.controller;
 import com.kematelyu.kematelyu.dto.CreateEventRequest;
 import com.kematelyu.kematelyu.dto.EventDetailDTO;
 import com.kematelyu.kematelyu.dto.EventSummaryDTO;
-import com.kematelyu.kematelyu.exception.ResourceNotFoundException;
 import com.kematelyu.kematelyu.model.Event;
-import com.kematelyu.kematelyu.model.Mahasiswa;
-import com.kematelyu.kematelyu.service.EventService;
 import com.kematelyu.kematelyu.model.Registration;
+import com.kematelyu.kematelyu.service.EventService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -31,19 +29,20 @@ public class EventController {
     public ResponseEntity<?> createEvent(@RequestBody CreateEventRequest dto) {
         Long userId = (Long) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         String role = SecurityContextHolder.getContext().getAuthentication()
-                .getAuthorities().iterator().next().getAuthority(); // ROLE_STAFF
+                .getAuthorities().iterator().next().getAuthority();
 
-        if (!"ROLE_STAFF".equals(role)) {
+        if (!"ROLE_STAFF".equals(role))
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body("Hanya akun STAFF yang boleh membuat event");
-        }
+
         return ResponseEntity.ok(service.createEvent(dto, userId));
     }
 
     /* -------- BASIC CRUD -------- */
+
     @GetMapping
     public List<EventSummaryDTO> getAll() {
-        return service.getAllEvents(); // ✅ return DTO untuk hindari lazy proxy error
+        return service.getAllEvents();
     }
 
     @GetMapping("/{id}")
@@ -60,12 +59,13 @@ public class EventController {
         old.setTime(dto.getTime());
         old.setMaxParticipant(dto.getMaxParticipant());
 
-        String fotoPath = dto.getFotoPath();
-        if (fotoPath != null && !fotoPath.startsWith("uploads/events/")) {
-            fotoPath = "uploads/events/" + fotoPath;
+        String foto = dto.getFotoPath();
+        if (foto != null && !foto.startsWith("events/")) {
+            foto = "events/" + foto;
         }
-        old.setFotoPath(fotoPath);
+        old.setFotoPath(foto);
 
+        /* gunakan repo.save via service.createEvent agar relasi staff tetap benar */
         return service.createEvent(dto, old.getCreatedBy().getId());
     }
 
@@ -75,10 +75,10 @@ public class EventController {
     }
 
     /* ---------------------- REGISTRATION ---------------------- */
-    @PostMapping("/{id}/register")
-    public ResponseEntity<?> registerToEvent(@PathVariable Long id) {       
-        Long userId = (Long) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
 
+    @PostMapping("/{id}/register")
+    public ResponseEntity<?> registerToEvent(@PathVariable Long id) {
+        Long userId = (Long) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         try {
             Registration reg = service.registerToEventByUser(userId, id);
             return ResponseEntity.ok("Pendaftaran berhasil, status: " + reg.getStatus());
@@ -93,23 +93,24 @@ public class EventController {
     }
 
     @GetMapping("/{eventId}/participants/status")
-    public ResponseEntity<?> getParticipantsByStatus(@PathVariable Long eventId,
-                                                    @RequestParam String status) {
+    public ResponseEntity<?> getParticipantsByStatus(
+            @PathVariable Long eventId,
+            @RequestParam String status) {
         return ResponseEntity.ok(service.getParticipantsByStatus(eventId, status));
     }
 
     @PutMapping("/participants/{registrationId}/approve")
     public ResponseEntity<?> approveParticipant(@PathVariable Long registrationId) {
         String role = SecurityContextHolder.getContext().getAuthentication()
-            .getAuthorities().iterator().next().getAuthority();
-        if (!"ROLE_STAFF".equals(role)) {
+                .getAuthorities().iterator().next().getAuthority();
+
+        if (!"ROLE_STAFF".equals(role))
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body("Hanya staff yang boleh meng-approve pendaftaran.");
-        }
 
         try {
-            Registration approved = service.approveParticipant(registrationId);
-            return ResponseEntity.ok("Berhasil approve peserta: " + approved.getMahasiswa().getName());
+            Registration r = service.approveParticipant(registrationId);
+            return ResponseEntity.ok("Berhasil approve peserta: " + r.getMahasiswa().getName());
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(e.getMessage());
         }
@@ -118,37 +119,36 @@ public class EventController {
     @PutMapping("/participants/{registrationId}/reject")
     public ResponseEntity<?> rejectParticipant(@PathVariable Long registrationId) {
         String role = SecurityContextHolder.getContext().getAuthentication()
-            .getAuthorities().iterator().next().getAuthority();
+                .getAuthorities().iterator().next().getAuthority();
 
-        if (!"ROLE_STAFF".equals(role)) {
+        if (!"ROLE_STAFF".equals(role))
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body("Hanya staff yang boleh menolak pendaftaran.");
-        }
 
         try {
-            Registration rejected = service.rejectParticipant(registrationId);
-            return ResponseEntity.ok("Pendaftaran ditolak untuk: " + rejected.getMahasiswa().getName());
+            Registration r = service.rejectParticipant(registrationId);
+            return ResponseEntity.ok("Pendaftaran ditolak untuk: " + r.getMahasiswa().getName());
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
 
     /* --------------------- CERTIFICATE ------------------------ */
+
     @PostMapping("/{id}/generate-certificate")
-    public ResponseEntity<?> generateCertificate(@PathVariable Long id,
-                                                 @RequestParam String nim) {
+    public ResponseEntity<?> generateCertificate(
+            @PathVariable Long id,
+            @RequestParam String nim) {
         return ResponseEntity.ok(service.generateCertificate(id, nim));
     }
 
-    /* --------------------- DTO ENDPOINTS ------------------------ */
+    /* --------------------- DTO for FE ------------------------ */
 
-    // Untuk homepage: daftar event ringkas
     @GetMapping("/summary")
     public List<EventSummaryDTO> getEventSummaries() {
         return service.getAllEvents();
     }
 
-    // Untuk detail: detail lengkap 1 event
     @GetMapping("/{id}/detail")
     public EventDetailDTO getEventDetail(@PathVariable Long id) {
         return service.getEventDetailById(id);
