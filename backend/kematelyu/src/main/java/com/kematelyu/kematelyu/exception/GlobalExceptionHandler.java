@@ -1,21 +1,30 @@
 package com.kematelyu.kematelyu.exception;
 
-import org.springframework.http.*;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.ControllerAdvice;
+import org.springframework.web.bind.annotation.ExceptionHandler;
 
-@RestControllerAdvice
+import java.util.LinkedHashMap;
+import java.util.Map;
+
+@ControllerAdvice
 public class GlobalExceptionHandler {
 
-    @ExceptionHandler(ResourceNotFoundException.class)
-    public ResponseEntity<String> notFound(ResourceNotFoundException ex){
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ex.getMessage());
+    @ExceptionHandler(BaseException.class)
+    public ResponseEntity<Map<String, Object>> handleBase(BaseException ex) {
+        Map<String, Object> body = new LinkedHashMap<>();
+        body.put("code", ex.getCode());
+        body.put("status", ex.getStatus());
+        body.put("message", ex.getMessage());
+        return ResponseEntity.status(ex.getCode()).body(body);
     }
 
-    @ExceptionHandler(InvalidCredentialsException.class)
-    public ResponseEntity<?> handleInvalidLogin(InvalidCredentialsException ex) {
-        return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                            .body(new java.util.LinkedHashMap<>() {{
-                                put("message", ex.getMessage());
-                            }});
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<Map<String, Object>> handleOther(Exception ex) {
+        Map<String, Object> body = new LinkedHashMap<>();
+        body.put("code", 500);
+        body.put("status", "Internal Server Error");
+        body.put("message", ex.getMessage());
+        return ResponseEntity.status(500).body(body);
     }
 }
