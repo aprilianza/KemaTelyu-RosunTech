@@ -14,37 +14,37 @@
               <!-- Title -->
               <div class="mb-4">
                 <label class="form-label fw-semibold">Judul Event</label>
-                <input v-model="form.title" class="form-control bg-light border-0" placeholder="Judul" required />
+                <input v-model="form.title" class="form-control bg-light border-0" placeholder="Judul" />
               </div>
 
               <!-- Description -->
               <div class="mb-4">
                 <label class="form-label fw-semibold">Deskripsi Event</label>
-                <textarea v-model="form.description" class="form-control bg-light border-0" rows="4" placeholder="Deskripsi" required></textarea>
+                <textarea v-model="form.description" class="form-control bg-light border-0" rows="4" placeholder="Deskripsi" ></textarea>
               </div>
 
               <!-- Date & Time -->
               <div class="row mb-4">
                 <div class="col-md-6">
                   <label class="form-label fw-semibold">Tanggal</label>
-                  <input type="date" v-model="form.date" class="form-control bg-light border-0" required />
+                  <input type="date" v-model="form.date" class="form-control bg-light border-0"  />
                 </div>
                 <div class="col-md-6">
                   <label class="form-label fw-semibold">Waktu</label>
-                  <input type="time" v-model="form.time" class="form-control bg-light border-0" required />
+                  <input type="time" v-model="form.time" class="form-control bg-light border-0"  />
                 </div>
               </div>
 
               <!-- Max Participants -->
               <div class="mb-4">
                 <label class="form-label fw-semibold">Maksimal Peserta</label>
-                <input type="number" v-model="form.maxParticipant" class="form-control bg-light border-0" required />
+                <input type="number" v-model="form.maxParticipant" class="form-control bg-light border-0"  />
               </div>
 
               <!-- Upload Photo -->
               <div class="mb-4">
                 <label class="form-label fw-semibold">Upload Poster</label>
-                <input type="file" @change="handleFile" class="form-control bg-light border-0" accept="image/*" required />
+                <input type="file" @change="handleFile" class="form-control bg-light border-0" accept="image/*"  />
                 <small class="text-muted">Max 2 MB • JPG/PNG</small>
 
                 <div v-if="preview" class="mt-3 text-center">
