@@ -182,7 +182,7 @@ export default {
       user: {
         name: '',
         division: '',
-        photo: 'profile.png',
+        photo: '',
       },
       events: [],
       selectedEvent: null,
