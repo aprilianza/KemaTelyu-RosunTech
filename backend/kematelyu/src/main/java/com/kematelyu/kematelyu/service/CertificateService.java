@@ -47,4 +47,5 @@ public class CertificateService {
 
     return certificateRepository.findByMahasiswa(mahasiswa);
     }
+    
 }
