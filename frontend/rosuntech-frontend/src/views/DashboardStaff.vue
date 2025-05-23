@@ -245,9 +245,6 @@ export default {
   async mounted() {
     await this.checkAuthentication();
   },
-  async mounted() {
-    await this.checkAuthentication();
-  },
   methods: {
     async checkAuthentication() {
       try {
