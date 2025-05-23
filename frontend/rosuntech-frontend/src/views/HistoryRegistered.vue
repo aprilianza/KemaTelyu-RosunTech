@@ -13,7 +13,7 @@
           <div class="event-card history-event-card d-flex flex-column animate__animated animate__fadeIn"
                :style="{'animation-delay': index * 0.1 + 's'}">
             <h5 class="event-title mb-3">{{ event.title }}</h5>
-            <p class="event-date mb-2">Registration Date: {{ event.dateCreated }}</p>
+            <p class="event-date mb-2">Tanggal Registrasi: {{ event.dateCreated }}</p>
             
             <!-- Status Badge -->
             <div class="d-flex align-items-center mb-3">
@@ -35,7 +35,7 @@
                 v-if="event.status === 'Menunggu'"
                 class="btn action-btn cancel-btn"
               >
-                Cancel
+                Batal
               </button>
             </div>
           </div>

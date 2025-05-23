@@ -87,7 +87,7 @@ export default {
         // Tampilkan SweetAlert2
         this.$swal.fire({
           icon: 'error',
-          title: 'Login Failed',
+          title: 'Login Gagal',
           text: errorMessage,
           confirmButtonText: 'OK',
           customClass: {
