@@ -20,11 +20,16 @@ import java.util.stream.Collectors;
 @Service
 public class EventService {
 
-    @Autowired private EventRepository repo;
-    @Autowired private StaffRepository staffRepo;
-    @Autowired private MahasiswaRepository mahasiswaRepo;
-    @Autowired private RegistrationRepository regRepo;
-    @Autowired private CertificateRepository certificateRepo;
+    @Autowired
+    private EventRepository repo;
+    @Autowired
+    private StaffRepository staffRepo;
+    @Autowired
+    private MahasiswaRepository mahasiswaRepo;
+    @Autowired
+    private RegistrationRepository regRepo;
+    @Autowired
+    private CertificateRepository certificateRepo;
 
     /* -------------------- DTO ENDPOINTS -------------------- */
 
@@ -33,8 +38,9 @@ public class EventService {
                 .map(e -> new EventSummaryDTO(
                         e.getId(),
                         e.getTitle(),
+                        e.getDescription(), // ✅ tambahkan ini
                         e.getDate(),
-                        e.getTime(),        // ✅ include time jika DTO-nya support
+                        e.getTime(),
                         e.getFotoPath()))
                 .collect(Collectors.toList());
     }
@@ -50,8 +56,7 @@ public class EventService {
                 e.getDate(),
                 e.getTime(),
                 e.getFotoPath(),
-                e.getMaxParticipant()
-        );
+                e.getMaxParticipant());
     }
 
     /* -------------------- CRUD -------------------- */
@@ -186,6 +191,7 @@ public class EventService {
             Path p = Paths.get("src/main/resources/static/events");
             if (Files.notExists(p))
                 Files.createDirectories(p);
-        } catch (Exception ignored) {}
+        } catch (Exception ignored) {
+        }
     }
 }
