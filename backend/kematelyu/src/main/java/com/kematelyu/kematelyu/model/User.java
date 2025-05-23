@@ -17,7 +17,7 @@ public abstract class User {
     @Column(nullable = false, unique = true)
     private String email;
 
-    /*  <<< PASSWORD TIDAK DI-SERIALISE KE JSON >>>  */
+    /* <<< PASSWORD TIDAK DI-SERIALISE KE JSON >>> */
     @JsonIgnore
     @Column(nullable = false)
     private String password;
@@ -25,48 +25,82 @@ public abstract class User {
     @Column(nullable = false)
     private String role;
 
-    public User() {}
+    /* ---------- FOTO ---------- */
+    @Column(name = "foto_path")
+    private String fotoPath; // e.g. "certificate/user_image/7.png"
+
+    public User() {
+    }
 
     public User(Long id, String name, String email,
-                String password, String role) {
+            String password, String role, String fotoPath) {
         this.id = id;
         this.name = name;
         this.email = email;
         this.password = password;
         this.role = role;
+        this.fotoPath = fotoPath;
     }
 
-    /* ---------- BASIC LOGIN VALIDATION ---------- */
-    public boolean login(String inputEmail, String inputPassword)
-            throws AkunTidakTerdaftarException, PasswordSalahException {
-        if (!this.email.equals(inputEmail))
-            throw new AkunTidakTerdaftarException("Akun tidak terdaftar");
-        if (!this.password.equals(inputPassword))
-            throw new PasswordSalahException("Password salah");
-        return true;
-    }
-
-    /* ---------- CUSTOM EXCEPTIONS ---------- */
+    /* ---------- EXCEPTIONS ---------- */
     public static class AkunTidakTerdaftarException extends Exception {
-        public AkunTidakTerdaftarException(String msg) { super(msg); }
+        public AkunTidakTerdaftarException(String msg) {
+            super(msg);
+        }
     }
+
     public static class PasswordSalahException extends Exception {
-        public PasswordSalahException(String msg) { super(msg); }
+        public PasswordSalahException(String msg) {
+            super(msg);
+        }
     }
 
-    /* ---------- GETTERS & SETTERS ---------- */
-    public Long getId() { return id; }
-    public void setId(Long id) { this.id = id; }
+    /* ---------- GETTERS / SETTERS ---------- */
+    public Long getId() {
+        return id;
+    }
 
-    public String getName() { return name; }
-    public void setName(String name) { this.name = name; }
+    public void setId(Long id) {
+        this.id = id;
+    }
 
-    public String getEmail() { return email; }
-    public void setEmail(String email) { this.email = email; }
+    public String getName() {
+        return name;
+    }
 
-    public String getPassword() { return password; }
-    public void setPassword(String password) { this.password = password; }
+    public void setName(String name) {
+        this.name = name;
+    }
 
-    public String getRole() { return role; }
-    public void setRole(String role) { this.role = role; }
+    public String getEmail() {
+        return email;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
+    }
+
+    public String getPassword() {
+        return password;
+    }
+
+    public void setPassword(String password) {
+        this.password = password;
+    }
+
+    public String getRole() {
+        return role;
+    }
+
+    public void setRole(String role) {
+        this.role = role;
+    }
+
+    public String getFotoPath() {
+        return fotoPath;
+    }
+
+    public void setFotoPath(String fotoPath) {
+        this.fotoPath = fotoPath;
+    }
 }

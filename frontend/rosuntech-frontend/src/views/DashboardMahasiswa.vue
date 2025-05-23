@@ -162,9 +162,15 @@ export default {
     },
   },
   mounted() {
+    // ⬇️ Redirect ke /login kalau token tidak ada
+    const token = localStorage.getItem('token');
+    if (!token) {
+      this.$router.push('/');
+      return;
+    }
+
+    // Lanjut proses normal
     this.fetchCurrentUser();
-    // Make sure FontAwesome is loaded if you're using it via CDN
-    // If you're not using it via main.js or index.html already
     this.loadFontAwesome();
   },
   methods: {

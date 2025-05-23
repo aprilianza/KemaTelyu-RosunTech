@@ -9,6 +9,9 @@ import com.kematelyu.kematelyu.repository.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -31,30 +34,29 @@ public class EventService {
 
     public List<EventSummaryDTO> getAllEvents() {
         return repo.findAll().stream()
-                .map(event -> new EventSummaryDTO(
-                        event.getId(),
-                        event.getTitle(),
-                        event.getDate(),
-                        event.getFotoPath()
-                ))
+                .map(e -> new EventSummaryDTO(
+                        e.getId(),
+                        e.getTitle(),
+                        e.getDate(),
+                        e.getFotoPath()))
                 .collect(Collectors.toList());
     }
 
     public EventDetailDTO getEventDetailById(Long id) {
-        Event event = repo.findById(id)
+        Event e = repo.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Event id " + id + " not found"));
 
-        // pakai ctor 6-arg yang baru kita tambahkan di atas
         return new EventDetailDTO(
-                event.getId(),
-                event.getTitle(),
-                event.getDescription(),
-                event.getDate(),
-                event.getFotoPath(),
-                event.getMaxParticipant());
+                e.getId(),
+                e.getTitle(),
+                e.getDescription(),
+                e.getDate(),
+                e.getFotoPath(),
+                e.getMaxParticipant());
     }
 
     /* -------------------- CRUD -------------------- */
+
     public List<Event> all() {
         return repo.findAll();
     }
@@ -69,9 +71,12 @@ public class EventService {
     }
 
     /* -------------------- CREATE -------------------- */
+
     public Event createEvent(CreateEventRequest dto, Long staffId) {
         Staff staff = staffRepo.findById(staffId)
                 .orElseThrow(() -> new ResourceNotFoundException("Staff not found"));
+
+        ensureStaticEventsDir(); // pastikan folder ada
 
         Event e = new Event();
         e.setTitle(dto.getTitle());
@@ -79,10 +84,9 @@ public class EventService {
         e.setDate(dto.getDate());
         e.setTime(dto.getTime());
 
-        // auto-prefix uploads/events/
         String fotoPath = dto.getFotoPath();
-        if (fotoPath != null && !fotoPath.startsWith("uploads/events/")) {
-            fotoPath = "uploads/events/" + fotoPath;
+        if (fotoPath != null && !fotoPath.startsWith("events/")) {
+            fotoPath = "events/" + fotoPath;
         }
         e.setFotoPath(fotoPath);
 
@@ -92,24 +96,22 @@ public class EventService {
     }
 
     /* -------------------- pendaftaran & sertifikat -------------------- */
+
     public Registration registerToEvent(Long eventId, String nim) {
         Event event = byId(eventId);
         Mahasiswa m = mahasiswaRepo.findByNim(nim)
-                                   .orElseThrow(() -> new ResourceNotFoundException("Mahasiswa tidak ditemukan"));
+                .orElseThrow(() -> new ResourceNotFoundException("Mahasiswa tidak ditemukan"));
+
         if (regRepo.existsByEventAndMahasiswa(event, m))
             throw new IllegalStateException("Sudah terdaftar di event ini.");
 
-        Registration reg = new Registration();
-        reg.setEvent(event);
-        reg.setMahasiswa(m);
-        reg.setStatus(Registration.Status.PENDING);
-        reg.setVerified(false);
+        Registration reg = new Registration(m, event);
         return regRepo.save(reg);
     }
 
     public Registration registerToEventByUser(Long userId, Long eventId) {
         User user = mahasiswaRepo.findById(userId)
-                    .orElseThrow(() -> new ResourceNotFoundException("Mahasiswa tidak ditemukan"));
+                .orElseThrow(() -> new ResourceNotFoundException("Mahasiswa tidak ditemukan"));
 
         if (!(user instanceof Mahasiswa mhs))
             throw new IllegalStateException("Hanya mahasiswa yang dapat mendaftar");
@@ -137,33 +139,61 @@ public class EventService {
                 .toList();
     }
 
+    /** PUT /api/events/participants/{id}/approve */
     public Registration approveParticipant(Long registrationId) {
         Registration reg = regRepo.findById(registrationId)
-                                  .orElseThrow(() -> new ResourceNotFoundException("Registrasi tidak ditemukan"));
+                .orElseThrow(() -> new ResourceNotFoundException("Registrasi tidak ditemukan"));
+
         reg.setStatus(Registration.Status.APPROVED);
         reg.setVerified(true);
-        return regRepo.save(reg);
+        regRepo.save(reg);
+
+        /* otomatis generate sertifikat */
+        Event event = reg.getEvent();
+        Mahasiswa mhs = reg.getMahasiswa();
+
+        if (!certificateRepo.existsByEventAndMahasiswa(event, mhs)) {
+            Certificate cert = event.generateCertificate(mhs);
+            certificateRepo.save(cert);
+        }
+
+        return reg;
     }
 
     public Registration rejectParticipant(Long registrationId) {
         Registration reg = regRepo.findById(registrationId)
-            .orElseThrow(() -> new ResourceNotFoundException("Registrasi tidak ditemukan"));
-        reg.cancel(); 
+                .orElseThrow(() -> new ResourceNotFoundException("Registrasi tidak ditemukan"));
+        reg.cancel();
         return regRepo.save(reg);
     }
 
+    /* Manual generate sertifikat (fallback) */
     public Certificate generateCertificate(Long eventId, String nim) {
         Event event = byId(eventId);
         Mahasiswa m = mahasiswaRepo.findByNim(nim)
-                                   .orElseThrow(() -> new ResourceNotFoundException("Mahasiswa tidak ditemukan"));
-        Registration reg = regRepo.findByEventAndMahasiswa(event, m)
-                                   .orElseThrow(() -> new ResourceNotFoundException("Belum daftar event"));
-        if (!reg.isVerified()) throw new IllegalStateException("Belum diverifikasi");
+                .orElseThrow(() -> new ResourceNotFoundException("Mahasiswa tidak ditemukan"));
 
-        Certificate c = new Certificate();
-        c.setEvent(event);
-        c.setMahasiswa(m);
-        c.setIssueDate(LocalDate.now());
+        if (certificateRepo.existsByEventAndMahasiswa(event, m))
+            throw new IllegalStateException("Sertifikat sudah dibuat.");
+
+        Registration reg = regRepo.findByEventAndMahasiswa(event, m)
+                .orElseThrow(() -> new ResourceNotFoundException("Belum daftar event"));
+        if (!reg.isVerified())
+            throw new IllegalStateException("Belum diverifikasi");
+
+        Certificate c = event.generateCertificate(m);
         return certificateRepo.save(c);
+    }
+
+    /* -------------------- util -------------------- */
+
+    /** Pastikan resources/static/events/ ada (dev-time). */
+    private void ensureStaticEventsDir() {
+        try {
+            Path p = Paths.get("src/main/resources/static/events");
+            if (Files.notExists(p))
+                Files.createDirectories(p);
+        } catch (Exception ignored) {
+        }
     }
 }
