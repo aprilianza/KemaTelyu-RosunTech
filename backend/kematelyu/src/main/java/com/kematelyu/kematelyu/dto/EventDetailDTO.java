@@ -1,6 +1,7 @@
 package com.kematelyu.kematelyu.dto;
 
 import java.time.LocalDate;
+import java.time.LocalTime;
 
 /**
  * DTO lengkap untuk detail event.
@@ -12,8 +13,9 @@ public class EventDetailDTO {
     private String title;
     private String description;
     private LocalDate date;
+    private LocalTime time;
     private String location; // (belum dipakai, biarkan null⇢future-proof)
-    private Integer quota; // (belum dipakai, biarkan null⇢future-proof)
+    private Integer quota;   // (belum dipakai, biarkan null⇢future-proof)
     private String fotoPath;
     private Integer maxParticipant;
 
@@ -27,12 +29,13 @@ public class EventDetailDTO {
      * Ctor lengkap (8 arg). Pakai ini kalau sudah punya location & quota.
      */
     public EventDetailDTO(Long id, String title, String description, LocalDate date,
-            String location, Integer quota,
-            String fotoPath, Integer maxParticipant) {
+                          LocalTime time, String location, Integer quota,
+                          String fotoPath, Integer maxParticipant) {
         this.id = id;
         this.title = title;
         this.description = description;
         this.date = date;
+        this.time = time;
         this.location = location;
         this.quota = quota;
         this.fotoPath = fotoPath;
@@ -40,15 +43,15 @@ public class EventDetailDTO {
     }
 
     /**
-     * Ctor ringkas (6 arg) — persis seperti yang dipanggil di EventService.
-     * Location & quota diset null (atau bisa default sendiri nanti).
+     * Ctor ringkas (7 arg) — dipakai oleh EventService.
      */
     public EventDetailDTO(Long id, String title, String description, LocalDate date,
-            String fotoPath, Integer maxParticipant) {
-        this(id, title, description, date, null, null, fotoPath, maxParticipant);
+                          LocalTime time, String fotoPath, Integer maxParticipant) {
+        this(id, title, description, date, time, null, null, fotoPath, maxParticipant);
     }
 
     /* ---------- GETTERS & SETTERS ---------- */
+
     public Long getId() {
         return id;
     }
@@ -79,6 +82,14 @@ public class EventDetailDTO {
 
     public void setDate(LocalDate date) {
         this.date = date;
+    }
+
+    public LocalTime getTime() {
+        return time;
+    }
+
+    public void setTime(LocalTime time) {
+        this.time = time;
     }
 
     public String getLocation() {
