@@ -24,6 +24,15 @@ public class EventSummaryDTO {
         this.fotoPath = fotoPath;
     }
 
+    public EventSummaryDTO(Long id, String title, LocalDate date, String fotoPath) {
+        this.id = id;
+        this.title = title;
+        this.date = date;
+        this.fotoPath = fotoPath;
+        this.description = null;
+        this.time = null;
+    }
+
     /* ---------- GETTERS & SETTERS ---------- */
 
     public Long getId() {

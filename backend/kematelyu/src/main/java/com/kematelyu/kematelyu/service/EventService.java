@@ -194,4 +194,15 @@ public class EventService {
         } catch (Exception ignored) {
         }
     }
+
+    public List<EventSummaryDTO> getEventsByStaff(Long userId) {
+        Staff staff = staffRepo.findById(userId)
+            .orElseThrow(() -> new ResourceNotFoundException("Staff tidak ditemukan"));
+    
+        List<Event> events = repo.findByCreatedBy(staff);
+    
+        return events.stream()
+            .map(e -> new EventSummaryDTO(e.getId(), e.getTitle(), e.getDate(), e.getFotoPath()))
+            .collect(Collectors.toList());
+    }
 }
