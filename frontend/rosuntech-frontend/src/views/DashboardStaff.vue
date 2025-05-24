@@ -1,4 +1,4 @@
- <template>
+<template>
   <div class="d-flex">
     <!-- Sidebar -->
     <SidebarStaff />
@@ -18,7 +18,7 @@
                 <h3 class="fw-bold mb-2">{{ user.name }}</h3>
                 <div class="division-badge"><i class="bi bi-building me-2"></i>{{ user.division }}</div>
               </div>
-              <router-link to="/CreateEvent" class="btn btn-lg create-event-btn"> <i class="bi bi-plus-circle me-2"></i>Create Event </router-link>
+              <router-link to="/CreateEvent" class="btn btn-lg create-event-btn"> <i class="bi bi-plus-circle me-2"></i>Buat Event </router-link>
             </div>
           </div>
         </div>
@@ -27,8 +27,8 @@
       <!-- Event List -->
       <div class="events-section">
         <div class="section-header d-flex justify-content-between align-items-center mb-4">
-          <h5 class="section-title mb-0"><i class="bi bi-calendar-event me-2"></i>Current Events You Created</h5>
-          <div class="event-counter badge bg-light text-primary">{{ events.length }} Events</div>
+          <h5 class="section-title mb-0"><i class="bi bi-calendar-event me-2"></i>Event yang Anda Buat</h5>
+          <div class="event-counter badge bg-light text-primary">{{ events.length }} Event</div>
         </div>
 
         <div v-if="loadingEvents" class="text-center py-5">
@@ -50,13 +50,13 @@
               <div class="card-body d-flex flex-column">
                 <div class="badges-container mb-2">
                   <span class="badge time-badge me-2"> <i class="bi bi-clock me-1"></i>{{ formatTime(event.time) }} </span>
-                  <span class="badge participant-badge"> <i class="bi bi-people me-1"></i>Max {{ event.maxParticipants || 50 }} </span>
+                  <span class="badge participant-badge"> <i class="bi bi-people me-1"></i>Maks {{ event.maxParticipant }} </span>
                 </div>
                 <h5 class="event-title mb-2">{{ event.title }}</h5>
                 <p class="event-description text-truncate mb-3">{{ event.description }}</p>
                 <div class="mt-auto d-flex justify-content-between">
-                  <button class="btn btn-outline-light btn-sm" @click="confirmDeleteEvent(event.id)"><i class="bi bi-trash me-1"></i> Delete Event</button>
-                  <button class="btn btn-light btn-sm" @click="openModal(event)"><i class="bi bi-eye me-1"></i> Details</button>
+                  <button class="btn btn-outline-light btn-sm" @click="confirmDeleteEvent(event.id)"><i class="bi bi-trash me-1"></i> Hapus</button>
+                  <button class="btn btn-light btn-sm" @click="openModal(event)"><i class="bi bi-eye me-1"></i> Detail</button>
                 </div>
               </div>
             </div>
@@ -97,7 +97,7 @@
               </div>
               <div class="metadata-item">
                 <span class="metadata-icon users-icon"></span>
-                <span>Max {{ selectedEvent.maxParticipants || 50 }} Participants</span>
+                <span>Maks {{ selectedEvent.maxParticipant }} Peserta</span>
               </div>
             </div>
 
@@ -108,8 +108,8 @@
             <!-- Participants Section -->
             <div class="participants-section mt-4">
               <h4 class="participants-title">
-                <i class="bi bi-people-fill me-2"></i>Participants
-                <span class="participant-count">({{ eventParticipants.length }})</span>
+                <i class="bi bi-people-fill me-2"></i>Peserta
+                <span class="participant-count">({{ selectedEvent.participants.length }})</span>
               </h4>
 
               <div class="table-responsive mt-3">
@@ -117,37 +117,55 @@
                   <thead>
                     <tr>
                       <th scope="col">#</th>
-                      <th scope="col">Name</th>
+                      <th scope="col">Nama</th>
                       <th scope="col">Email</th>
-                      <th scope="col">Registration Date</th>
+                      <th scope="col">NIM</th>
+                      <th scope="col">Fakultas</th>
                       <th scope="col">Status</th>
-                      <th scope="col">Actions</th>
+                      <th scope="col">Aksi</th>
                     </tr>
                   </thead>
                   <tbody>
-                    <tr v-for="(participant, idx) in eventParticipants" :key="participant.id">
+                    <tr v-for="(participant, idx) in selectedEvent.participants" :key="participant.id">
                       <td>{{ idx + 1 }}</td>
-                      <td>{{ participant.user.name }}</td>
-                      <td>{{ participant.user.email }}</td>
-                      <td>{{ formatDateTime(participant.createdAt) }}</td>
                       <td>
-                        <span :class="getStatusBadgeClass(participant.status)">
-                          {{ participant.status }}
+                        <div class="d-flex align-items-center">
+                          <img :src="getUserImage(participant.fotoPath)" class="rounded-circle me-2" width="30" height="30" alt="Foto Peserta">
+                          {{ participant.name }}
+                        </div>
+                      </td>
+                      <td>{{ participant.email }}</td>
+                      <td>{{ participant.nim }}</td>
+                      <td>{{ participant.fakultas }}</td>
+                      <td>
+                        <span :class="getStatusBadgeClass(getRegistrationStatus(participant.nim))">
+                          {{ formatStatus(getRegistrationStatus(participant.nim)) }}
                         </span>
                       </td>
                       <td>
                         <div class="btn-group">
-                          <button class="btn btn-sm btn-success" @click="updateParticipantStatus(participant.id, 'Accepted')" :disabled="participant.status === 'Accepted'">
+                          <button 
+                            class="btn btn-sm btn-success" 
+                            @click="updateParticipantStatus(participant.nim, 'APPROVED')" 
+                            :disabled="getRegistrationStatus(participant.nim) === 'APPROVED'">
                             <i class="bi bi-check-circle"></i>
                           </button>
-                          <button class="btn btn-sm btn-danger" @click="updateParticipantStatus(participant.id, 'Rejected')" :disabled="participant.status === 'Rejected'">
+                          <button 
+                            class="btn btn-sm btn-secondary" 
+                            @click="updateParticipantStatus(participant.nim, 'PENDING')" 
+                            :disabled="getRegistrationStatus(participant.nim) === 'PENDING'">
+                            <i class="bi bi-check-circle"></i>
+                          </button>                          <button 
+                            class="btn btn-sm btn-danger" 
+                            @click="updateParticipantStatus(participant.nim, 'REJECTED')" 
+                            :disabled="getRegistrationStatus(participant.nim) === 'REJECTED'">
                             <i class="bi bi-x-circle"></i>
                           </button>
                         </div>
                       </td>
                     </tr>
-                    <tr v-if="eventParticipants.length === 0">
-                      <td colspan="6" class="text-center py-3">No participants registered yet</td>
+                    <tr v-if="selectedEvent.participants.length === 0">
+                      <td colspan="7" class="text-center py-3">Belum ada peserta yang terdaftar</td>
                     </tr>
                   </tbody>
                 </table>
@@ -155,8 +173,8 @@
             </div>
 
             <div class="modern-modal-actions">
-              <button class="btn btn-outline-danger" @click="closeModal"><i class="bi bi-x-circle me-2"></i>Close</button>
-              <button class="btn btn-danger" @click="confirmDeleteEvent(selectedEvent.id)"><i class="bi bi-trash me-2"></i>Delete Event</button>
+              <button class="btn btn-outline-danger" @click="closeModal"><i class="bi bi-x-circle me-2"></i>Tutup</button>
+              <button class="btn btn-danger" @click="confirmDeleteEvent(selectedEvent.id)"><i class="bi bi-trash me-2"></i>Hapus Event</button>
             </div>
           </div>
         </div>
@@ -169,7 +187,7 @@
 import SidebarStaff from '@/components/SidebarStaff.vue';
 import axios from 'axios';
 import Swal from 'sweetalert2';
-import { getEvents, deleteEvent, getEventParticipants, updateParticipantStatus } from '@/api/event';
+import { getEventsStaff, deleteEvent, updateParticipantStatus } from '@/api/event';
 
 export default {
   name: 'DashboardStaff',
@@ -182,11 +200,10 @@ export default {
       user: {
         name: '',
         division: '',
-        photo: 'profile.png',
+        photo: '',
       },
       events: [],
       selectedEvent: null,
-      eventParticipants: [],
     };
   },
   async mounted() {
@@ -268,31 +285,17 @@ export default {
     async fetchEvents() {
       this.loadingEvents = true;
       try {
-        const response = await getEvents();
+        const response = await getEventsStaff();
         this.events = response.data;
       } catch (error) {
         console.error('Error fetching events:', error);
         Swal.fire({
           icon: 'error',
           title: 'Error',
-          text: 'Failed to load events. Please try again later.',
+          text: 'Gagal memuat event. Silakan coba lagi nanti.',
         });
       } finally {
         this.loadingEvents = false;
-      }
-    },
-
-    async fetchEventParticipants(eventId) {
-      try {
-        const response = await getEventParticipants(eventId);
-        this.eventParticipants = response.data;
-      } catch (error) {
-        console.error('Error fetching participants:', error);
-        Swal.fire({
-          icon: 'error',
-          title: 'Error',
-          text: 'Failed to load participants. Please try again later.',
-        });
       }
     },
 
@@ -323,7 +326,6 @@ export default {
     async openModal(event) {
       this.selectedEvent = event;
       document.body.classList.add('modal-open');
-      await this.fetchEventParticipants(event.id);
     },
 
     closeModal() {
@@ -333,6 +335,10 @@ export default {
 
     getEventImage(fotoPath) {
       if (!fotoPath) return require('@/assets/img/placeholder.jpg');
+      return `http://localhost:8888/${fotoPath}`;
+    },
+
+    getUserImage(fotoPath) {
       return `http://localhost:8888/${fotoPath}`;
     },
 
@@ -360,10 +366,19 @@ export default {
       return timeString.substring(0, 5);
     },
 
-    formatDateTime(dateTimeString) {
-      if (!dateTimeString) return '';
-      const date = new Date(dateTimeString);
-      return date.toLocaleString('id-ID');
+    formatStatus(status) {
+      const statusMap = {
+        'APPROVED': 'Diterima',
+        'REJECTED': 'Ditolak',
+        'PENDING': 'Menunggu'
+      };
+      return statusMap[status] || status;
+    },
+
+    getRegistrationStatus(nim) {
+      if (!this.selectedEvent || !this.selectedEvent.registrations) return 'PENDING';
+      const registration = this.selectedEvent.registrations.find(r => r.mahasiswaNim === nim);
+      return registration ? registration.status : 'PENDING';
     },
 
     async confirmDeleteEvent(eventId) {
@@ -404,20 +419,28 @@ export default {
           Swal.fire({
             icon: 'error',
             title: 'Error',
-            text: 'Failed to delete event. Please try again later.',
+            text: 'Gagal menghapus event. Silakan coba lagi nanti.',
           });
         }
       }
     },
 
-    async updateParticipantStatus(registrationId, newStatus) {
+    async updateParticipantStatus(nim, newStatus) {
       try {
-        await updateParticipantStatus(registrationId, newStatus);
+        // Find the registration ID for this participant
+        const registration = this.selectedEvent.registrations.find(r => r.mahasiswaNim === nim);
+        
+        if (!registration) {
+          throw new Error('Registrasi tidak ditemukan untuk peserta ini');
+        }
+
+        await updateParticipantStatus(registration.id, newStatus);
         
         // Update local state
-        const participant = this.eventParticipants.find(p => p.id === registrationId);
-        if (participant) {
-          participant.status = newStatus;
+        const registrationIndex = this.selectedEvent.registrations.findIndex(r => r.mahasiswaNim === nim);
+        if (registrationIndex !== -1) {
+          this.selectedEvent.registrations[registrationIndex].status = newStatus;
+          this.selectedEvent.registrations[registrationIndex].verified = newStatus === 'APPROVED';
         }
 
         const Toast = Swal.mixin({
@@ -430,25 +453,25 @@ export default {
 
         Toast.fire({
           icon: 'success',
-          title: `Status diperbarui ke ${newStatus}`,
+          title: `Status diperbarui ke ${this.formatStatus(newStatus)}`,
         });
       } catch (error) {
         console.error('Error updating participant status:', error);
         Swal.fire({
           icon: 'error',
           title: 'Error',
-          text: 'Failed to update participant status. Please try again later.',
+          text: 'Gagal memperbarui status peserta. Silakan coba lagi nanti.',
         });
       }
     },
 
     getStatusBadgeClass(status) {
       switch (status) {
-        case 'Accepted':
+        case 'APPROVED':
           return 'badge bg-success';
-        case 'Processing':
+        case 'PENDING':
           return 'badge bg-secondary';
-        case 'Rejected':
+        case 'REJECTED':
           return 'badge bg-danger';
         default:
           return 'badge bg-secondary';

@@ -8,6 +8,10 @@ export async function getEvents() {
   return api.get('/api/events');
 }
 
+export async function getEventsStaff() {
+  return api.get('/api/events/staff/myevents');
+}
+
 export async function deleteEvent(id) {
   return api.delete(`/api/events/${id}`);
 }
