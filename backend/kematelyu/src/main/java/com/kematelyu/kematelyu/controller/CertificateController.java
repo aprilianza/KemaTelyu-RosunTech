@@ -4,6 +4,8 @@ import com.kematelyu.kematelyu.dto.CertificateDTO;
 import com.kematelyu.kematelyu.exception.ForbiddenException;
 import com.kematelyu.kematelyu.exception.UnauthorizedException;
 import com.kematelyu.kematelyu.model.Certificate;
+import com.kematelyu.kematelyu.model.Mahasiswa;
+import com.kematelyu.kematelyu.model.Event;
 import com.kematelyu.kematelyu.service.CertificateService;
 import com.kematelyu.kematelyu.util.CertificatePdfGenerator;
 import org.springframework.http.*;
@@ -25,7 +27,7 @@ public class CertificateController {
         this.certService = certService;
     }
 
-    /* ---------- util: success wrapper ---------- */
+    // Util wrapper untuk response sukses
     private ResponseEntity<Map<String, Object>> ok(Object data) {
         Map<String, Object> body = new LinkedHashMap<>();
         body.put("code", 200);
@@ -34,42 +36,49 @@ public class CertificateController {
         return ResponseEntity.ok(body);
     }
 
-    /* ---------- LIST CERTIFICATE (JSON) ---------- */
+    // Mendapatkan daftar sertifikat user yang sedang login
     @GetMapping
     public ResponseEntity<Map<String, Object>> getMyCertificates(Authentication auth) {
-
-        if (auth == null || auth.getPrincipal() == null)
+        if (auth == null || auth.getPrincipal() == null) {
             throw new UnauthorizedException("Token missing");
+        }
 
         Long userId = (Long) auth.getPrincipal();
-        List<Certificate> raw = certService.getCertificatesByMahasiswaId(userId);
+        List<Certificate> certificates = certService.getCertificatesByMahasiswaId(userId);
 
-        List<CertificateDTO> dto = raw.stream()
-                .map(c -> new CertificateDTO(
-                        c.getId(),
-                        c.getEvent().getId(),
-                        c.getEvent().getTitle(),
-                        c.getEvent().getFotoPath(),
-                        c.getIssueDate()))
+        List<CertificateDTO> dtoList = certificates.stream()
+                .map(cert -> {
+                    Event e = cert.getEvent();
+                    Mahasiswa m = cert.getMahasiswa();
+                    return new CertificateDTO(
+                            cert.getId(),
+                            m.getNim(),
+                            e.getId(),
+                            e.getTitle(),
+                            e.getFotoPath(),
+                            cert.getIssueDate());
+                })
                 .toList();
 
-        return ok(dto);
+        return ok(dtoList);
     }
 
-    /* ---------- DOWNLOAD PDF ---------- */
+    // Mendownload sertifikat sebagai PDF
     @GetMapping("/{id}/download")
     public ResponseEntity<byte[]> download(
             @PathVariable Long id,
             Authentication auth) throws IOException {
 
-        if (auth == null || auth.getPrincipal() == null)
+        if (auth == null || auth.getPrincipal() == null) {
             throw new UnauthorizedException("Token missing");
+        }
 
         Long userId = (Long) auth.getPrincipal();
         Certificate cert = certService.findById(id);
 
-        if (!cert.getMahasiswa().getId().equals(userId))
+        if (!cert.getMahasiswa().getId().equals(userId)) {
             throw new ForbiddenException("Certificate does not belong to current user");
+        }
 
         byte[] pdf = CertificatePdfGenerator.generate(cert);
 
