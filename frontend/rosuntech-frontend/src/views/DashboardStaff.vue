@@ -116,7 +116,7 @@
                 <table class="table table-hover">
                   <thead>
                     <tr>
-                      <th scope="col">#</th>
+                      <th scope="col">No</th>
                       <th scope="col">Nama</th>
                       <th scope="col">Email</th>
                       <th scope="col">NIM</th>
@@ -173,8 +173,8 @@
             </div>
 
             <div class="modern-modal-actions">
-              <button class="btn btn-outline-danger" @click="closeModal"><i class="bi bi-x-circle me-2"></i>Tutup</button>
-              <button class="btn btn-danger" @click="confirmDeleteEvent(selectedEvent.id)"><i class="bi bi-trash me-2"></i>Hapus Event</button>
+              <button class="btn btn-outline-danger" @click="closeModal">Tutup</button>
+              <button class="btn btn-danger" @click="confirmDeleteEvent(selectedEvent.id)">Hapus Event</button>
             </div>
           </div>
         </div>
@@ -592,7 +592,7 @@ export default {
 
 /* Event Cards */
 .event-card {
-  background: linear-gradient(135deg, #2c3e50, #1a252f);
+  background: linear-gradient(135deg, #2c3e50, v-bind('$colors.primary'));
   border-radius: 12px;
   overflow: hidden;
   transition: all 0.3s ease;
@@ -624,8 +624,8 @@ export default {
   position: absolute;
   top: 15px;
   right: 15px;
-  background-color: rgba(179, 2, 2, 0.9);
-  color: white;
+  background-color: white;
+  color: v-bind('$colors.primary');
   border-radius: 8px;
   padding: 0.5rem;
   display: flex;
@@ -775,7 +775,7 @@ export default {
 .event-date-badge {
   position: absolute;
   top: 20px;
-  right: 20px;
+  left: 20px;
   background-color: white;
   border-radius: 10px;
   padding: 0.75rem 1rem;
