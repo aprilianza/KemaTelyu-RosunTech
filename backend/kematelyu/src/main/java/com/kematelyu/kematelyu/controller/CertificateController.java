@@ -24,7 +24,7 @@ public class CertificateController {
     public CertificateController(CertificateService certService) {
         this.certService = certService;
     }
-
+    //ngasih komentar doang
     /* ---------- util: success wrapper ---------- */
     private ResponseEntity<Map<String, Object>> ok(Object data) {
         Map<String, Object> body = new LinkedHashMap<>();
