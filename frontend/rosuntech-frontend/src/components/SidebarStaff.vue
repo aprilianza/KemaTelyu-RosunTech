@@ -45,7 +45,7 @@
               <div class="nav-icon-wrapper">
                 <font-awesome-icon :icon="['fas', 'calendar-alt']" class="menu-icon" />
               </div>
-              <span class="nav-text">Tambah Event</span>
+              <span class="nav-text">Buat Event</span>
               <div class="nav-indicator"></div>
             </router-link>
           </li>
