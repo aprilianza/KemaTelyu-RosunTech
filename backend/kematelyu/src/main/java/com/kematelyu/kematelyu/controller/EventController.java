@@ -2,7 +2,7 @@ package com.kematelyu.kematelyu.controller;
 
 import com.kematelyu.kematelyu.dto.CreateEventRequest;
 import com.kematelyu.kematelyu.dto.EventDetailDTO;
-import com.kematelyu.kematelyu.dto.EventSummaryDTO;
+import com.kematelyu.kematelyu.dto.EventFullDTO;
 import com.kematelyu.kematelyu.exception.ForbiddenException;
 import com.kematelyu.kematelyu.model.Event;
 import com.kematelyu.kematelyu.model.Registration;
@@ -27,7 +27,6 @@ public class EventController {
         this.service = service;
     }
 
-    /* ---------- util: success wrapper ---------- */
     private ResponseEntity<Map<String, Object>> ok(Object data) {
         Map<String, Object> body = new LinkedHashMap<>();
         body.put("code", 200);
@@ -36,7 +35,6 @@ public class EventController {
         return ResponseEntity.ok(body);
     }
 
-    /* ---------- CREATE ---------- */
     @PostMapping
     public ResponseEntity<Map<String, Object>> createEvent(@RequestBody CreateEventRequest dto) {
         Long userId = (Long) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
@@ -50,18 +48,16 @@ public class EventController {
         return ok(ev);
     }
 
-    /* ---------- READ ---------- */
     @GetMapping
-    public List<EventSummaryDTO> getAll() {
+    public List<EventFullDTO> getAll() {
         return service.getAllEvents();
     }
 
     @GetMapping("/{id}")
-    public Event getOne(@PathVariable Long id) {
-        return service.byId(id);
+    public EventFullDTO getOne(@PathVariable Long id) {
+        return service.getEventByIdAsDTO(id);
     }
 
-    /* ---------- UPDATE ---------- */
     @PutMapping("/{id}")
     public ResponseEntity<Map<String, Object>> update(@PathVariable Long id,
             @RequestBody CreateEventRequest dto) {
@@ -83,7 +79,6 @@ public class EventController {
         return ok(updated);
     }
 
-    /* ---------- DELETE ---------- */
     @DeleteMapping("/{id}")
     public ResponseEntity<Map<String, Object>> delete(@PathVariable Long id) {
         Long userId = (Long) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
@@ -101,7 +96,6 @@ public class EventController {
         return ok("Event berhasil dihapus oleh pembuatnya.");
     }
 
-    /* ---------- REGISTRATION ---------- */
     @PostMapping("/{id}/register")
     public ResponseEntity<Map<String, Object>> registerToEvent(@PathVariable Long id) {
         Long userId = (Long) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
@@ -143,18 +137,11 @@ public class EventController {
         return ok("Pendaftaran ditolak untuk: " + r.getMahasiswa().getName());
     }
 
-    /* ---------- CERTIFICATE ---------- */
     @PostMapping("/{id}/generate-certificate")
     public ResponseEntity<Map<String, Object>> generateCertificate(
             @PathVariable Long id,
             @RequestParam String nim) {
         return ok(service.generateCertificate(id, nim));
-    }
-
-    /* ---------- DTO extra ---------- */
-    @GetMapping("/summary")
-    public List<EventSummaryDTO> getEventSummaries() {
-        return service.getAllEvents();
     }
 
     @GetMapping("/{id}/detail")
@@ -171,7 +158,7 @@ public class EventController {
         }
 
         Long userId = Long.parseLong(principal.toString());
-        List<EventSummaryDTO> events = service.getEventsByStaff(userId);
+        List<EventFullDTO> events = service.getEventsByStaff(userId);
         return ResponseEntity.ok(events);
     }
 }
