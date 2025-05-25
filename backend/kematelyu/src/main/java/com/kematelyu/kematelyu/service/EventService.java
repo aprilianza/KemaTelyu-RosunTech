@@ -128,7 +128,7 @@ public class EventService {
 
         Registration reg = regRepo.findByEventAndMahasiswa(event, m)
                 .orElseThrow(() -> new ResourceNotFoundException("Belum daftar event"));
-        if (!reg.isVerified())
+        if (!reg.isActive())
             throw new IllegalStateException("Belum diverifikasi");
 
         return certificateRepo.save(event.generateCertificate(m));
@@ -165,7 +165,6 @@ public class EventService {
                         r.getId(),
                         r.getMahasiswa().getNim(),
                         r.getStatus().name(),
-                        r.isVerified()))
                 .toList();
 
         List<CertificateDTO> certDTOs = e.getCertificates().stream()
@@ -215,7 +214,6 @@ public class EventService {
                 .orElseThrow(() -> new ResourceNotFoundException("Registrasi tidak ditemukan"));
 
         reg.setStatus(Registration.Status.APPROVED);
-        reg.setVerified(true);
         return regRepo.save(reg);
     }
 
@@ -224,7 +222,6 @@ public class EventService {
                 .orElseThrow(() -> new ResourceNotFoundException("Registrasi tidak ditemukan"));
 
         reg.setStatus(Registration.Status.REJECTED);
-        reg.setVerified(false);
         return regRepo.save(reg);
     }
     

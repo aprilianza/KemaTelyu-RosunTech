@@ -5,19 +5,16 @@ public class RegistrationDTO {
     private Long id;
     private String mahasiswaNim;
     private String status;
-    private boolean verified;
 
     public RegistrationDTO() {
     }
 
     public RegistrationDTO(Long id,
             String mahasiswaNim,
-            String status,
-            boolean verified) {
+            String status) {
         this.id = id;
         this.mahasiswaNim = mahasiswaNim;
         this.status = status;
-        this.verified = verified;
     }
 
     public Long getId() {
@@ -42,13 +39,5 @@ public class RegistrationDTO {
 
     public void setStatus(String status) {
         this.status = status;
-    }
-
-    public boolean isVerified() {
-        return verified;
-    }
-
-    public void setVerified(boolean verified) {
-        this.verified = verified;
     }
 }

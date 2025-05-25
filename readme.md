@@ -248,7 +248,6 @@ Endpoint : **POST** `/api/events/{eventId}/register`
   "mahasiswa": { "id": "<long>", "name": "<string>" },
   "date": "<date>",
   "status": "APPROVED",
-  "isVerified": "<boolean>"
 }
 ```
 
