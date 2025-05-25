@@ -149,13 +149,8 @@
                             @click="updateParticipantStatus(participant.nim, 'APPROVED')" 
                             :disabled="getRegistrationStatus(participant.nim) === 'APPROVED'">
                             <i class="bi bi-check-circle"></i>
-                          </button>
-                          <button 
-                            class="btn btn-sm btn-secondary" 
-                            @click="updateParticipantStatus(participant.nim, 'PENDING')" 
-                            :disabled="getRegistrationStatus(participant.nim) === 'PENDING'">
-                            <i class="bi bi-check-circle"></i>
-                          </button>                          <button 
+                          </button>                          
+                          <button
                             class="btn btn-sm btn-danger" 
                             @click="updateParticipantStatus(participant.nim, 'REJECTED')" 
                             :disabled="getRegistrationStatus(participant.nim) === 'REJECTED'">
@@ -183,11 +178,17 @@
   </div>
 </template>
 
+<!-- DashboardStaff.vue -->
 <script>
 import SidebarStaff from '@/components/SidebarStaff.vue';
 import axios from 'axios';
 import Swal from 'sweetalert2';
-import { getEventsStaff, deleteEvent, updateParticipantStatus } from '@/api/event';
+// Alias agar tidak bentrok dengan method lokal
+import {
+  getEventsStaff,
+  deleteEvent,
+  updateParticipantStatus as apiUpdateParticipantStatus
+} from '@/api/event';
 
 export default {
   name: 'DashboardStaff',
@@ -211,50 +212,42 @@ export default {
     await this.fetchEvents();
   },
   methods: {
+    /* AUTENTIKASI & FETCH EVENTS */
     async checkAuthentication() {
       try {
         const token = localStorage.getItem('token');
         const userData = localStorage.getItem('user');
-        
         if (!token) {
           await this.showAuthError('Autentikasi Diperlukan', 'Silakan login untuk mengakses halaman ini');
           this.redirectToLogin();
           return;
         }
-
         let user = null;
         if (userData) {
-          try {
-            user = JSON.parse(userData);
-          } catch (error) {
-            console.error('Error parsing user data:', error);
-            await this.showAuthError('Data User Tidak Valid', 'Data user tidak valid. Silakan login kembali');
+          try { user = JSON.parse(userData); }
+          catch (err) {
+            console.error(err);
+            await this.showAuthError('Data User Tidak Valid', 'Silakan login kembali');
             this.redirectToLogin();
             return;
           }
         }
-
         if (!user || !user.role || user.role.toUpperCase() !== 'STAFF') {
-          await this.showAuthError('Akses Ditolak', 'Anda memerlukan hak akses staff untuk membuka halaman ini');
+          await this.showAuthError('Akses Ditolak', 'Anda memerlukan hak akses staff');
           this.redirectToLogin();
           return;
         }
-
-        const response = await axios.get('/api/auth/me', {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+        const resp = await axios.get('/api/auth/me', {
+          headers: { Authorization: `Bearer ${token}` },
         });
-
-        if (response.status === 200) {
+        if (resp.status === 200) {
           this.user = {
             ...this.user,
-            ...response.data,
-            name: response.data.name || this.user.name,
-            division: response.data.divisi || this.user.divisi,
-            photo: response.data.fotoPath || this.user.fotoPath,
+            ...resp.data,
+            name: resp.data.name || this.user.name,
+            division: resp.data.divisi || this.user.division,
+            photo: resp.data.fotoPath || this.user.photo,
           };
-
           this.isAuthenticated = true;
           this.isLoading = false;
         } else {
@@ -262,20 +255,14 @@ export default {
           this.redirectToLogin();
         }
       } catch (error) {
-        console.error('Authentication failed:', error);
-
-        if (error.response) {
-          if (error.response.status === 401) {
-            await this.showAuthError('Sesi Habis', 'Sesi login Anda telah habis. Silakan login kembali');
-          } else if (error.response.status === 403) {
-            await this.showAuthError('Akses Ditolak', 'Anda tidak memiliki izin untuk mengakses halaman ini');
-          } else {
-            await this.showAuthError('Kesalahan Server', 'Terjadi kesalahan pada server. Silakan coba lagi nanti');
-          }
-        } else if (error.request) {
-          await this.showAuthError('Koneksi Gagal', 'Tidak dapat terhubung ke server. Periksa koneksi internet Anda');
+        console.error(error);
+        const code = error.response?.status;
+        if (code === 401) {
+          await this.showAuthError('Sesi Habis', 'Silakan login kembali');
+        } else if (code === 403) {
+          await this.showAuthError('Akses Ditolak', 'Anda tidak memiliki izin');
         } else {
-          await this.showAuthError('Kesalahan', 'Terjadi kesalahan saat memverifikasi autentikasi');
+          await this.showAuthError('Kesalahan Server', 'Coba lagi nanti');
         }
         this.clearAuthData();
         this.redirectToLogin();
@@ -285,30 +272,24 @@ export default {
     async fetchEvents() {
       this.loadingEvents = true;
       try {
-        const response = await getEventsStaff();
-        this.events = response.data;
+        const resp = await getEventsStaff();
+        this.events = resp.data.message;
       } catch (error) {
-        console.error('Error fetching events:', error);
-        Swal.fire({
-          icon: 'error',
-          title: 'Error',
-          text: 'Gagal memuat event. Silakan coba lagi nanti.',
-        });
+        console.error(error);
+        Swal.fire({ icon: 'error', title: 'Error', text: 'Gagal memuat event.' });
       } finally {
         this.loadingEvents = false;
       }
     },
 
-    async showAuthError(title, message) {
+    async showAuthError(title, text) {
       await Swal.fire({
         icon: 'error',
-        title: title,
-        text: message,
+        title,
+        text,
         confirmButtonText: 'Ke Halaman Login',
         allowOutsideClick: false,
-        customClass: {
-          confirmButton: 'btn btn-danger',
-        },
+        customClass: { confirmButton: 'btn btn-danger' },
       });
     },
 
@@ -323,68 +304,54 @@ export default {
       this.$router.push('/');
     },
 
+    /* MODAL */
     async openModal(event) {
       this.selectedEvent = event;
       document.body.classList.add('modal-open');
     },
-
     closeModal() {
       this.selectedEvent = null;
       document.body.classList.remove('modal-open');
     },
 
+    /* FORMATTER */
     getEventImage(fotoPath) {
-      if (!fotoPath) return require('@/assets/img/placeholder.jpg');
-      return `http://localhost:8888/${fotoPath}`;
+      return fotoPath ? `http://localhost:8888/${fotoPath}` : require('@/assets/img/placeholder.jpg');
     },
-
     getUserImage(fotoPath) {
       return `http://localhost:8888/${fotoPath}`;
     },
-
     formatDate(dateString) {
-      const date = new Date(dateString);
-      const optionsDay = { day: 'numeric' };
-      const optionsMonth = { month: 'long' };
-      const optionsYear = { year: 'numeric' };
-      
+      const d = new Date(dateString);
       return {
-        day: date.toLocaleDateString('id-ID', optionsDay),
-        month: date.toLocaleDateString('id-ID', optionsMonth),
-        year: date.toLocaleDateString('id-ID', optionsYear)
+        day:   d.toLocaleDateString('id-ID', { day: 'numeric' }),
+        month: d.toLocaleDateString('id-ID', { month: 'long' }),
+        year:  d.toLocaleDateString('id-ID', { year: 'numeric' }),
       };
     },
-
     formatFullDate(dateString) {
-      const date = new Date(dateString);
-      const options = { day: 'numeric', month: 'long', year: 'numeric' };
-      return date.toLocaleDateString('id-ID', options);
+      return new Date(dateString).toLocaleDateString('id-ID', {
+        day: 'numeric', month: 'long', year: 'numeric'
+      });
     },
-
     formatTime(timeString) {
-      if (!timeString) return '';
-      return timeString.substring(0, 5);
+      return timeString ? timeString.substring(0, 5) : '';
     },
-
     formatStatus(status) {
-      const statusMap = {
-        'APPROVED': 'Diterima',
-        'REJECTED': 'Ditolak',
-        'PENDING': 'Menunggu'
-      };
-      return statusMap[status] || status;
+      const map = { 'APPROVED': 'Diterima', 'REJECTED': 'Ditolak', 'PENDING': 'Menunggu' };
+      return map[status] || status;
     },
-
     getRegistrationStatus(nim) {
-      if (!this.selectedEvent || !this.selectedEvent.registrations) return 'PENDING';
-      const registration = this.selectedEvent.registrations.find(r => r.mahasiswaNim === nim);
-      return registration ? registration.status : 'PENDING';
+      if (!this.selectedEvent?.registrations) return 'PENDING';
+      const r = this.selectedEvent.registrations.find(x => x.mahasiswaNim === nim);
+      return r?.status || 'PENDING';
     },
 
+    /* HAPUS EVENT */
     async confirmDeleteEvent(eventId) {
       const result = await Swal.fire({
         title: 'Hapus Event',
-        text: 'Apakah Anda yakin ingin menghapus event ini? Tindakan ini tidak dapat dibatalkan.',
+        text: 'Tindakan ini tidak dapat dibatalkan.',
         icon: 'warning',
         showCancelButton: true,
         confirmButtonColor: '#d33',
@@ -392,89 +359,56 @@ export default {
         confirmButtonText: 'Ya, hapus!',
         cancelButtonText: 'Batal',
       });
-
       if (result.isConfirmed) {
         try {
           await deleteEvent(eventId);
-          this.events = this.events.filter(event => event.id !== eventId);
-          
-          if (this.selectedEvent && this.selectedEvent.id === eventId) {
-            this.closeModal();
-          }
-
-          const Toast = Swal.mixin({
-            toast: true,
-            position: 'top-end',
-            showConfirmButton: false,
-            timer: 3000,
-            timerProgressBar: true,
-          });
-
-          Toast.fire({
-            icon: 'success',
-            title: 'Event berhasil dihapus',
-          });
+          this.events = this.events.filter(e => e.id !== eventId);
+          if (this.selectedEvent?.id === eventId) this.closeModal();
+          Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: 'Event berhasil dihapus', showConfirmButton: false, timer: 2000 });
         } catch (error) {
-          console.error('Error deleting event:', error);
-          Swal.fire({
-            icon: 'error',
-            title: 'Error',
-            text: 'Gagal menghapus event. Silakan coba lagi nanti.',
-          });
+          console.error(error);
+          Swal.fire({ icon: 'error', title: 'Error', text: 'Gagal menghapus event.' });
         }
       }
     },
 
+    /* APPROVE / REJECT PARTICIPANT */
     async updateParticipantStatus(nim, newStatus) {
       try {
-        // Find the registration ID for this participant
         const registration = this.selectedEvent.registrations.find(r => r.mahasiswaNim === nim);
-        
-        if (!registration) {
-          throw new Error('Registrasi tidak ditemukan untuk peserta ini');
+        if (!registration) throw new Error('Registrasi tidak ditemukan');
+
+        // Panggil API approve/reject
+        const resp = await apiUpdateParticipantStatus(registration.id, newStatus);
+
+        // Update state lokal
+        const idx = this.selectedEvent.registrations.findIndex(r => r.mahasiswaNim === nim);
+        if (idx !== -1) {
+          this.selectedEvent.registrations[idx].status   = newStatus;
+          this.selectedEvent.registrations[idx].verified = (newStatus === 'APPROVED');
         }
 
-        await updateParticipantStatus(registration.id, newStatus);
-        
-        // Update local state
-        const registrationIndex = this.selectedEvent.registrations.findIndex(r => r.mahasiswaNim === nim);
-        if (registrationIndex !== -1) {
-          this.selectedEvent.registrations[registrationIndex].status = newStatus;
-          this.selectedEvent.registrations[registrationIndex].verified = newStatus === 'APPROVED';
-        }
-
-        const Toast = Swal.mixin({
-          toast: true,
-          position: 'top-end',
-          showConfirmButton: false,
-          timer: 3000,
-          timerProgressBar: true,
-        });
-
-        Toast.fire({
+        // Toast dengan message dari backend
+        Swal.mixin({
+          toast: true, position: 'top-end', showConfirmButton: false,
+          timer: 3000, timerProgressBar: true
+        }).fire({
           icon: 'success',
-          title: `Status diperbarui ke ${this.formatStatus(newStatus)}`,
+          title: resp.data.message
         });
+
       } catch (error) {
         console.error('Error updating participant status:', error);
-        Swal.fire({
-          icon: 'error',
-          title: 'Error',
-          text: 'Gagal memperbarui status peserta. Silakan coba lagi nanti.',
-        });
+        Swal.fire({ icon: 'error', title: 'Error', text: 'Gagal memperbarui status peserta.' });
       }
     },
 
     getStatusBadgeClass(status) {
       switch (status) {
-        case 'APPROVED':
-          return 'badge bg-success';
-        case 'PENDING':
-          return 'badge bg-secondary';
-        case 'REJECTED':
-          return 'badge bg-danger';
-        default:
-          return 'badge bg-secondary';
+        case 'APPROVED': return 'badge bg-success';
+        case 'PENDING':  return 'badge bg-secondary';
+        case 'REJECTED': return 'badge bg-danger';
+        default:         return 'badge bg-secondary';
       }
     },
   },
@@ -482,29 +416,21 @@ export default {
   beforeRouteEnter(to, from, next) {
     const token = localStorage.getItem('token');
     const userData = localStorage.getItem('user');
-
-    if (!token) {
-      next('/');
-      return;
-    }
-
+    if (!token) { next('/'); return; }
     if (userData) {
       try {
-        const user = JSON.parse(userData);
-        if (!user.role || user.role.toUpperCase() !== 'STAFF') {
-          next('/');
-          return;
-        }
-      } catch (error) {
+        const u = JSON.parse(userData);
+        if (!u.role || u.role.toUpperCase() !== 'STAFF') { next('/'); return; }
+      } catch {
         next('/');
         return;
       }
     }
-
     next();
   },
 };
 </script>
+
 <style scoped>
 .content-wrapper {
   flex-grow: 1;
