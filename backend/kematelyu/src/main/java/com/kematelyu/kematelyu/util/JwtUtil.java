@@ -10,9 +10,9 @@ import java.util.Date;
 @Component
 public class JwtUtil {
 
-    // Ideally simpan di env-var
+    /* ✅ Simpan di ENV-VAR pada production */
     private static final String SECRET = "KemaTelyuSuperSecretKeyYangPanjangBangetBiar256bit!";
-    private static final long EXP_MS = 1000 * 60 * 60 * 4; // 4 jam
+    private static final long   EXP_MS = 1000 * 60 * 60; // 1 jam
 
     private final Key key = Keys.hmacShaKeyFor(SECRET.getBytes());
 
@@ -24,7 +24,7 @@ public class JwtUtil {
                 .setSubject(String.valueOf(userId))
                 .claim("role", role)
                 .setIssuedAt(now)
-                .setExpiration(exp)
+                .setExpiration(exp)            // ⏰ expiry 1 jam
                 .signWith(key, SignatureAlgorithm.HS256)
                 .compact();
     }
