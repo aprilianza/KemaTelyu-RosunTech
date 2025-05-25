@@ -21,13 +21,13 @@ export async function getEventParticipants(eventId) {
 }
 
 export async function updateParticipantStatus(registrationId, status) {
-  const endpoint = status === 'Accepted' 
-    ? `approve` 
-    : status === 'Rejected' 
-      ? `reject` 
-      : '';
-  
-  if (!endpoint) return Promise.reject('Invalid status');
-  
-  return api.put(`/api/events/participants/${registrationId}/${endpoint}`);
+  let action;
+  if (status === 'APPROVED') {
+    action = 'approve';
+  } else if (status === 'REJECTED') {
+    action = 'reject';
+  } else {
+    throw new Error('Status must be "APPROVED" or "REJECTED"');
+  }
+  return api.patch(`/api/events/participants/${registrationId}/${action}`);
 }
