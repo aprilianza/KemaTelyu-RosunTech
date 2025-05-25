@@ -115,7 +115,7 @@ public class EventController {
         return ok(service.getParticipantsByStatus(eventId, status));
     }
 
-    @PutMapping("/participants/{registrationId}/approve")
+    @PatchMapping("/participants/{registrationId}/approve")
     public ResponseEntity<Map<String, Object>> approveParticipant(@PathVariable Long registrationId) {
         String role = SecurityContextHolder.getContext().getAuthentication()
                 .getAuthorities().iterator().next().getAuthority();
@@ -126,7 +126,7 @@ public class EventController {
         return ok("Berhasil approve peserta: " + r.getMahasiswa().getName());
     }
 
-    @PutMapping("/participants/{registrationId}/reject")
+    @PatchMapping("/participants/{registrationId}/reject")
     public ResponseEntity<Map<String, Object>> rejectParticipant(@PathVariable Long registrationId) {
         String role = SecurityContextHolder.getContext().getAuthentication()
                 .getAuthorities().iterator().next().getAuthority();
@@ -136,6 +136,7 @@ public class EventController {
         Registration r = service.rejectParticipant(registrationId);
         return ok("Pendaftaran ditolak untuk: " + r.getMahasiswa().getName());
     }
+
 
     @PostMapping("/{id}/generate-certificate")
     public ResponseEntity<Map<String, Object>> generateCertificate(
