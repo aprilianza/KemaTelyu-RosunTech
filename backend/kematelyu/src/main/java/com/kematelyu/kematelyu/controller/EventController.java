@@ -3,6 +3,7 @@ package com.kematelyu.kematelyu.controller;
 import com.kematelyu.kematelyu.dto.CreateEventRequest;
 import com.kematelyu.kematelyu.dto.EventDetailDTO;
 import com.kematelyu.kematelyu.dto.EventFullDTO;
+import com.kematelyu.kematelyu.dto.EventSummaryDTO;
 import com.kematelyu.kematelyu.exception.ForbiddenException;
 import com.kematelyu.kematelyu.model.Event;
 import com.kematelyu.kematelyu.model.Registration;
@@ -155,11 +156,21 @@ public class EventController {
         Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
 
         if (principal instanceof String && principal.equals("anonymousUser")) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Token tidak valid atau tidak ditemukan.");
+            Map<String, Object> error = new LinkedHashMap<>();
+            error.put("code", 401);
+            error.put("status", "Unauthorized");
+            error.put("message", "Token tidak valid atau tidak ditemukan.");
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(error);
         }
 
-        Long userId = Long.parseLong(principal.toString());
-        List<EventFullDTO> events = service.getEventsByStaff(userId);
-        return ResponseEntity.ok(events);
+        Long userId = (Long) principal; 
+
+        List<EventSummaryDTO> events = service.getEventsByStaff(userId);
+
+        Map<String, Object> result = new LinkedHashMap<>();
+        result.put("code", 200);
+        result.put("status", "OK");
+        result.put("message", events);
+        return ResponseEntity.ok(result);
     }
 }
