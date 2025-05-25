@@ -136,19 +136,12 @@ public class EventService {
 
     /* -------------------- STAFF FILTER -------------------- */
 
-    public List<EventSummaryDTO> getEventsByStaff(Long userId) {
+    public List<EventFullDTO> getEventsByStaff(Long userId) {
         Staff staff = staffRepo.findById(userId)
             .orElseThrow(() -> new ResourceNotFoundException("Staff tidak ditemukan"));
     
         return repo.findByCreatedBy(staff).stream()
-            .map(event -> new EventSummaryDTO(
-                event.getId(),
-                event.getTitle(),
-                event.getDescription(),
-                event.getDate(),
-                event.getTime(),           
-                event.getFotoPath()
-            ))
+            .map(this::mapToFullDTO)
             .collect(Collectors.toList());
     }
 
