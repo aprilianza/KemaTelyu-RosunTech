@@ -136,12 +136,20 @@ public class EventService {
 
     /* -------------------- STAFF FILTER -------------------- */
 
-    public List<EventFullDTO> getEventsByStaff(Long userId) {
+    public List<EventSummaryDTO> getEventsByStaff(Long userId) {
         Staff staff = staffRepo.findById(userId)
-                .orElseThrow(() -> new ResourceNotFoundException("Staff tidak ditemukan"));
+            .orElseThrow(() -> new ResourceNotFoundException("Staff tidak ditemukan"));
+    
         return repo.findByCreatedBy(staff).stream()
-                .map(this::mapToFullDTO)
-                .collect(Collectors.toList());
+            .map(event -> new EventSummaryDTO(
+                event.getId(),
+                event.getTitle(),
+                event.getDescription(),
+                event.getDate(),
+                event.getTime(),           
+                event.getFotoPath()
+            ))
+            .collect(Collectors.toList());
     }
 
     /* -------------------- INTERNAL MAPPER -------------------- */
@@ -164,7 +172,8 @@ public class EventService {
                 .map(r -> new RegistrationDTO(
                         r.getId(),
                         r.getMahasiswa().getNim(),
-                        r.getStatus().name(),
+                        r.getStatus().name()
+                ))
                 .toList();
 
         List<CertificateDTO> certDTOs = e.getCertificates().stream()
