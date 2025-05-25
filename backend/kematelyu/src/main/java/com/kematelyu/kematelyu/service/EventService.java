@@ -1,8 +1,6 @@
 package com.kematelyu.kematelyu.service;
 
-import com.kematelyu.kematelyu.dto.CreateEventRequest;
-import com.kematelyu.kematelyu.dto.EventDetailDTO;
-import com.kematelyu.kematelyu.dto.EventSummaryDTO;
+import com.kematelyu.kematelyu.dto.*;
 import com.kematelyu.kematelyu.exception.ResourceNotFoundException;
 import com.kematelyu.kematelyu.model.*;
 import com.kematelyu.kematelyu.repository.*;
@@ -12,8 +10,6 @@ import org.springframework.stereotype.Service;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.time.LocalDate;
-import java.time.LocalTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -33,22 +29,13 @@ public class EventService {
 
     /* -------------------- DTO ENDPOINTS -------------------- */
 
-    public List<EventSummaryDTO> getAllEvents() {
-        return repo.findAll().stream()
-                .map(e -> new EventSummaryDTO(
-                        e.getId(),
-                        e.getTitle(),
-                        e.getDescription(), // ✅ tambahkan ini
-                        e.getDate(),
-                        e.getTime(),
-                        e.getFotoPath()))
-                .collect(Collectors.toList());
+    public List<EventFullDTO> getAllEvents() {
+        return repo.findAll().stream().map(this::mapToFullDTO).toList();
     }
 
     public EventDetailDTO getEventDetailById(Long id) {
         Event e = repo.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Event id " + id + " not found"));
-
         return new EventDetailDTO(
                 e.getId(),
                 e.getTitle(),
@@ -102,17 +89,6 @@ public class EventService {
 
     /* -------------------- REGISTRASI -------------------- */
 
-    public Registration registerToEvent(Long eventId, String nim) {
-        Event event = byId(eventId);
-        Mahasiswa m = mahasiswaRepo.findByNim(nim)
-                .orElseThrow(() -> new ResourceNotFoundException("Mahasiswa tidak ditemukan"));
-
-        if (regRepo.existsByEventAndMahasiswa(event, m))
-            throw new IllegalStateException("Sudah terdaftar di event ini.");
-
-        return regRepo.save(new Registration(m, event));
-    }
-
     public Registration registerToEventByUser(Long userId, Long eventId) {
         User user = mahasiswaRepo.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("Mahasiswa tidak ditemukan"));
@@ -142,32 +118,6 @@ public class EventService {
                 .toList();
     }
 
-    public Registration approveParticipant(Long registrationId) {
-        Registration reg = regRepo.findById(registrationId)
-                .orElseThrow(() -> new ResourceNotFoundException("Registrasi tidak ditemukan"));
-
-        reg.setStatus(Registration.Status.APPROVED);
-        reg.setVerified(true);
-        regRepo.save(reg);
-
-        Event event = reg.getEvent();
-        Mahasiswa mhs = reg.getMahasiswa();
-
-        if (!certificateRepo.existsByEventAndMahasiswa(event, mhs)) {
-            Certificate cert = event.generateCertificate(mhs);
-            certificateRepo.save(cert);
-        }
-
-        return reg;
-    }
-
-    public Registration rejectParticipant(Long registrationId) {
-        Registration reg = regRepo.findById(registrationId)
-                .orElseThrow(() -> new ResourceNotFoundException("Registrasi tidak ditemukan"));
-        reg.cancel();
-        return regRepo.save(reg);
-    }
-
     public Certificate generateCertificate(Long eventId, String nim) {
         Event event = byId(eventId);
         Mahasiswa m = mahasiswaRepo.findByNim(nim)
@@ -178,10 +128,83 @@ public class EventService {
 
         Registration reg = regRepo.findByEventAndMahasiswa(event, m)
                 .orElseThrow(() -> new ResourceNotFoundException("Belum daftar event"));
-        if (!reg.isVerified())
+        if (!reg.isActive())
             throw new IllegalStateException("Belum diverifikasi");
 
         return certificateRepo.save(event.generateCertificate(m));
+    }
+
+    /* -------------------- STAFF FILTER -------------------- */
+
+    public List<EventSummaryDTO> getEventsByStaff(Long userId) {
+        Staff staff = staffRepo.findById(userId)
+            .orElseThrow(() -> new ResourceNotFoundException("Staff tidak ditemukan"));
+    
+        return repo.findByCreatedBy(staff).stream()
+            .map(event -> new EventSummaryDTO(
+                event.getId(),
+                event.getTitle(),
+                event.getDescription(),
+                event.getDate(),
+                event.getTime(),           
+                event.getFotoPath()
+            ))
+            .collect(Collectors.toList());
+    }
+
+    /* -------------------- INTERNAL MAPPER -------------------- */
+
+    private EventFullDTO mapToFullDTO(Event e) {
+
+        CreatedByDTO createdByDTO = null;
+        if (e.getCreatedBy() != null) {
+            Staff s = e.getCreatedBy();
+            createdByDTO = new CreatedByDTO(
+                    s.getId(),
+                    s.getName(),
+                    s.getEmail(),
+                    s.getRole(),
+                    s.getFotoPath(),
+                    s.getDivisi());
+        }
+
+        List<RegistrationDTO> regDTOs = e.getRegistrations().stream()
+                .map(r -> new RegistrationDTO(
+                        r.getId(),
+                        r.getMahasiswa().getNim(),
+                        r.getStatus().name()
+                ))
+                .toList();
+
+        List<CertificateDTO> certDTOs = e.getCertificates().stream()
+                .map(c -> new CertificateDTO(
+                        c.getId(),
+                        c.getMahasiswa().getNim(),
+                        c.getIssueDate()))
+                .toList();
+
+        List<ParticipantDTO> participantDTOs = e.getParticipants().stream()
+                .map(m -> new ParticipantDTO(
+                        m.getId(),
+                        m.getNim(),
+                        m.getName(),
+                        m.getEmail(),
+                        m.getFakultas(),
+                        m.getFotoPath()))
+                .toList();
+
+        return new EventFullDTO(
+                e.getId(),
+                e.getTitle(),
+                e.getDescription(),
+                e.getDate(),
+                e.getTime(),
+                e.getFotoPath(),
+                e.getMaxParticipant(),
+                createdByDTO,
+                regDTOs,
+                certDTOs,
+                participantDTOs);
     }
 
     /* -------------------- UTILITY -------------------- */
@@ -194,4 +217,28 @@ public class EventService {
         } catch (Exception ignored) {
         }
     }
+
+    public Registration approveParticipant(Long registrationId) {
+        Registration reg = regRepo.findById(registrationId)
+                .orElseThrow(() -> new ResourceNotFoundException("Registrasi tidak ditemukan"));
+
+        reg.setStatus(Registration.Status.APPROVED);
+        return regRepo.save(reg);
+    }
+
+    public Registration rejectParticipant(Long registrationId) {
+        Registration reg = regRepo.findById(registrationId)
+                .orElseThrow(() -> new ResourceNotFoundException("Registrasi tidak ditemukan"));
+
+        reg.setStatus(Registration.Status.REJECTED);
+        return regRepo.save(reg);
+    }
+    
+    public EventFullDTO getEventByIdAsDTO(Long id) {
+        Event event = repo.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Event not found"));
+
+        return mapToFullDTO(event); // sudah ada di class ini
+    }
+    
 }

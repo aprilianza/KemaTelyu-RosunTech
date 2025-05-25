@@ -4,7 +4,7 @@
     <div class="content-container">
       <div class="container py-4" style="min-height: 100vh">
         <div class="text-center mb-4 mt-5">
-          <h2 class="fw-bold">Create Event</h2>
+          <h2 class="fw-bold">Buat Event</h2>
           <p class="text-muted">Buat acara baru untuk mahasiswa Telkom University</p>
         </div>
 
@@ -54,7 +54,7 @@
 
               <!-- Submit Button -->
               <div class="text-center mt-4">
-                <button class="btn btn-danger px-5 py-2 rounded-pill"><i class="fas fa-plus-circle me-2"></i>Buat Event</button>
+                <button class="btn btn-danger px-5 py-2 rounded-pill">Buat Event</button>
               </div>
             </form>
           </div>

@@ -28,18 +28,16 @@ public class JwtFilter extends OncePerRequestFilter {
 
     @Override
     protected void doFilterInternal(HttpServletRequest req,
-                                    HttpServletResponse res,
-                                    FilterChain chain)
+            HttpServletResponse res,
+            FilterChain chain)
             throws ServletException, IOException {
 
         String path = req.getServletPath();
         String method = req.getMethod();
 
         // ✅ BYPASS: Auth endpoints & GET /api/events
-        if (
-            path.startsWith("/api/auth") ||
-            (method.equals("GET") && path.startsWith("/api/events"))
-        ) {
+        if (path.startsWith("/api/auth") ||
+                (method.equals("GET") && path.equals("/api/events"))) {
             chain.doFilter(req, res);
             return;
         }
@@ -54,12 +52,10 @@ public class JwtFilter extends OncePerRequestFilter {
                 Long userId = Long.parseLong(claims.getSubject());
                 String role = claims.get("role", String.class);
 
-                UsernamePasswordAuthenticationToken auth =
-                        new UsernamePasswordAuthenticationToken(
-                                userId,
-                                null,
-                                List.of(new SimpleGrantedAuthority("ROLE_" + role))
-                        );
+                UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(
+                        userId,
+                        null,
+                        List.of(new SimpleGrantedAuthority("ROLE_" + role)));
 
                 auth.setDetails(new WebAuthenticationDetailsSource().buildDetails(req));
                 SecurityContextHolder.getContext().setAuthentication(auth);
