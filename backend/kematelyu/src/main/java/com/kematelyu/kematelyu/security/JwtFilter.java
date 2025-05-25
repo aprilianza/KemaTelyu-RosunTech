@@ -62,7 +62,6 @@ public class JwtFilter extends OncePerRequestFilter {
 
             } catch (Exception e) {
                 // Token tidak valid/expired → lanjutkan tanpa Auth
-                System.out.println("JWT invalid: " + e.getMessage());
             }
         }
 
