@@ -1,13 +1,9 @@
 <template>
   <div id="app" class="d-flex">
-    <!-- Sidebar -->
     <Sidebar />
 
-    <!-- Main Content -->
     <div class="content-wrapper container">
-      <!-- User Profile, Total Event, and History Section -->
       <div class="row mb-5 animate__animated animate__fadeIn">
-        <!-- User Profile Section -->
         <div class="col-lg-6 col-md-12 mb-3">
           <div class="card user-profile-card h-100 animate__animated animate__fadeInLeft">
             <div class="card-body">
@@ -25,7 +21,6 @@
           </div>
         </div>
 
-        <!-- Total Event Card -->
         <div class="col-lg-3 col-md-6 mb-3">
           <div class="card total-event-card h-100 animate__animated animate__fadeInRight">
             <div class="card-body text-center d-flex flex-column justify-content-center">
@@ -35,7 +30,6 @@
           </div>
         </div>
 
-        <!-- History Card -->
         <div class="col-lg-3 col-md-6 mb-3" @click="$router.push({ name: 'History' })">
           <div class="card history-card h-100 animate__animated animate__fadeInRight">
             <div class="card-body d-flex flex-column align-items-center justify-content-center">
@@ -46,46 +40,44 @@
         </div>
       </div>
 
-      <!-- Events Section -->
       <h2 class="mb-4 animate__animated animate__fadeIn">Events</h2>
       <div class="row justify-content-center g-4 mb-5">
         <div class="col-12 col-md-6" v-for="(event, index) in events" :key="event.id">
           <div class="event-card d-flex flex-column animate__animated animate__fadeIn" 
                :style="{'animation-delay': index * 0.1 + 's'}">
             <div class="image-wrapper mb-3 hover-zoom">
-              <img :src="require(`@/assets/img/${event.image}`)" alt="Event Image" />
+              <img :src="`http://localhost:8888/${event.fotoPath}`" alt="Event Image" />
             </div>
             <h5 class="event-title mb-1 text-truncate">{{ event.title }}</h5>
             <a href="#" class="text-start see-more mb-3" @click.prevent="openModal(event)">
               lihat detail
             </a>
             <div class="d-flex justify-content-end gap-3 mt-auto">
-              <span class="badge date-badge">{{ event.date }}</span>
+              <span class="badge date-badge">{{ formatDate(event.date) }}</span>
               <span class="badge time-badge">{{ event.time }}</span>
             </div>
           </div>
         </div>
       </div>
 
-      <!-- Modern Event Detail Modal -->
       <div v-if="selectedEvent" class="modern-modal-container animate__animated animate__fadeIn">
         <div class="modern-modal-backdrop" @click="closeModal"></div>
         <div class="modern-modal animate__animated animate__zoomIn">
           <button type="button" class="modern-modal-close" @click="closeModal">
             <span class="close-icon">&times;</span>
           </button>
-          
+
           <div class="modern-modal-image">
-            <img :src="require(`@/assets/img/${selectedEvent.image}`)" alt="Event Image" />
+            <img :src="`http://localhost:8888/${selectedEvent.fotoPath}`" alt="Event Image" />
           </div>
-          
+
           <div class="modern-modal-content">
             <h2 class="modal-event-title">{{ selectedEvent.title }}</h2>
-            
+
             <div class="modal-event-metadata">
               <div class="metadata-item">
                 <span class="metadata-icon calendar-icon"></span>
-                <span>{{ selectedEvent.date }}</span>
+                <span>{{ formatDate(selectedEvent.date) }}</span>
               </div>
               <div class="metadata-item">
                 <span class="metadata-icon clock-icon"></span>
@@ -93,16 +85,16 @@
               </div>
               <div class="metadata-item">
                 <span class="metadata-icon users-icon"></span>
-                <span>{{ selectedEvent.createdBy }}</span>
+                <span>{{ selectedEvent.createdByName }}</span>
               </div>
             </div>
-            
+
             <div class="modal-event-description">
               <p>{{ selectedEvent.description }}</p>
             </div>
-            
+
             <div class="modern-modal-actions">
-              <button type="button" class="btn register-btn">
+              <button type="button" class="btn register-btn" @click="registerToEvent(selectedEvent.id)">
                 Register
               </button>
             </div>
@@ -122,57 +114,41 @@ export default {
   name: 'DashboardMahasiswa',
   components: { Sidebar },
   data() {
-  return {
-    user: JSON.parse(localStorage.getItem('user')) || {
-      name: '',
-      nim: '',
-      fakultas: '',
-      fotoPath: ''
-    },
-    events: [],
-    selectedEvent: null
-  };
-},
+    return {
+      user: JSON.parse(localStorage.getItem('user')) || {
+        name: '', nim: '', fakultas: '', fotoPath: ''
+      },
+      events: [],
+      selectedEvent: null
+    };
+  },
   computed: {
     totalEvents() {
       return this.events.length;
     },
-     profilePhoto() {
-    if (this.user.fotoPath?.startsWith('http')) return this.user.fotoPath;
-    if (this.user.fotoPath) {
-      return `http://localhost:8888/${this.user.fotoPath}`;
+    profilePhoto() {
+      if (this.user.fotoPath?.startsWith('http')) return this.user.fotoPath;
+      if (this.user.fotoPath) {
+        return `http://localhost:8888/${this.user.fotoPath}`;
+      }
+      return require('@/assets/img/profile.png');
     }
-    return require('@/assets/img/profile.png');
-  }
-
   },
   mounted() {
-    // ⬇️ Redirect ke /login kalau token tidak ada
     const token = localStorage.getItem('token');
     if (!token) {
       this.$router.push('/');
       return;
     }
-
-    // Lanjut proses normal
     this.fetchCurrentUser();
+    this.fetchEvents();
     this.loadFontAwesome();
   },
   methods: {
-    loadFontAwesome() {
-      // If you're not already loading FontAwesome elsewhere, add this method
-      if (!document.getElementById('font-awesome-css')) {
-        const link = document.createElement('link');
-        link.id = 'font-awesome-css';
-        link.rel = 'stylesheet';
-        link.href = 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css';
-        document.head.appendChild(link);
-      }
-    },
     async fetchEvents() {
       try {
-        const response = await getEvents(); // Mengambil event menggunakan API
-        this.events = response.data; // Menyimpan event yang diambil ke dalam array events
+        const res = await getEvents();
+        this.events = res.data;
       } catch (error) {
         console.error("Error fetching events:", error);
       }
@@ -185,13 +161,41 @@ export default {
         console.error('Gagal ambil data user:', err);
       }
     },
+    async registerToEvent(eventId) {
+      try {
+        const token = localStorage.getItem('token');
+        await api.post(`/api/registration/${eventId}`, {}, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+
+        alert('Berhasil mendaftar!');
+        this.closeModal();
+      } catch (error) {
+        console.error('Gagal mendaftar:', error);
+        alert('Pendaftaran gagal.');
+      }
+    },
     openModal(event) {
       this.selectedEvent = event;
-      document.body.style.overflow = 'hidden'; // Prevent scrolling when modal is open
+      document.body.style.overflow = 'hidden';
     },
     closeModal() {
       this.selectedEvent = null;
-      document.body.style.overflow = ''; // Re-enable scrolling
+      document.body.style.overflow = '';
+    },
+    loadFontAwesome() {
+      if (!document.getElementById('font-awesome-css')) {
+        const link = document.createElement('link');
+        link.id = 'font-awesome-css';
+        link.rel = 'stylesheet';
+        link.href = 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css';
+        document.head.appendChild(link);
+      }
+    },
+    formatDate(dateStr) {
+      return new Date(dateStr).toLocaleDateString('id-ID', {
+        day: 'numeric', month: 'long', year: 'numeric'
+      });
     }
   }
 };
