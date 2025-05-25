@@ -3,7 +3,6 @@ package com.kematelyu.kematelyu.controller;
 import com.kematelyu.kematelyu.dto.CreateEventRequest;
 import com.kematelyu.kematelyu.dto.EventDetailDTO;
 import com.kematelyu.kematelyu.dto.EventFullDTO;
-import com.kematelyu.kematelyu.dto.EventSummaryDTO;
 import com.kematelyu.kematelyu.exception.ForbiddenException;
 import com.kematelyu.kematelyu.model.Event;
 import com.kematelyu.kematelyu.model.Registration;
@@ -163,9 +162,9 @@ public class EventController {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(error);
         }
 
-        Long userId = (Long) principal; 
+        Long userId = (Long) principal;
 
-        List<EventSummaryDTO> events = service.getEventsByStaff(userId);
+        List<EventFullDTO> events = service.getEventsByStaff(userId);
 
         Map<String, Object> result = new LinkedHashMap<>();
         result.put("code", 200);
