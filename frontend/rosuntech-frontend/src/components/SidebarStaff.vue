@@ -95,14 +95,14 @@ export default {
 
     async logout() {
       const result = await Swal.fire({
-        title: 'Logout Confirmation',
-        text: 'Are you sure you want to logout?',
+        title: 'Konfirmasi Logout',
+        text: 'Apakah anda yakin ingin logout?',
         icon: 'question',
         showCancelButton: true,
         confirmButtonColor: '#d33',
         cancelButtonColor: '#3085d6',
-        confirmButtonText: 'Yes, logout',
-        cancelButtonText: 'Cancel',
+        confirmButtonText: 'Ya',
+        cancelButtonText: 'Batal',
       });
 
       if (result.isConfirmed) {
@@ -131,7 +131,6 @@ export default {
 </script>
 
 <style scoped>
-/* Header dengan hamburger, title, dan page name */
 .sidebar-header {
   display: flex;
   align-items: center;
@@ -184,7 +183,6 @@ export default {
   color: v-bind('$colors.third');
 }
 
-/* Page Name Styling */
 .page-name {
   display: flex;
   align-items: center;
@@ -200,7 +198,6 @@ export default {
   padding-right: 24px;
 }
 
-/* Backdrop Overlay */
 .sidebar-backdrop {
   position: fixed;
   top: 0;
@@ -219,7 +216,6 @@ export default {
   }
 }
 
-/* Sidebar styles */
 .sidebar {
   background: linear-gradient(145deg, #ffffff 0%, #f8fafc 100%);
   position: fixed;
@@ -241,7 +237,6 @@ export default {
   transform: translateX(0);
 }
 
-/* Brand Section */
 .sidebar-brand {
   display: flex;
   align-items: center;
@@ -276,7 +271,6 @@ export default {
   letter-spacing: -0.3px;
 }
 
-/* Navigation */
 .sidebar-nav {
   flex: 1;
   padding: 16px 0;
@@ -353,7 +347,6 @@ export default {
   background: rgba(255, 255, 255, 0.8);
 }
 
-/* Footer / Logout */
 .sidebar-footer {
   padding: 24px 16px 32px;
   border-top: 1px solid rgba(0, 0, 0, 0.05);
@@ -396,7 +389,6 @@ export default {
   }
 }
 
-/* Smooth animations */
 * {
   box-sizing: border-box;
 }
