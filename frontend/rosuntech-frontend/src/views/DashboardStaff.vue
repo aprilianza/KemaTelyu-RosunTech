@@ -1,4 +1,4 @@
- <template>
+<template>
   <div class="d-flex">
     <!-- Sidebar -->
     <SidebarStaff />
@@ -18,7 +18,7 @@
                 <h3 class="fw-bold mb-2">{{ user.name }}</h3>
                 <div class="division-badge"><i class="bi bi-building me-2"></i>{{ user.division }}</div>
               </div>
-              <router-link to="/CreateEvent" class="btn btn-lg create-event-btn"> <i class="bi bi-plus-circle me-2"></i>Create Event </router-link>
+              <router-link to="/CreateEvent" class="btn btn-lg create-event-btn"> <i class="bi bi-plus-circle me-2"></i>Buat Event </router-link>
             </div>
           </div>
         </div>
@@ -27,8 +27,8 @@
       <!-- Event List -->
       <div class="events-section">
         <div class="section-header d-flex justify-content-between align-items-center mb-4">
-          <h5 class="section-title mb-0"><i class="bi bi-calendar-event me-2"></i>Current Events You Created</h5>
-          <div class="event-counter badge bg-light text-primary">{{ events.length }} Events</div>
+          <h5 class="section-title mb-0"><i class="bi bi-calendar-event me-2"></i>Event yang Anda Buat</h5>
+          <div class="event-counter badge bg-light text-primary">{{ events.length }} Event</div>
         </div>
 
         <div v-if="loadingEvents" class="text-center py-5">
@@ -50,13 +50,13 @@
               <div class="card-body d-flex flex-column">
                 <div class="badges-container mb-2">
                   <span class="badge time-badge me-2"> <i class="bi bi-clock me-1"></i>{{ formatTime(event.time) }} </span>
-                  <span class="badge participant-badge"> <i class="bi bi-people me-1"></i>Max {{ event.maxParticipants || 50 }} </span>
+                  <span class="badge participant-badge"> <i class="bi bi-people me-1"></i>Maks {{ event.maxParticipant }} </span>
                 </div>
                 <h5 class="event-title mb-2">{{ event.title }}</h5>
                 <p class="event-description text-truncate mb-3">{{ event.description }}</p>
                 <div class="mt-auto d-flex justify-content-between">
-                  <button class="btn btn-outline-light btn-sm" @click="confirmDeleteEvent(event.id)"><i class="bi bi-trash me-1"></i> Delete Event</button>
-                  <button class="btn btn-light btn-sm" @click="openModal(event)"><i class="bi bi-eye me-1"></i> Details</button>
+                  <button class="btn btn-outline-light btn-sm" @click="confirmDeleteEvent(event.id)"><i class="bi bi-trash me-1"></i> Hapus</button>
+                  <button class="btn btn-light btn-sm" @click="openModal(event)"><i class="bi bi-eye me-1"></i> Detail</button>
                 </div>
               </div>
             </div>
@@ -97,7 +97,7 @@
               </div>
               <div class="metadata-item">
                 <span class="metadata-icon users-icon"></span>
-                <span>Max {{ selectedEvent.maxParticipants || 50 }} Participants</span>
+                <span>Maks {{ selectedEvent.maxParticipant }} Peserta</span>
               </div>
             </div>
 
@@ -108,46 +108,59 @@
             <!-- Participants Section -->
             <div class="participants-section mt-4">
               <h4 class="participants-title">
-                <i class="bi bi-people-fill me-2"></i>Participants
-                <span class="participant-count">({{ eventParticipants.length }})</span>
+                <i class="bi bi-people-fill me-2"></i>Peserta
+                <span class="participant-count">({{ selectedEvent.participants.length }})</span>
               </h4>
 
               <div class="table-responsive mt-3">
                 <table class="table table-hover">
                   <thead>
                     <tr>
-                      <th scope="col">#</th>
-                      <th scope="col">Name</th>
+                      <th scope="col">No</th>
+                      <th scope="col">Nama</th>
                       <th scope="col">Email</th>
-                      <th scope="col">Registration Date</th>
+                      <th scope="col">NIM</th>
+                      <th scope="col">Fakultas</th>
                       <th scope="col">Status</th>
-                      <th scope="col">Actions</th>
+                      <th scope="col">Aksi</th>
                     </tr>
                   </thead>
                   <tbody>
-                    <tr v-for="(participant, idx) in eventParticipants" :key="participant.id">
+                    <tr v-for="(participant, idx) in selectedEvent.participants" :key="participant.id">
                       <td>{{ idx + 1 }}</td>
-                      <td>{{ participant.user.name }}</td>
-                      <td>{{ participant.user.email }}</td>
-                      <td>{{ formatDateTime(participant.createdAt) }}</td>
                       <td>
-                        <span :class="getStatusBadgeClass(participant.status)">
-                          {{ participant.status }}
+                        <div class="d-flex align-items-center">
+                          <img :src="getUserImage(participant.fotoPath)" class="rounded-circle me-2" width="30" height="30" alt="Foto Peserta">
+                          {{ participant.name }}
+                        </div>
+                      </td>
+                      <td>{{ participant.email }}</td>
+                      <td>{{ participant.nim }}</td>
+                      <td>{{ participant.fakultas }}</td>
+                      <td>
+                        <span :class="getStatusBadgeClass(getRegistrationStatus(participant.nim))">
+                          {{ formatStatus(getRegistrationStatus(participant.nim)) }}
                         </span>
                       </td>
                       <td>
                         <div class="btn-group">
-                          <button class="btn btn-sm btn-success" @click="updateParticipantStatus(participant.id, 'Accepted')" :disabled="participant.status === 'Accepted'">
+                          <button 
+                            class="btn btn-sm btn-success" 
+                            @click="updateParticipantStatus(participant.nim, 'APPROVED')" 
+                            :disabled="getRegistrationStatus(participant.nim) === 'APPROVED'">
                             <i class="bi bi-check-circle"></i>
-                          </button>
-                          <button class="btn btn-sm btn-danger" @click="updateParticipantStatus(participant.id, 'Rejected')" :disabled="participant.status === 'Rejected'">
+                          </button>                          
+                          <button
+                            class="btn btn-sm btn-danger" 
+                            @click="updateParticipantStatus(participant.nim, 'REJECTED')" 
+                            :disabled="getRegistrationStatus(participant.nim) === 'REJECTED'">
                             <i class="bi bi-x-circle"></i>
                           </button>
                         </div>
                       </td>
                     </tr>
-                    <tr v-if="eventParticipants.length === 0">
-                      <td colspan="6" class="text-center py-3">No participants registered yet</td>
+                    <tr v-if="selectedEvent.participants.length === 0">
+                      <td colspan="7" class="text-center py-3">Belum ada peserta yang terdaftar</td>
                     </tr>
                   </tbody>
                 </table>
@@ -155,8 +168,8 @@
             </div>
 
             <div class="modern-modal-actions">
-              <button class="btn btn-outline-danger" @click="closeModal"><i class="bi bi-x-circle me-2"></i>Close</button>
-              <button class="btn btn-danger" @click="confirmDeleteEvent(selectedEvent.id)"><i class="bi bi-trash me-2"></i>Delete Event</button>
+              <button class="btn btn-outline-danger" @click="closeModal">Tutup</button>
+              <button class="btn btn-danger" @click="confirmDeleteEvent(selectedEvent.id)">Hapus Event</button>
             </div>
           </div>
         </div>
@@ -165,11 +178,17 @@
   </div>
 </template>
 
+<!-- DashboardStaff.vue -->
 <script>
 import SidebarStaff from '@/components/SidebarStaff.vue';
 import axios from 'axios';
 import Swal from 'sweetalert2';
-import { getEvents, deleteEvent, getEventParticipants, updateParticipantStatus } from '@/api/event';
+// Alias agar tidak bentrok dengan method lokal
+import {
+  getEventsStaff,
+  deleteEvent,
+  updateParticipantStatus as apiUpdateParticipantStatus
+} from '@/api/event';
 
 export default {
   name: 'DashboardStaff',
@@ -182,11 +201,10 @@ export default {
       user: {
         name: '',
         division: '',
-        photo: 'profile.png',
+        photo: '',
       },
       events: [],
       selectedEvent: null,
-      eventParticipants: [],
     };
   },
   async mounted() {
@@ -194,50 +212,42 @@ export default {
     await this.fetchEvents();
   },
   methods: {
+    /* AUTENTIKASI & FETCH EVENTS */
     async checkAuthentication() {
       try {
         const token = localStorage.getItem('token');
         const userData = localStorage.getItem('user');
-        
         if (!token) {
           await this.showAuthError('Autentikasi Diperlukan', 'Silakan login untuk mengakses halaman ini');
           this.redirectToLogin();
           return;
         }
-
         let user = null;
         if (userData) {
-          try {
-            user = JSON.parse(userData);
-          } catch (error) {
-            console.error('Error parsing user data:', error);
-            await this.showAuthError('Data User Tidak Valid', 'Data user tidak valid. Silakan login kembali');
+          try { user = JSON.parse(userData); }
+          catch (err) {
+            console.error(err);
+            await this.showAuthError('Data User Tidak Valid', 'Silakan login kembali');
             this.redirectToLogin();
             return;
           }
         }
-
         if (!user || !user.role || user.role.toUpperCase() !== 'STAFF') {
-          await this.showAuthError('Akses Ditolak', 'Anda memerlukan hak akses staff untuk membuka halaman ini');
+          await this.showAuthError('Akses Ditolak', 'Anda memerlukan hak akses staff');
           this.redirectToLogin();
           return;
         }
-
-        const response = await axios.get('/api/auth/me', {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+        const resp = await axios.get('/api/auth/me', {
+          headers: { Authorization: `Bearer ${token}` },
         });
-
-        if (response.status === 200) {
+        if (resp.status === 200) {
           this.user = {
             ...this.user,
-            ...response.data,
-            name: response.data.name || this.user.name,
-            division: response.data.divisi || this.user.divisi,
-            photo: response.data.fotoPath || this.user.fotoPath,
+            ...resp.data,
+            name: resp.data.name || this.user.name,
+            division: resp.data.divisi || this.user.division,
+            photo: resp.data.fotoPath || this.user.photo,
           };
-
           this.isAuthenticated = true;
           this.isLoading = false;
         } else {
@@ -245,20 +255,14 @@ export default {
           this.redirectToLogin();
         }
       } catch (error) {
-        console.error('Authentication failed:', error);
-
-        if (error.response) {
-          if (error.response.status === 401) {
-            await this.showAuthError('Sesi Habis', 'Sesi login Anda telah habis. Silakan login kembali');
-          } else if (error.response.status === 403) {
-            await this.showAuthError('Akses Ditolak', 'Anda tidak memiliki izin untuk mengakses halaman ini');
-          } else {
-            await this.showAuthError('Kesalahan Server', 'Terjadi kesalahan pada server. Silakan coba lagi nanti');
-          }
-        } else if (error.request) {
-          await this.showAuthError('Koneksi Gagal', 'Tidak dapat terhubung ke server. Periksa koneksi internet Anda');
+        console.error(error);
+        const code = error.response?.status;
+        if (code === 401) {
+          await this.showAuthError('Sesi Habis', 'Silakan login kembali');
+        } else if (code === 403) {
+          await this.showAuthError('Akses Ditolak', 'Anda tidak memiliki izin');
         } else {
-          await this.showAuthError('Kesalahan', 'Terjadi kesalahan saat memverifikasi autentikasi');
+          await this.showAuthError('Kesalahan Server', 'Coba lagi nanti');
         }
         this.clearAuthData();
         this.redirectToLogin();
@@ -268,44 +272,24 @@ export default {
     async fetchEvents() {
       this.loadingEvents = true;
       try {
-        const response = await getEvents();
-        this.events = response.data;
+        const resp = await getEventsStaff();
+        this.events = resp.data.message;
       } catch (error) {
-        console.error('Error fetching events:', error);
-        Swal.fire({
-          icon: 'error',
-          title: 'Error',
-          text: 'Failed to load events. Please try again later.',
-        });
+        console.error(error);
+        Swal.fire({ icon: 'error', title: 'Error', text: 'Gagal memuat event.' });
       } finally {
         this.loadingEvents = false;
       }
     },
 
-    async fetchEventParticipants(eventId) {
-      try {
-        const response = await getEventParticipants(eventId);
-        this.eventParticipants = response.data;
-      } catch (error) {
-        console.error('Error fetching participants:', error);
-        Swal.fire({
-          icon: 'error',
-          title: 'Error',
-          text: 'Failed to load participants. Please try again later.',
-        });
-      }
-    },
-
-    async showAuthError(title, message) {
+    async showAuthError(title, text) {
       await Swal.fire({
         icon: 'error',
-        title: title,
-        text: message,
+        title,
+        text,
         confirmButtonText: 'Ke Halaman Login',
         allowOutsideClick: false,
-        customClass: {
-          confirmButton: 'btn btn-danger',
-        },
+        customClass: { confirmButton: 'btn btn-danger' },
       });
     },
 
@@ -320,56 +304,54 @@ export default {
       this.$router.push('/');
     },
 
+    /* MODAL */
     async openModal(event) {
       this.selectedEvent = event;
       document.body.classList.add('modal-open');
-      await this.fetchEventParticipants(event.id);
     },
-
     closeModal() {
       this.selectedEvent = null;
       document.body.classList.remove('modal-open');
     },
 
+    /* FORMATTER */
     getEventImage(fotoPath) {
-      if (!fotoPath) return require('@/assets/img/placeholder.jpg');
+      return fotoPath ? `http://localhost:8888/${fotoPath}` : require('@/assets/img/placeholder.jpg');
+    },
+    getUserImage(fotoPath) {
       return `http://localhost:8888/${fotoPath}`;
     },
-
     formatDate(dateString) {
-      const date = new Date(dateString);
-      const optionsDay = { day: 'numeric' };
-      const optionsMonth = { month: 'long' };
-      const optionsYear = { year: 'numeric' };
-      
+      const d = new Date(dateString);
       return {
-        day: date.toLocaleDateString('id-ID', optionsDay),
-        month: date.toLocaleDateString('id-ID', optionsMonth),
-        year: date.toLocaleDateString('id-ID', optionsYear)
+        day:   d.toLocaleDateString('id-ID', { day: 'numeric' }),
+        month: d.toLocaleDateString('id-ID', { month: 'long' }),
+        year:  d.toLocaleDateString('id-ID', { year: 'numeric' }),
       };
     },
-
     formatFullDate(dateString) {
-      const date = new Date(dateString);
-      const options = { day: 'numeric', month: 'long', year: 'numeric' };
-      return date.toLocaleDateString('id-ID', options);
+      return new Date(dateString).toLocaleDateString('id-ID', {
+        day: 'numeric', month: 'long', year: 'numeric'
+      });
     },
-
     formatTime(timeString) {
-      if (!timeString) return '';
-      return timeString.substring(0, 5);
+      return timeString ? timeString.substring(0, 5) : '';
+    },
+    formatStatus(status) {
+      const map = { 'APPROVED': 'Diterima', 'REJECTED': 'Ditolak', 'PENDING': 'Menunggu' };
+      return map[status] || status;
+    },
+    getRegistrationStatus(nim) {
+      if (!this.selectedEvent?.registrations) return 'PENDING';
+      const r = this.selectedEvent.registrations.find(x => x.mahasiswaNim === nim);
+      return r?.status || 'PENDING';
     },
 
-    formatDateTime(dateTimeString) {
-      if (!dateTimeString) return '';
-      const date = new Date(dateTimeString);
-      return date.toLocaleString('id-ID');
-    },
-
+    /* HAPUS EVENT */
     async confirmDeleteEvent(eventId) {
       const result = await Swal.fire({
         title: 'Hapus Event',
-        text: 'Apakah Anda yakin ingin menghapus event ini? Tindakan ini tidak dapat dibatalkan.',
+        text: 'Tindakan ini tidak dapat dibatalkan.',
         icon: 'warning',
         showCancelButton: true,
         confirmButtonColor: '#d33',
@@ -377,81 +359,56 @@ export default {
         confirmButtonText: 'Ya, hapus!',
         cancelButtonText: 'Batal',
       });
-
       if (result.isConfirmed) {
         try {
           await deleteEvent(eventId);
-          this.events = this.events.filter(event => event.id !== eventId);
-          
-          if (this.selectedEvent && this.selectedEvent.id === eventId) {
-            this.closeModal();
-          }
-
-          const Toast = Swal.mixin({
-            toast: true,
-            position: 'top-end',
-            showConfirmButton: false,
-            timer: 3000,
-            timerProgressBar: true,
-          });
-
-          Toast.fire({
-            icon: 'success',
-            title: 'Event berhasil dihapus',
-          });
+          this.events = this.events.filter(e => e.id !== eventId);
+          if (this.selectedEvent?.id === eventId) this.closeModal();
+          Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: 'Event berhasil dihapus', showConfirmButton: false, timer: 2000 });
         } catch (error) {
-          console.error('Error deleting event:', error);
-          Swal.fire({
-            icon: 'error',
-            title: 'Error',
-            text: 'Failed to delete event. Please try again later.',
-          });
+          console.error(error);
+          Swal.fire({ icon: 'error', title: 'Error', text: 'Gagal menghapus event.' });
         }
       }
     },
 
-    async updateParticipantStatus(registrationId, newStatus) {
+    /* APPROVE / REJECT PARTICIPANT */
+    async updateParticipantStatus(nim, newStatus) {
       try {
-        await updateParticipantStatus(registrationId, newStatus);
-        
-        // Update local state
-        const participant = this.eventParticipants.find(p => p.id === registrationId);
-        if (participant) {
-          participant.status = newStatus;
+        const registration = this.selectedEvent.registrations.find(r => r.mahasiswaNim === nim);
+        if (!registration) throw new Error('Registrasi tidak ditemukan');
+
+        // Panggil API approve/reject
+        const resp = await apiUpdateParticipantStatus(registration.id, newStatus);
+
+        // Update state lokal
+        const idx = this.selectedEvent.registrations.findIndex(r => r.mahasiswaNim === nim);
+        if (idx !== -1) {
+          this.selectedEvent.registrations[idx].status   = newStatus;
+          this.selectedEvent.registrations[idx].verified = (newStatus === 'APPROVED');
         }
 
-        const Toast = Swal.mixin({
-          toast: true,
-          position: 'top-end',
-          showConfirmButton: false,
-          timer: 3000,
-          timerProgressBar: true,
+        // Toast dengan message dari backend
+        Swal.mixin({
+          toast: true, position: 'top-end', showConfirmButton: false,
+          timer: 3000, timerProgressBar: true
+        }).fire({
+          icon: 'success',
+          title: resp.data.message
         });
 
-        Toast.fire({
-          icon: 'success',
-          title: `Status diperbarui ke ${newStatus}`,
-        });
       } catch (error) {
         console.error('Error updating participant status:', error);
-        Swal.fire({
-          icon: 'error',
-          title: 'Error',
-          text: 'Failed to update participant status. Please try again later.',
-        });
+        Swal.fire({ icon: 'error', title: 'Error', text: 'Gagal memperbarui status peserta.' });
       }
     },
 
     getStatusBadgeClass(status) {
       switch (status) {
-        case 'Accepted':
-          return 'badge bg-success';
-        case 'Processing':
-          return 'badge bg-secondary';
-        case 'Rejected':
-          return 'badge bg-danger';
-        default:
-          return 'badge bg-secondary';
+        case 'APPROVED': return 'badge bg-success';
+        case 'PENDING':  return 'badge bg-secondary';
+        case 'REJECTED': return 'badge bg-danger';
+        default:         return 'badge bg-secondary';
       }
     },
   },
@@ -459,29 +416,21 @@ export default {
   beforeRouteEnter(to, from, next) {
     const token = localStorage.getItem('token');
     const userData = localStorage.getItem('user');
-
-    if (!token) {
-      next('/');
-      return;
-    }
-
+    if (!token) { next('/'); return; }
     if (userData) {
       try {
-        const user = JSON.parse(userData);
-        if (!user.role || user.role.toUpperCase() !== 'STAFF') {
-          next('/');
-          return;
-        }
-      } catch (error) {
+        const u = JSON.parse(userData);
+        if (!u.role || u.role.toUpperCase() !== 'STAFF') { next('/'); return; }
+      } catch {
         next('/');
         return;
       }
     }
-
     next();
   },
 };
 </script>
+
 <style scoped>
 .content-wrapper {
   flex-grow: 1;
@@ -569,7 +518,7 @@ export default {
 
 /* Event Cards */
 .event-card {
-  background: linear-gradient(135deg, #2c3e50, #1a252f);
+  background: linear-gradient(135deg, #2c3e50, v-bind('$colors.primary'));
   border-radius: 12px;
   overflow: hidden;
   transition: all 0.3s ease;
@@ -601,8 +550,8 @@ export default {
   position: absolute;
   top: 15px;
   right: 15px;
-  background-color: rgba(179, 2, 2, 0.9);
-  color: white;
+  background-color: white;
+  color: v-bind('$colors.primary');
   border-radius: 8px;
   padding: 0.5rem;
   display: flex;
@@ -752,7 +701,7 @@ export default {
 .event-date-badge {
   position: absolute;
   top: 20px;
-  right: 20px;
+  left: 20px;
   background-color: white;
   border-radius: 10px;
   padding: 0.75rem 1rem;

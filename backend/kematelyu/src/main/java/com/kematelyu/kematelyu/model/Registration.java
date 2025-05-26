@@ -18,8 +18,6 @@ public class Registration {
     private LocalDate date;
     @Enumerated(EnumType.STRING)
     private Status status;
-    @Column(name = "is_verified", nullable = false)
-    private boolean verified = false;
 
     public Registration() {}
 
@@ -29,20 +27,17 @@ public class Registration {
         this.event = event;
         this.date = LocalDate.now();
         this.status = Status.PENDING;
-        this.verified = false;
     }
 
     /* business */
     public void approve() {
         this.status = Status.APPROVED;
-        this.verified = true;
     }
     public void cancel() {
         this.status = Status.REJECTED;
-        this.verified = false;
     }
     public boolean isActive() {
-        return status == Status.APPROVED && verified;
+        return status == Status.APPROVED;
     }
 
     /* getters & setters */
@@ -60,7 +55,4 @@ public class Registration {
 
     public Status getStatus() { return status; }
     public void setStatus(Status status) { this.status = status; }
-
-    public boolean isVerified() { return verified; }
-    public void setVerified(boolean verified) { this.verified = verified; }
 }

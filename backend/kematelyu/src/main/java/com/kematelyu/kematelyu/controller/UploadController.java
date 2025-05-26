@@ -1,38 +1,68 @@
 package com.kematelyu.kematelyu.controller;
 
-import jakarta.servlet.http.HttpServletRequest;
-import org.springframework.http.HttpStatus;
+import com.kematelyu.kematelyu.exception.BaseException;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.Map;
+import java.util.UUID;
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/upload")
 @CrossOrigin
 public class UploadController {
 
+    private static final List<String> ALLOWED_EXTENSIONS = List.of(".jpg", ".jpeg", ".png");
+    private static final List<String> ALLOWED_MIME_TYPES = List.of("image/jpeg", "image/png");
+
     @PostMapping
-    public ResponseEntity<?> uploadFile(@RequestParam("file") MultipartFile file) {
-        String uploadDir = System.getProperty("user.dir") + "/uploads/events/";
+    public ResponseEntity<Map<String, String>> uploadFile(@RequestParam("file") MultipartFile file) {
 
         try {
-            // Cek dan buat folder jika belum ada
-            File dir = new File(uploadDir);
-            if (!dir.exists())
-                dir.mkdirs();
+            // Validasi extension
+            String originalName = file.getOriginalFilename();
+            String extension = "";
+            if (originalName != null && originalName.contains(".")) {
+                extension = originalName.substring(originalName.lastIndexOf('.')).toLowerCase();
+            }
 
-            // Simpan file ke folder
-            File dest = new File(uploadDir + file.getOriginalFilename());
-            file.transferTo(dest);
+            if (!ALLOWED_EXTENSIONS.contains(extension)) {
+                throw new BaseException(org.springframework.http.HttpStatus.BAD_REQUEST,
+                        "Ekstensi file tidak diperbolehkan: " + extension);
+            }
 
-            return ResponseEntity.ok("File uploaded: " + dest.getPath());
+            // Validasi MIME type
+            String mimeType = file.getContentType();
+            if (mimeType == null || !ALLOWED_MIME_TYPES.contains(mimeType)) {
+                throw new BaseException(org.springframework.http.HttpStatus.BAD_REQUEST,
+                        "Tipe file tidak diperbolehkan: " + mimeType);
+            }
+
+            // Simpan ke folder eksternal: /static/events
+            Path uploadDir = Paths.get(System.getProperty("user.dir"), "static", "events");
+            if (Files.notExists(uploadDir)) {
+                Files.createDirectories(uploadDir);
+            }
+
+            String randomName = UUID.randomUUID().toString().replace("-", "") + extension;
+            Path destination = uploadDir.resolve(randomName);
+            file.transferTo(destination);
+
+            String relativePath = "events/" + randomName;
+            return ResponseEntity.ok(Map.of(
+                    "filePath", relativePath,
+                    "message", "File uploaded successfully"
+            ));
+
         } catch (IOException e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body("Gagal upload: " + e.getMessage());
+            throw new BaseException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
+                    "Gagal upload: " + e.getMessage());
         }
     }
 }
