@@ -71,7 +71,12 @@ export default {
     toggleSidebar() {
       this.isOpen = !this.isOpen;
     },
-    confirmLogout() {
+     /* menghapus token & profil di localStorage */
+    clearAuthData() {
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+    },
+   confirmLogout() {
       Swal.fire({
         title: 'Apakah anda yakin ingin logout?',
         icon: 'warning',
@@ -82,15 +87,11 @@ export default {
           confirmButton: 'btn btn-danger me-2',
           cancelButton: 'btn btn-secondary'
         },
-        buttonsStyling: false,
-        dangerMode: true,
-      }).then((result) => {
+        buttonsStyling: false
+      }).then(result => {
         if (result.isConfirmed) {
-          // Redirect ke halaman login
+          this.clearAuthData();               // ⬅️ panggil di sini
           this.$router.push({ name: 'Login' });
-
-          // Atau panggil action Vuex/Pinia jika perlu
-          // this.logout(); 
         }
       });
     }
