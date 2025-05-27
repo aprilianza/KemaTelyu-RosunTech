@@ -1,5 +1,6 @@
 package com.kematelyu.kematelyu.security;
 
+import com.kematelyu.kematelyu.repository.UserRepository;
 import com.kematelyu.kematelyu.util.JwtUtil;
 import io.jsonwebtoken.Claims;
 import jakarta.servlet.FilterChain;
@@ -21,48 +22,60 @@ import java.util.List;
 public class JwtFilter extends OncePerRequestFilter {
 
     private final JwtUtil jwtUtil;
+    private final UserRepository userRepo;
 
-    public JwtFilter(JwtUtil jwtUtil) {
+    public JwtFilter(JwtUtil jwtUtil, UserRepository userRepo) {
         this.jwtUtil = jwtUtil;
+        this.userRepo = userRepo;
     }
 
     @Override
     protected void doFilterInternal(HttpServletRequest req,
-            HttpServletResponse res,
-            FilterChain chain)
-            throws ServletException, IOException {
+                                    HttpServletResponse res,
+                                    FilterChain chain)
+                                    throws ServletException, IOException {
 
-        String path = req.getServletPath();
+        String path   = req.getServletPath();
         String method = req.getMethod();
 
-        // ✅ BYPASS: Auth endpoints & GET /api/events
+        // ✅ BYPASS: endpoint auth & public GET /api/events
         if (path.startsWith("/api/auth") ||
-                (method.equals("GET") && path.equals("/api/events"))) {
+           (method.equals("GET") && path.equals("/api/events"))) {
             chain.doFilter(req, res);
             return;
         }
 
-        // ✅ Validasi token jika ada
+        // ✅ Validasi token bila ada
         String header = req.getHeader(HttpHeaders.AUTHORIZATION);
         if (header != null && header.startsWith("Bearer ")) {
             String token = header.substring(7);
 
             try {
                 Claims claims = jwtUtil.parse(token).getBody();
-                Long userId = Long.parseLong(claims.getSubject());
-                String role = claims.get("role", String.class);
+                Long   userId = Long.parseLong(claims.getSubject());
+                String role   = claims.get("role", String.class);
 
-                UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(
-                        userId,
-                        null,
-                        List.of(new SimpleGrantedAuthority("ROLE_" + role)));
+                /* ⚠️ Cek apakah user masih ada di DB */
+                if (!userRepo.existsById(userId)) {
+                    res.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                    res.getWriter().write("Token tidak valid: user tidak ditemukan");
+                    return;
+                }
+
+                UsernamePasswordAuthenticationToken auth =
+                        new UsernamePasswordAuthenticationToken(
+                                userId,
+                                null,
+                                List.of(new SimpleGrantedAuthority("ROLE_" + role)));
 
                 auth.setDetails(new WebAuthenticationDetailsSource().buildDetails(req));
                 SecurityContextHolder.getContext().setAuthentication(auth);
 
             } catch (Exception e) {
-                // Token tidak valid/expired → lanjutkan tanpa Auth
-                System.out.println("JWT invalid: " + e.getMessage());
+                // Token invalid / expired → reject
+                res.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                res.getWriter().write("Token tidak valid atau expired");
+                return;
             }
         }
 
