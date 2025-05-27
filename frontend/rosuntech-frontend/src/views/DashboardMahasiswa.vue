@@ -54,12 +54,19 @@
           <div class="event-card d-flex flex-column animate__animated animate__fadeIn" 
                :style="{'animation-delay': index * 0.1 + 's'}">
             <div class="image-wrapper mb-3 hover-zoom">
-              <img :src="require(`@/assets/img/${event.image}`)" alt="Event Image" />
+              <img :src="`/${event.fotoPath}`" alt="Event Image" />
             </div>
             <h5 class="event-title mb-1 text-truncate">{{ event.title }}</h5>
             <a href="#" class="text-start see-more mb-3" @click.prevent="openModal(event)">
               lihat detail
             </a>
+
+            <div class="mt-3 d-flex justify-content-end gap-2">
+            <button class="btn btn-primary btn-sm" @click="registerEvent(event.id)" :disabled="event.registered">
+               {{ event.registered ? 'Terdaftar' : 'Register' }}
+            </button>
+            </div>
+
             <div class="d-flex justify-content-end gap-3 mt-auto">
               <span class="badge date-badge">{{ event.date }}</span>
               <span class="badge time-badge">{{ event.time }}</span>
@@ -124,35 +131,7 @@ export default {
   data() {
     return {
       user: { name: '', nim: '', fakultas: '', photo: '' }, // data user di-load dari backend
-      events: [
-        {
-          id: 1,
-          title: 'Telkommetra Mengadakan Lomba Inovasi Digital untuk Mahasiswa Seluruh Indonesia',
-          image: 'placeholder.jpg',
-          description: "Lomba inovasi digital bertema 'Smart Campus' dengan hadiah jutaan rupiah.",
-          date: '21 Maret 2025',
-          time: '09.00 WIB',
-          createdBy: 'Fakultas Ilmu Komputer'
-        },
-        {
-          id: 2,
-          title: 'Workshop UI/UX Design: Membangun Portofolio Profesional',
-          image: 'placeholder.jpg',
-          description: 'Pelatihan intensif desain antarmuka pengguna dengan studi kasus nyata.',
-          date: '05 April 2025',
-          time: '13.00 WIB',
-          createdBy: 'Prodi Desain Digital'
-        },
-        {
-          id: 3,
-          title: 'Seminar Big Data & Analytics di Era Industri 4.0',
-          image: 'placeholder.jpg',
-          description: 'Mendalami penerapan big data untuk pengambilan keputusan bisnis.',
-          date: '18 April 2025',
-          time: '10.00 WIB',
-          createdBy: 'Himpunan Mahasiswa TI'
-        }
-      ],
+      events: [],
       selectedEvent: null,
     };
   },
@@ -170,8 +149,10 @@ export default {
     }
 
     // Lanjut proses normal
-    this.fetchCurrentUser();
     this.loadFontAwesome();
+    this.fetchCurrentUser();
+    this.fetchEvents();
+    
   },
   methods: {
     loadFontAwesome() {
@@ -192,6 +173,37 @@ export default {
         console.error('Gagal ambil data user:', err);
       }
     },
+    async fetchEvents() {
+      try {
+        // Ambil data event dari API /api/events
+        const res = await api.get('/api/events');
+        console.log('Events API response:', res.data);
+        // Data event kemungkinan ada di res.data.message sesuai struktur response di EventController
+        this.events = res.data.map(event => ({
+          id: event.id,
+          title: event.title,
+          image: event.fotoPath ? event.fotoPath.replace(/^events\//, '') : 'placeholder.jpg', // sesuaikan property fotoPath
+          description: event.description,
+          date: event.date,
+          time: event.time,
+          createdBy: event.createdBy?.name || 'Unknown', // jika ada createdBy dan nama staff
+          registered: event.registrations?.some(reg => reg.nim === this.user.nim && reg.status === 'APPROVED') || false
+        }));
+      } catch (error) {
+        console.error('Gagal mengambil data event:', error);
+      }
+    },
+    async registerEvent(eventId) {
+    try {
+      const res = await api.post(`/api/events/${eventId}/register`);
+      alert(res.data.message || 'Berhasil daftar event!');
+      // Update status registered agar tombol disable setelah daftar
+       this.fetchEvents();
+    } catch (err) {
+      console.error('Gagal daftar event:', err);
+      alert('Gagal daftar event, coba lagi.');
+    }
+  },
     openModal(event) {
       this.selectedEvent = event;
       document.body.style.overflow = 'hidden'; // Prevent scrolling when modal is open
