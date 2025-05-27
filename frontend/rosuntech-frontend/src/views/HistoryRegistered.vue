@@ -17,10 +17,11 @@
             
             <!-- Status Badge -->
             <div class="d-flex align-items-center mb-3">
-              <span :class="['status-badge', 
-                event.status === 'Diterima' ? 'status-approved' : 'status-pending']">
-                {{ event.status }}
-              </span>
+             <span :class="['status-badge', 
+              event.status === 'Diterima' ? 'status-approved' : 
+              event.status === 'Menunggu' ? 'status-pending' : 'status-rejected']">
+              {{ event.status }}
+            </span>
             </div>
 
             <!-- Action Buttons -->
@@ -50,8 +51,6 @@
 <script>
 import Sidebar from '@/components/Sidebar.vue';
 import api from '@/api/axios';
-import jsPDF from 'jspdf';
-import html2canvas from 'html2canvas';
 
 export default {
   name: 'HistoryRegisteredEvents',
@@ -61,30 +60,100 @@ export default {
   data() {
     return {
       historyEvents: [],
-      
+      previousEvents: [],
     };
   },
   created() {
     const savedHistory = localStorage.getItem('historyEvents');
     if (savedHistory) {
       try {
-        this.historyEvents = JSON.parse(savedHistory);
+        const parsed = JSON.parse(savedHistory);
+      if (!Array.isArray(parsed) || parsed.length === 0) {
+        localStorage.removeItem('historyEvents');
+        this.historyEvents = [];
+      } else {
+        this.historyEvents = parsed.map(e => {
+          if (e.status === 'APPROVED') e.status = 'Diterima';
+          else if (e.status === 'PENDING') e.status = 'Menunggu';
+          else if (e.status === 'REJECTED') e.status = 'Ditolak';
+          return e;
+        });
+        this.previousEvents = [...this.historyEvents];
+      }
       } catch {
         this.historyEvents = [];
       }
     }
 
-    if (this.$route.params.event) {
-      const event = this.$route.params.event;
-      this.historyEvents.push(event);
-    }
+    console.log('History Events:', this.historyEvents);
   },
   mounted() {
     // Make sure Animate.css is loaded
     this.loadAnimateCSS();
+    this.fetchHistoryEvents();
+    this.pollingInterval = setInterval(() => {
+    this.fetchHistoryEvents();
+    }, 30000);
   },
-  methods: {
 
+  methods: {
+    showStatusPopup(event) {
+    this.$swal.fire({
+      icon: event.status === 'Diterima' ? 'success' :
+          event.status === 'Menunggu' ? 'info' : 'error',
+      title: `Status Anda: ${event.status}`,
+      text: `Status registrasi untuk "${event.title}" sekarang adalah "${event.status}".`,
+      confirmButtonText: 'OK'
+    });
+  },
+   async fetchHistoryEvents() {
+    try {
+      const response = await api.post('/api/registrations/my');
+      console.log("Event dari backend:", response.data.message);
+        
+        // Asumsi response.data.message berisi list registrasi
+       const newEvents = response.data.message.map(reg => {
+  let statusText = '';
+  if (reg.status === 'APPROVED') statusText = 'Diterima';
+  else if (reg.status === 'PENDING') statusText = 'Menunggu';
+  else if (reg.status === 'REJECTED') statusText = 'Ditolak';
+
+  return {
+    id: reg.id,
+    title: reg.eventTitle,
+    dateCreated: reg.date,
+    status: statusText,
+  };
+});
+
+console.log('Event yang sudah dimapping:', newEvents);
+
+newEvents.forEach(newEvent => {
+        const oldEvent = this.previousEvents.find(e => e.id === newEvent.id);
+        if (oldEvent && oldEvent.status !== newEvent.status) {
+          // munculkan popup notifikasi perubahan status
+          this.showStatusPopup(newEvent);
+        }
+      });
+
+      this.historyEvents = newEvents;
+      this.previousEvents = [...newEvents];
+
+        // Simpan ke localStorage jika perlu
+        localStorage.setItem('historyEvents', JSON.stringify(this.historyEvents));
+      } catch (error) {
+        console.error('Gagal fetch history registrasi:', error);
+        // fallback load dari localStorage jika ada
+        const savedHistory = localStorage.getItem('historyEvents');
+        if (savedHistory) {
+          try {
+            this.historyEvents = JSON.parse(savedHistory);
+          } catch {
+            this.historyEvents = [];
+          }
+        }
+      }
+    },
     saveHistoryToLocalStorage() {
     localStorage.setItem('historyEvents', JSON.stringify(this.historyEvents));
   },
@@ -98,71 +167,56 @@ export default {
         document.head.appendChild(link);
       }
     },
-    async downloadCertificate(event) {
-      try {
-        // Misalnya ambil data sertifikat dari backend
-        const response = await api.get(`/certificates/${event.id}`);
-        const certificateData = response.data;
 
-        // Buat elemen sertifikat yang tersembunyi untuk dijadikan canvas
-        const container = document.createElement('div');
-        container.style.width = '800px';
-        container.style.padding = '20px';
-        container.style.backgroundColor = '#fff';
+async downloadCertificate(event) {
+  console.log('Download certificate called for event id:', event.id);
+  try {
+    // Request file PDF dari backend, response bertipe blob
+    const response = await api.get(`/certificates/${event.id}/download`, {
+      responseType: 'blob' // sangat penting agar respon diterima sebagai file/binary
+    });
 
-        // Contoh layout sertifikat sederhana (bisa kustom sesuai kebutuhan)
-        container.innerHTML = `
-          <div style="text-align: center; font-family: Arial, sans-serif;">
-            <h1>SERTIFIKAT</h1>
-            <p>Dengan bangga diberikan kepada:</p>
-            <h2>${certificateData.name}</h2>
-            <p>Untuk partisipasi dalam event:</p>
-            <h3>${certificateData.eventTitle}</h3>
-            <p>Tanggal: ${certificateData.eventDate}</p>
-            <img src="${certificateData.photoUrl}" style="width: 200px; margin-top: 20px;" />
-            <p>Telkom University</p>
-          </div>
-        `;
+    // Buat URL sementara dari blob
+    const url = window.URL.createObjectURL(new Blob([response.data], { type: 'application/pdf' }));
 
-        document.body.appendChild(container);
+    // Buat elemen <a> untuk trigger download
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', `sertifikat-${event.id}.pdf`); // nama file yang diunduh
+    document.body.appendChild(link);
+    link.click();
 
-        // Generate canvas dari elemen
-        const canvas = await html2canvas(container, { scale: 2 });
-        const imgData = canvas.toDataURL('image/png');
+    // Bersihkan elemen dan URL object
+    document.body.removeChild(link);
+    window.URL.revokeObjectURL(url);
 
-        // Buat PDF
-        const pdf = new jsPDF({
-          orientation: 'landscape',
-          unit: 'px',
-          format: [canvas.width, canvas.height]
-        });
+    this.$swal.fire({
+      icon: 'success',
+      title: 'Download Berhasil',
+      text: 'Sertifikat sudah tersimpan di direktori perangkat Anda.',
+      confirmButtonText: 'OK'
+    });
 
-        pdf.addImage(imgData, 'PNG', 0, 0, canvas.width, canvas.height);
-
-        // Download PDF
-        pdf.save(`sertifikat_${certificateData.name}.pdf`);
-
-        // Hapus elemen sementara
-        document.body.removeChild(container);
-
-      } catch (error) {
-        console.error('Gagal download sertifikat:', error);
-        this.$swal.fire({
-          icon: 'error',
-          title: 'Gagal Download',
-          text: 'Tidak dapat mengunduh sertifikat saat ini. Silakan coba lagi.',
-          confirmButtonText: 'OK'
-        });
-      }
-    },
+  } catch (error) {
+    console.error('Gagal download sertifikat:', error);
+    this.$swal.fire({
+      icon: 'error',
+      title: 'Gagal Download',
+      text: 'Tidak dapat mengunduh sertifikat saat ini. Silakan coba lagi.',
+      confirmButtonText: 'OK'
+    });
+  }
+},
     cancelRegistration(eventId) {
       // Hapus event dengan id = eventId yang statusnya 'Menunggu'
       this.historyEvents = this.historyEvents.filter(
         event => !(event.id === eventId && event.status === 'Menunggu')
       );
       this.saveHistoryToLocalStorage();
-    }
+    },
+    
   }
+  
 };
 </script>
 
@@ -228,6 +282,11 @@ export default {
   font-weight: 600;
   font-size: 0.9rem;
   transition: transform 0.3s ease;
+}
+
+.status-rejected {
+  background-color: #dc3545; /* merah */
+  color: white;
 }
 
 .status-badge:hover {
