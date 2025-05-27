@@ -51,6 +51,7 @@
 <script>
 import Sidebar from '@/components/Sidebar.vue';
 import api from '@/api/axios';
+import { getMyRegistrations } from '@/api/registration';
 
 export default {
   name: 'HistoryRegisteredEvents',
@@ -59,44 +60,103 @@ export default {
   },
   data() {
     return {
-      historyEvents: [],
-      previousEvents: [],
+      registrations: [],
+      previousRegistrations: [],
+      error: null,
+      loading: false,
     };
   },
   created() {
-    const savedHistory = localStorage.getItem('historyEvents');
-    if (savedHistory) {
-      try {
-        const parsed = JSON.parse(savedHistory);
-      if (!Array.isArray(parsed) || parsed.length === 0) {
-        localStorage.removeItem('historyEvents');
-        this.historyEvents = [];
-      } else {
-        this.historyEvents = parsed.map(e => {
-          if (e.status === 'APPROVED') e.status = 'Diterima';
-          else if (e.status === 'PENDING') e.status = 'Menunggu';
-          else if (e.status === 'REJECTED') e.status = 'Ditolak';
-          return e;
-        });
-        this.previousEvents = [...this.historyEvents];
-      }
-      } catch {
-        this.historyEvents = [];
-      }
-    }
-
-    console.log('History Events:', this.historyEvents);
+    this.loadFromLocalStorage();
   },
   mounted() {
-    // Make sure Animate.css is loaded
     this.loadAnimateCSS();
-    this.fetchHistoryEvents();
+    this.fetchRegistrations();
     this.pollingInterval = setInterval(() => {
-    this.fetchHistoryEvents();
+      this.fetchRegistrations();
     }, 30000);
   },
 
+  beforeUnmount() {
+    clearInterval(this.pollingInterval);
+  },
+
   methods: {
+     loadFromLocalStorage() {
+      const saved = localStorage.getItem('historyEvents');
+      if (saved) {
+        try {
+          this.registrations = JSON.parse(saved);
+          this.previousRegistrations = [...this.registrations];
+        } catch {
+          this.registrations = [];
+          this.previousRegistrations = [];
+        }
+      }
+    },
+    async fetchHistoryEvents() {
+  try {
+    const response = await getMyRegistrations();
+    const newEvents = response.data.message.map(reg => {
+      let statusText = '';
+      if (reg.status === 'APPROVED') statusText = 'Diterima';
+      else if (reg.status === 'PENDING') statusText = 'Menunggu';
+      else if (reg.status === 'REJECTED') statusText = 'Ditolak';
+
+      return {
+        id: reg.id,
+        title: reg.eventTitle,
+        dateCreated: reg.date,
+        status: statusText,
+      };
+    });
+
+    // ...set state dan localStorage seperti biasa
+    this.historyEvents = newEvents;
+    this.previousEvents = [...newEvents];
+    localStorage.setItem('historyEvents', JSON.stringify(this.historyEvents));
+
+  } catch (error) {
+    console.error('Gagal fetch history registrasi:', error);
+    // fallback handling (misal localStorage atau dummy data)
+  }
+},
+    async fetchRegistrations() {
+  this.loading = true;
+  this.error = null;
+  try {
+    const response = await getMyRegistrations(); // panggil API dari registration.js
+    const newRegs = response.data.message.map(reg => {
+      let statusText = '';
+      if (reg.status === 'APPROVED') statusText = 'Diterima';
+      else if (reg.status === 'PENDING') statusText = 'Menunggu';
+      else if (reg.status === 'REJECTED') statusText = 'Ditolak';
+
+      return {
+        id: reg.id,
+        title: reg.eventTitle,
+        dateCreated: reg.date,
+        status: statusText,
+      };
+    });
+
+    // Notifikasi perubahan status
+    newRegs.forEach(newReg => {
+      const oldReg = this.previousRegistrations.find(e => e.id === newReg.id);
+      if (oldReg && oldReg.status !== newReg.status) {
+        this.showStatusPopup(newReg);
+      }
+    });
+
+    this.registrations = newRegs;
+    this.previousRegistrations = [...newRegs];
+    localStorage.setItem('historyEvents', JSON.stringify(newRegs));
+  } catch (error) {
+    this.error = 'Gagal mengambil data registrasi.';
+    console.error('Error fetchRegistrations:', error);
+  }
+},
+
     showStatusPopup(event) {
     this.$swal.fire({
       icon: event.status === 'Diterima' ? 'success' :
@@ -106,58 +166,6 @@ export default {
       confirmButtonText: 'OK'
     });
   },
-   async fetchHistoryEvents() {
-    try {
-      const response = await api.post('/api/registrations/my');
-      console.log("Event dari backend:", response.data.message);
-        
-        // Asumsi response.data.message berisi list registrasi
-       const newEvents = response.data.message.map(reg => {
-  let statusText = '';
-  if (reg.status === 'APPROVED') statusText = 'Diterima';
-  else if (reg.status === 'PENDING') statusText = 'Menunggu';
-  else if (reg.status === 'REJECTED') statusText = 'Ditolak';
-
-  return {
-    id: reg.id,
-    title: reg.eventTitle,
-    dateCreated: reg.date,
-    status: statusText,
-  };
-});
-
-console.log('Event yang sudah dimapping:', newEvents);
-
-newEvents.forEach(newEvent => {
-        const oldEvent = this.previousEvents.find(e => e.id === newEvent.id);
-        if (oldEvent && oldEvent.status !== newEvent.status) {
-          // munculkan popup notifikasi perubahan status
-          this.showStatusPopup(newEvent);
-        }
-      });
-
-      this.historyEvents = newEvents;
-      this.previousEvents = [...newEvents];
-
-        // Simpan ke localStorage jika perlu
-        localStorage.setItem('historyEvents', JSON.stringify(this.historyEvents));
-      } catch (error) {
-        console.error('Gagal fetch history registrasi:', error);
-        // fallback load dari localStorage jika ada
-        const savedHistory = localStorage.getItem('historyEvents');
-        if (savedHistory) {
-          try {
-            this.historyEvents = JSON.parse(savedHistory);
-          } catch {
-            this.historyEvents = [];
-          }
-        }
-      }
-    },
-    saveHistoryToLocalStorage() {
-    localStorage.setItem('historyEvents', JSON.stringify(this.historyEvents));
-  },
-
      loadAnimateCSS() {
       if (!document.getElementById('animate-css')) {
         const link = document.createElement('link');
@@ -209,10 +217,10 @@ async downloadCertificate(event) {
 },
     cancelRegistration(eventId) {
       // Hapus event dengan id = eventId yang statusnya 'Menunggu'
-      this.historyEvents = this.historyEvents.filter(
+      this.registrations = this.registrations.filter(
         event => !(event.id === eventId && event.status === 'Menunggu')
       );
-      this.saveHistoryToLocalStorage();
+      localStorage.setItem('historyEvents', JSON.stringify(this.registrations));
     },
     
   }
