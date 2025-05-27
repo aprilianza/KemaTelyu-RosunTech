@@ -52,6 +52,9 @@
             <a href="#" class="text-start see-more mb-3" @click.prevent="openModal(event)">
               lihat detail
             </a>
+
+          
+
             <div class="d-flex justify-content-end gap-3 mt-auto">
               <span class="badge date-badge">{{ formatDate(event.date) }}</span>
               <span class="badge time-badge">{{ event.time }}</span>
@@ -148,7 +151,10 @@ export default {
     async fetchEvents() {
       try {
         const res = await getEvents();
-        this.events = res.data;
+       this.events = res.data.map(event => ({
+          ...event,
+          registered: event.registrations?.some(reg => reg.nim === this.user.nim && reg.status === 'APPROVED') || false
+        }));
       } catch (error) {
         console.error("Error fetching events:", error);
       }
@@ -164,12 +170,14 @@ export default {
     async registerToEvent(eventId) {
       try {
         const token = localStorage.getItem('token');
-        await api.post(`/api/registration/${eventId}`, {}, {
+        if (!token) throw new Error("User belum login");
+        const res = await api.post(`/api/events/${eventId}/register`, {}, {
           headers: { Authorization: `Bearer ${token}` }
         });
 
-        alert('Berhasil mendaftar!');
+        alert(res.data.message || 'Berhasil daftar event!');
         this.closeModal();
+        this.fetchEvents();
       } catch (error) {
         console.error('Gagal mendaftar:', error);
         alert('Pendaftaran gagal.');

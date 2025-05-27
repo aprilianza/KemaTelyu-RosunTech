@@ -17,10 +17,11 @@
             
             <!-- Status Badge -->
             <div class="d-flex align-items-center mb-3">
-              <span :class="['status-badge', 
-                event.status === 'Diterima' ? 'status-approved' : 'status-pending']">
-                {{ event.status }}
-              </span>
+             <span :class="['status-badge', 
+              event.status === 'Diterima' ? 'status-approved' : 
+              event.status === 'Menunggu' ? 'status-pending' : 'status-rejected']">
+              {{ event.status }}
+            </span>
             </div>
 
             <!-- Action Buttons -->
@@ -28,12 +29,14 @@
               <button
                 v-if="event.status === 'Diterima'"
                 class="btn action-btn download-btn "
+                 @click="downloadCertificate(event)"
               >
                 Download
               </button>
               <button
                 v-if="event.status === 'Menunggu'"
                 class="btn action-btn cancel-btn"
+                @click="cancelRegistration(event.id)"
               >
                 Batal
               </button>
@@ -47,6 +50,8 @@
 
 <script>
 import Sidebar from '@/components/Sidebar.vue';
+import api from '@/api/axios';
+import { getMyRegistrations } from '@/api/registration';
 
 export default {
   name: 'HistoryRegisteredEvents',
@@ -55,40 +60,113 @@ export default {
   },
   data() {
     return {
-      historyEvents: [
-        {
-          id: 1,
-          title: 'Workshop UI/UX Design: Membangun Portofolio Profesional',
-          dateCreated: '9 May 2023',
-          status: 'Diterima'
-        },
-        {
-          id: 2,
-          title: 'Seminar Big Data & Analytics di Era Industri 4.0',
-          dateCreated: '9 May 2023',
-          status: 'Menunggu'
-        },
-        {
-          id: 3,
-          title: 'Telkommetra Mengadakan Lomba Inovasi Digital untuk Mahasiswa Seluruh Indonesia',
-          dateCreated: '10 May 2023',
-          status: 'Diterima'
-        }
-      ]
+      registrations: [],
+      previousRegistrations: [],
+      error: null,
+      loading: false,
     };
   },
   created() {
-    if (this.$route.params.event) {
-      const event = this.$route.params.event;
-      this.historyEvents.push(event);
-    }
+    this.loadFromLocalStorage();
   },
   mounted() {
-    // Make sure Animate.css is loaded
     this.loadAnimateCSS();
+    this.fetchRegistrations();
+    this.pollingInterval = setInterval(() => {
+      this.fetchRegistrations();
+    }, 30000);
   },
+
+  beforeUnmount() {
+    clearInterval(this.pollingInterval);
+  },
+
   methods: {
-    loadAnimateCSS() {
+     loadFromLocalStorage() {
+      const saved = localStorage.getItem('historyEvents');
+      if (saved) {
+        try {
+          this.registrations = JSON.parse(saved);
+          this.previousRegistrations = [...this.registrations];
+        } catch {
+          this.registrations = [];
+          this.previousRegistrations = [];
+        }
+      }
+    },
+    async fetchHistoryEvents() {
+  try {
+    const response = await getMyRegistrations();
+    const newEvents = response.data.message.map(reg => {
+      let statusText = '';
+      if (reg.status === 'APPROVED') statusText = 'Diterima';
+      else if (reg.status === 'PENDING') statusText = 'Menunggu';
+      else if (reg.status === 'REJECTED') statusText = 'Ditolak';
+
+      return {
+        id: reg.id,
+        title: reg.eventTitle,
+        dateCreated: reg.date,
+        status: statusText,
+      };
+    });
+
+    // ...set state dan localStorage seperti biasa
+    this.historyEvents = newEvents;
+    this.previousEvents = [...newEvents];
+    localStorage.setItem('historyEvents', JSON.stringify(this.historyEvents));
+
+  } catch (error) {
+    console.error('Gagal fetch history registrasi:', error);
+    // fallback handling (misal localStorage atau dummy data)
+  }
+},
+    async fetchRegistrations() {
+  this.loading = true;
+  this.error = null;
+  try {
+    const response = await getMyRegistrations(); // panggil API dari registration.js
+    const newRegs = response.data.message.map(reg => {
+      let statusText = '';
+      if (reg.status === 'APPROVED') statusText = 'Diterima';
+      else if (reg.status === 'PENDING') statusText = 'Menunggu';
+      else if (reg.status === 'REJECTED') statusText = 'Ditolak';
+
+      return {
+        id: reg.id,
+        title: reg.eventTitle,
+        dateCreated: reg.date,
+        status: statusText,
+      };
+    });
+
+    // Notifikasi perubahan status
+    newRegs.forEach(newReg => {
+      const oldReg = this.previousRegistrations.find(e => e.id === newReg.id);
+      if (oldReg && oldReg.status !== newReg.status) {
+        this.showStatusPopup(newReg);
+      }
+    });
+
+    this.registrations = newRegs;
+    this.previousRegistrations = [...newRegs];
+    localStorage.setItem('historyEvents', JSON.stringify(newRegs));
+  } catch (error) {
+    this.error = 'Gagal mengambil data registrasi.';
+    console.error('Error fetchRegistrations:', error);
+  }
+},
+
+    showStatusPopup(event) {
+    this.$swal.fire({
+      icon: event.status === 'Diterima' ? 'success' :
+          event.status === 'Menunggu' ? 'info' : 'error',
+      title: `Status Anda: ${event.status}`,
+      text: `Status registrasi untuk "${event.title}" sekarang adalah "${event.status}".`,
+      confirmButtonText: 'OK'
+    });
+  },
+     loadAnimateCSS() {
       if (!document.getElementById('animate-css')) {
         const link = document.createElement('link');
         link.id = 'animate-css';
@@ -96,8 +174,57 @@ export default {
         link.href = 'https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css';
         document.head.appendChild(link);
       }
-    }
+    },
+
+async downloadCertificate(event) {
+  console.log('Download certificate called for event id:', event.id);
+  try {
+    // Request file PDF dari backend, response bertipe blob
+    const response = await api.get(`/certificates/${event.id}/download`, {
+      responseType: 'blob' // sangat penting agar respon diterima sebagai file/binary
+    });
+
+    // Buat URL sementara dari blob
+    const url = window.URL.createObjectURL(new Blob([response.data], { type: 'application/pdf' }));
+
+    // Buat elemen <a> untuk trigger download
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', `sertifikat-${event.id}.pdf`); // nama file yang diunduh
+    document.body.appendChild(link);
+    link.click();
+
+    // Bersihkan elemen dan URL object
+    document.body.removeChild(link);
+    window.URL.revokeObjectURL(url);
+
+    this.$swal.fire({
+      icon: 'success',
+      title: 'Download Berhasil',
+      text: 'Sertifikat sudah tersimpan di direktori perangkat Anda.',
+      confirmButtonText: 'OK'
+    });
+
+  } catch (error) {
+    console.error('Gagal download sertifikat:', error);
+    this.$swal.fire({
+      icon: 'error',
+      title: 'Gagal Download',
+      text: 'Tidak dapat mengunduh sertifikat saat ini. Silakan coba lagi.',
+      confirmButtonText: 'OK'
+    });
   }
+},
+    cancelRegistration(eventId) {
+      // Hapus event dengan id = eventId yang statusnya 'Menunggu'
+      this.registrations = this.registrations.filter(
+        event => !(event.id === eventId && event.status === 'Menunggu')
+      );
+      localStorage.setItem('historyEvents', JSON.stringify(this.registrations));
+    },
+    
+  }
+  
 };
 </script>
 
@@ -163,6 +290,11 @@ export default {
   font-weight: 600;
   font-size: 0.9rem;
   transition: transform 0.3s ease;
+}
+
+.status-rejected {
+  background-color: #dc3545; /* merah */
+  color: white;
 }
 
 .status-badge:hover {
