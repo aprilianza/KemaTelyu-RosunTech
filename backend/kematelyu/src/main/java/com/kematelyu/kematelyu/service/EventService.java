@@ -212,12 +212,27 @@ public class EventService {
     }
 
     public Registration approveParticipant(Long registrationId) {
-        Registration reg = regRepo.findById(registrationId)
-                .orElseThrow(() -> new ResourceNotFoundException("Registrasi tidak ditemukan"));
+    Registration reg = regRepo.findById(registrationId)
+            .orElseThrow(() -> new ResourceNotFoundException("Registrasi tidak ditemukan"));
 
+    // Cek apakah status sudah approved biar gak dobel proses
+    if (reg.getStatus() != Registration.Status.APPROVED) {
         reg.setStatus(Registration.Status.APPROVED);
-        return regRepo.save(reg);
+        reg = regRepo.save(reg); // simpan status yang sudah diubah
+
+        // Buat sertifikat kalau belum ada
+        boolean alreadyIssued = certificateRepo
+                .existsByEventAndMahasiswa(reg.getEvent(), reg.getMahasiswa());
+
+        if (!alreadyIssued) {
+            Certificate cert = reg.getEvent()
+                    .generateCertificate(reg.getMahasiswa());
+            certificateRepo.save(cert);
+        }
     }
+
+    return reg;
+}
 
     public Registration rejectParticipant(Long registrationId) {
         Registration reg = regRepo.findById(registrationId)
