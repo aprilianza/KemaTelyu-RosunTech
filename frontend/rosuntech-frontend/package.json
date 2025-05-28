@@ -17,7 +17,9 @@
     "bootstrapp": "^0.0.0",
     "core-js": "^3.8.3",
     "fortawesome": "^0.0.1-security",
-    "sweetalert2": "^11.21.0",
+    "html2canvas": "^1.4.1",
+    "jspdf": "^3.0.1",
+    "sweetalert2": "^11.22.0",
     "vue": "^3.2.13",
     "vue-router": "^4.5.1"
   },
