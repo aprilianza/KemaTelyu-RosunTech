@@ -13,7 +13,7 @@
       <div class="history-wrapper">
       <div class="row justify-content-center g-4 mb-5">
        
-         <div v-if="historyEvents.length === 0" class="text-center text-muted mb-3 col-12">
+         <div v-if="historyEvents.length === 0" class="empty-history-message">
              Belum ada data history registrasi.
         </div>
 
@@ -357,13 +357,23 @@ async downloadCertificate(event) {
 .bg-rejected {
   background-color: #dc3545 !important; /* merah */
   color: white !important;
-  box-shadow: 0 10px 20px rgba(255, 193, 7, 0.5) !important;
+  box-shadow: 0 10px 20px rgba(255, 7, 7, 0.57) !important;
 }
 
 
 .event-card:hover {
   transform: translateY(-8px) !important;
   box-shadow: 0 18px 30px rgba(0,0,0,0.2) !important;
+}
+
+.empty-history-message {
+  height: 60vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.25rem;
+  color: #6c757d;
+  text-align: center;
 }
 
 .history-event-card {
