@@ -18,10 +18,12 @@
       </div>
     </div>
     
-
+    <!-- Backdrop overlay -->
+      <div v-if="isOpen" class="sidebar-backdrop" @click="toggleSidebar"></div>
 
     <!-- Sidebar -->
     <div :class="['sidebar', isOpen ? 'open' : '']">
+    
 
       <!-- Menu -->
       <nav class="sidebar-nav">
@@ -111,7 +113,7 @@ export default {
 .sidebar-header {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: space-between; /* atur elemen kiri dan kanan */
   padding: 15px 20px;
   background-color: #ffffff;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
@@ -122,6 +124,8 @@ export default {
   width: 100%;
 }
 
+
+
 .open-sidebar-btn {
   font-size: 24px;
   background-color: transparent;
@@ -129,6 +133,23 @@ export default {
   color: #333;
   cursor: pointer;
   margin-right: 10px;
+}
+
+.sidebar-header > .d-flex.align-items-center {
+  gap: 20px; /* beri jarak antar hamburger dan judul */
+}
+
+.sidebar-header .sidebar-title {
+  margin-left: 10px; /* bisa sesuaikan jika perlu */
+  flex-grow: 1; /* supaya judul mengambil ruang maksimal */
+}
+
+.page-name {
+  margin-left: auto; /* dorong tulisan Home ke kanan */
+  padding-right: 20px; /* beri jarak dari tepi kanan */
+  font-weight: 700;
+  color: #b30202; /* warna merah */
+  font-size: 18px;
 }
 
 .sidebar-title {
@@ -313,5 +334,24 @@ export default {
 .sidebar * {
   transition: all 0.2s ease;
 }
+
+.sidebar-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.61); /* hitam transparan */
+  z-index: 999; /* pastikan di bawah sidebar tapi di atas konten */
+  opacity: 0;
+  animation: fadeIn 0.3s ease forwards;
+}
+
+@keyframes fadeIn {
+  to {
+    opacity: 1;
+  }
+}
+
 
 </style>
