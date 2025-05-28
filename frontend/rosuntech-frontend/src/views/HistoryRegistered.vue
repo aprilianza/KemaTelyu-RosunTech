@@ -4,21 +4,21 @@
     <Sidebar />
 
     <!-- Main Content -->
-    <div class="content-wrapper container">
+    <div class="content-wrapper container-fluid py-4">
       <!-- Header Section -->
 
       
 
       <!-- History Events Section -->
+      <div class="history-wrapper">
       <div class="row justify-content-center g-4 mb-5">
 
          <div v-if="historyEvents.length === 0" class="text-center text-muted mb-3 col-12">
              Belum ada data history registrasi.
         </div>
 
-  <div v-if="historyEvents.length > 0">
-  <div class="col-12 col-md-6" v-for="(event, index) in historyEvents" :key="event.id">
-    <div class="event-card history-event-card d-flex flex-column animate__animated animate__fadeIn" :style="{'animation-delay': index * 0.1 + 's'}">
+  <div v-if="historyEvents.length > 0" class="history-grid">
+  <div class="event-card history-event-card animate__animated animate__fadeIn" v-for="(event, index) in historyEvents" :key="event.id" :style="{'animation-delay': index * 0.1 + 's'}">
       <h5 class="event-title mb-3">{{ event.title }}</h5>
       <p class="event-date mb-2">Tanggal Registrasi: {{ event.dateCreated }}</p>
 
@@ -55,11 +55,11 @@
         </button>
       </div>
     </div>
-  </div>
 </div>
 
     </div>
   </div>
+</div>
 </div>
 </template>
 
@@ -79,6 +79,7 @@ export default {
       previousRegistrations: [],
       error: null,
       loading: false,
+      user: JSON.parse(localStorage.getItem('user')) || { name: 'User', nim: '', fakultas: '' },
     };
   },
   created() {
@@ -214,7 +215,7 @@ async downloadCertificate(event) {
     // Buat elemen <a> untuk trigger download
     const link = document.createElement('a');
     link.href = url;
-    link.setAttribute('download', `sertifikat-${event.id}.pdf`); // nama file yang diunduh
+    link.setAttribute('download', `${this.user.name}-${event.title}.pdf`); // nama file yang diunduh
     document.body.appendChild(link);
     link.click();
 
@@ -239,13 +240,41 @@ async downloadCertificate(event) {
     });
   }
 },
-    cancelRegistration(eventId) {
-      // Hapus event dengan id = eventId yang statusnya 'Menunggu'
-      this.registrations = this.registrations.filter(
-        event => !(event.id === eventId && event.status === 'Menunggu')
-      );
-      localStorage.setItem('historyEvents', JSON.stringify(this.registrations));
-    },
+    async cancelRegistration(eventId) {
+    const confirmed = await this.$swal.fire({
+      icon: 'warning',
+      title: 'Batalkan Pendaftaran',
+      text: 'Apakah Anda yakin ingin membatalkan pendaftaran event ini?',
+      showCancelButton: true,
+      cancelButtonText: 'Tidak',
+      confirmButtonText: 'Ya',
+      
+    });
+
+    if (confirmed.isConfirmed) {
+      try {
+        // Panggil API hapus registration
+        await this.$api.delete(`/registrations/${eventId}`);
+
+        // Refresh data registrasi (fetch ulang dari backend)
+        await this.fetchRegistrations();
+
+        this.$swal.fire({
+          icon: 'success',
+          title: 'Pendaftaran berhasil dibatalkan',
+          timer: 2000,
+          showConfirmButton: false,
+        });
+      } catch (error) {
+        console.error('Gagal membatalkan pendaftaran:', error);
+        this.$swal.fire({
+          icon: 'error',
+          title: 'Gagal membatalkan pendaftaran',
+          text: 'Silakan coba lagi nanti',
+        });
+      }
+    }
+  },
     
   }
   
@@ -258,20 +287,43 @@ async downloadCertificate(event) {
 
 .content-wrapper {
   flex-grow: 1;
-  margin-top: 100px;
+  margin-top: 90px;
+  max-width: 900px;
+  padding: 0 15px;
+}
+
+.history-wrapper {
+  padding: 0 20px;
+}
+
+.history-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(600px, max-content));
+  justify-content: start;
+  gap: 2rem; /* jarak antar card */
+  padding: 0 2rem;
+}
+
+.history-header {
+  text-align: center;
+  font-weight: 700;
+  font-size: 2rem;
+  margin-bottom: 2rem;
+  color: #b22222; /* merah gelap */
+  text-shadow: 1px 1px 4px rgba(0, 0, 0, 0.1);
 }
 
 /* Event Card for History */
 .event-card {
-  background-color: v-bind('$colors.fourth');
-  border-radius: 1.5rem;
-  padding: 1.5rem;
+  width: 610px;
+  background-color: #d63636;
+  border-radius: 20px;
+  padding: 1.7rem 1.8rem;
   display: flex;
   flex-direction: column;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 10px 20px rgba(214, 54, 54, 0.35);
   transition: transform 0.3s ease, box-shadow 0.3s ease;
-  animation: popupEffect 0.6s ease-out forwards;
-  margin-bottom: 1rem;
+  color: #fff;
 }
 
 @keyframes popupEffect {
@@ -286,8 +338,8 @@ async downloadCertificate(event) {
 }
 
 .event-card:hover {
-  transform: translateY(-7px);
-  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.15);
+   transform: translateY(-8px);
+  box-shadow: 0 18px 30px rgba(214, 54, 54, 0.6);
 }
 
 .history-event-card {
@@ -295,25 +347,41 @@ async downloadCertificate(event) {
 }
 
 .event-title {
-  color: #ffffff;
-  font-size: 1.2rem;
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: #fff;
+  margin-bottom: 0.6rem;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
 .event-date {
-  color: rgba(255, 255, 255, 0.8);
-  font-size: 0.9rem;
+  font-size: 0.95rem;
+  color: rgba(255, 255, 255, 0.85);
+  margin-bottom: 1rem;
+  font-weight: 400;
 }
 
 /* Status Badge */
-.status-badge {
-  padding: 0.5rem 1.2rem;
-  border-radius: 2rem;
-  font-weight: 600;
-  font-size: 0.9rem;
-  transition: transform 0.3s ease;
+.status-container {
+  gap: 10px;
+}
+
+.status-icon {
+  width: 28px;
+  height: 28px;
+  stroke-width: 3;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+
+.status-icon.approved {
+  stroke: #28a745;
+}
+
+.status-icon.pending {
+  stroke: #ffc107;
 }
 
 .status-rejected {
@@ -321,8 +389,18 @@ async downloadCertificate(event) {
   color: white;
 }
 
+.status-badge {
+  padding: 0.5rem 1.3rem;
+  border-radius: 2rem;
+  font-weight: 700;
+  font-size: 1rem;
+  text-transform: uppercase;
+  user-select: none;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
 .status-badge:hover {
-  transform: scale(1.05);
+  filter: brightness(1.15);
 }
 
 .status-approved {
@@ -335,33 +413,42 @@ async downloadCertificate(event) {
   color: #212529;
 }
 
+.status-rejected {
+  background-color: #f87171; /* merah */
+  color: white;
+}
+
 /* Action Buttons */
 .action-btn {
-  border-radius: 2rem;
-  padding: 0.5rem 1.2rem;
-  font-weight: 600;
-  font-size: 0.9rem;
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
+ border-radius: 2rem;
+  padding: 0.5rem 1.3rem;
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: #b22222;
+  background-color: white;
+  border: none;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.15);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: background-color 0.3s ease, box-shadow 0.3s ease, color 0.3s ease;
+}
+
+.action-btn i {
+  font-size: 1.1rem;
 }
 
 .action-btn:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+  background-color: #b22222;
+  color: white;
+  box-shadow: 0 6px 12px rgba(178, 34, 34, 0.6);
 }
 
-.download-btn {
-  background-color: #ffffff;
-  color: v-bind('$colors.primary');
-}
-
-.cancel-btn {
-  background-color: #ffffff;
-  color: v-bind('$colors.primary');
-}
 
 /* Gap utility */
 .gap-3 {
-  gap: 1rem;
+  gap: 10rem;
 }
 
 /* Animation settings */
