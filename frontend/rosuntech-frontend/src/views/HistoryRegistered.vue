@@ -12,13 +12,20 @@
       <!-- History Events Section -->
       <div class="history-wrapper">
       <div class="row justify-content-center g-4 mb-5">
-
+       
          <div v-if="historyEvents.length === 0" class="text-center text-muted mb-3 col-12">
              Belum ada data history registrasi.
         </div>
 
   <div v-if="historyEvents.length > 0" class="history-grid">
-  <div class="event-card history-event-card animate__animated animate__fadeIn" v-for="(event, index) in historyEvents" :key="event.id" :style="{'animation-delay': index * 0.1 + 's'}">
+  <div class="col-12 col-md-6" v-for="(event, index) in historyEvents" :key="event.id">
+  <div class="event-card history-event-card animate__animated animate__fadeIn" 
+    :class="{
+    'bg-approved': event.status === 'Diterima',
+    'bg-pending': event.status === 'Menunggu',
+    'bg-rejected': event.status === 'Ditolak'
+  }"
+    :style="{'animation-delay': index * 0.1 + 's'}">
       <h5 class="event-title mb-3">{{ event.title }}</h5>
       <p class="event-date mb-2">Tanggal Registrasi: {{ event.dateCreated }}</p>
 
@@ -56,7 +63,7 @@
       </div>
     </div>
 </div>
-
+</div>
     </div>
   </div>
 </div>
@@ -293,7 +300,7 @@ async downloadCertificate(event) {
 }
 
 .history-wrapper {
-  padding: 0 20px;
+  padding: 0;
 }
 
 .history-grid {
@@ -301,7 +308,7 @@ async downloadCertificate(event) {
   grid-template-columns: repeat(auto-fit, minmax(600px, max-content));
   justify-content: start;
   gap: 2rem; /* jarak antar card */
-  padding: 0 2rem;
+  padding: 0;
 }
 
 .history-header {
@@ -315,15 +322,13 @@ async downloadCertificate(event) {
 
 /* Event Card for History */
 .event-card {
-  width: 610px;
-  background-color: #d63636;
-  border-radius: 20px;
-  padding: 1.7rem 1.8rem;
-  display: flex;
-  flex-direction: column;
-  box-shadow: 0 10px 20px rgba(214, 54, 54, 0.35);
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
-  color: #fff;
+  width: 1200px;
+  display: flex !important;
+  flex-direction: column !important;
+  max-width: 850px !important;
+  border-radius: 20px !important;
+  padding: 1.7rem 1.8rem !important;
+  transition: transform 0.3s ease, box-shadow 0.3s ease !important;
 }
 
 @keyframes popupEffect {
@@ -337,9 +342,28 @@ async downloadCertificate(event) {
   }
 }
 
+.bg-approved {
+  background-color: #28a745 !important; /* hijau */
+  color: white !important;
+ box-shadow: 0 10px 20px rgba(40, 167, 69, 0.5) !important;
+}
+
+.bg-pending {
+  background-color: #ffc107 !important; /* kuning */
+  color: #212529 !important;
+  box-shadow: 0 10px 20px rgba(255, 193, 7, 0.5) !important;
+}
+
+.bg-rejected {
+  background-color: #dc3545 !important; /* merah */
+  color: white !important;
+  box-shadow: 0 10px 20px rgba(255, 193, 7, 0.5) !important;
+}
+
+
 .event-card:hover {
-   transform: translateY(-8px);
-  box-shadow: 0 18px 30px rgba(214, 54, 54, 0.6);
+  transform: translateY(-8px) !important;
+  box-shadow: 0 18px 30px rgba(0,0,0,0.2) !important;
 }
 
 .history-event-card {
@@ -349,7 +373,7 @@ async downloadCertificate(event) {
 .event-title {
   font-size: 1.3rem;
   font-weight: 700;
-  color: #fff;
+   color: inherit !important;
   margin-bottom: 0.6rem;
   white-space: nowrap;
   overflow: hidden;
@@ -358,7 +382,7 @@ async downloadCertificate(event) {
 
 .event-date {
   font-size: 0.95rem;
-  color: rgba(255, 255, 255, 0.85);
+  color: inherit !important;
   margin-bottom: 1rem;
   font-weight: 400;
 }
@@ -390,13 +414,15 @@ async downloadCertificate(event) {
 }
 
 .status-badge {
-  padding: 0.5rem 1.3rem;
+   padding: 0.5rem 1.3rem;
   border-radius: 2rem;
   font-weight: 700;
   font-size: 1rem;
   text-transform: uppercase;
   user-select: none;
   transition: background-color 0.3s ease, color 0.3s ease;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.15);
+  color: white;
 }
 
 .status-badge:hover {
@@ -404,30 +430,28 @@ async downloadCertificate(event) {
 }
 
 .status-approved {
-  background-color: #28a745;
-  color: white;
+  background-color: #1b5e20;
 }
 
 .status-pending {
-  background-color: #ffc107;
-  color: #212529;
+ background-color: #c49000;
+  color: white;
 }
 
 .status-rejected {
-  background-color: #f87171; /* merah */
+  background-color: #9f1a28; /* merah */
   color: white;
 }
 
 /* Action Buttons */
 .action-btn {
- border-radius: 2rem;
-  padding: 0.5rem 1.3rem;
+  border-radius: 2rem;
+  padding: 0.5rem 1.6rem;
   font-weight: 700;
   font-size: 0.95rem;
-  color: #b22222;
-  background-color: white;
-  border: none;
-  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.15);
+  border: 1.5px solid;
+  background: white;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.25);
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -435,16 +459,86 @@ async downloadCertificate(event) {
   transition: background-color 0.3s ease, box-shadow 0.3s ease, color 0.3s ease;
 }
 
+.action-btn-approved {
+  color: #1b4d20;
+  background-color: #d4edda;
+  border-color: #1b4d20;
+  box-shadow: 0 4px 10px rgba(27, 77, 32, 0.25);
+}
+
+.action-btn-approved:hover {
+  background-color: #1b4d20;
+  color: white;
+  box-shadow: 0 6px 18px rgba(27, 77, 32, 0.7);
+  border-color: #144d14;
+}
+
+.action-btn-pending {
+  color: #b28700;
+  background-color: #fff3cd;
+  border-color: #b28700;
+  box-shadow: 0 4px 10px rgba(178, 135, 0, 0.25);
+}
+.action-btn-pending:hover {
+  background-color: #b28700;
+  color: white;
+  box-shadow: 0 6px 18px rgba(178, 135, 0, 0.7);
+  border-color: #8c6700;
+}
+
+.action-btn-rejected {
+  color: #7b121f;
+  background-color: #f8d7da;
+  border-color: #7b121f;
+  box-shadow: 0 4px 10px rgba(123, 18, 31, 0.25);
+}
+.action-btn-rejected:hover {
+  background-color: #7b121f;
+  color: white;
+  box-shadow: 0 6px 18px rgba(123, 18, 31, 0.7);
+  border-color: #5e0c16;
+}
+
 .action-btn i {
   font-size: 1.1rem;
 }
 
 .action-btn:hover {
-  background-color: #b22222;
   color: white;
-  box-shadow: 0 6px 12px rgba(178, 34, 34, 0.6);
+  box-shadow: 0 6px 16px rgba(0,0,0,0.3);
 }
 
+.bg-approved .action-btn:hover {
+  background-color: #1b4d20; /* hijau gelap */
+  border-color: #144d14;
+  box-shadow: 0 6px 18px rgba(27, 77, 32, 0.7);
+}
+
+/* Hover for pending (yellow background card) */
+.bg-pending .action-btn:hover {
+  background-color: #b28700; /* kuning gelap */
+  border-color: #8c6700;
+  box-shadow: 0 6px 18px rgba(178, 135, 0, 0.7);
+}
+
+/* Hover for rejected (red background card) */
+.bg-rejected .action-btn:hover {
+  background-color: #7b121f; /* merah gelap */
+  border-color: #5e0c16;
+  box-shadow: 0 6px 18px rgba(123, 18, 31, 0.7);
+}
+
+.bg-approved:hover {
+  box-shadow: 0 18px 40px rgba(40, 167, 69, 0.7), 0 18px 18px rgba(0,0,0,0.2) !important;
+}
+
+.bg-pending:hover {
+  box-shadow: 0 18px 40px rgba(255, 193, 7, 0.7), 0 18px 18px rgba(0,0,0,0.2) !important;
+}
+
+.bg-rejected:hover {
+  box-shadow: 0 18px 40px rgba(220, 53, 69, 0.7), 0 18px 18px rgba(0,0,0,0.2) !important;
+}
 
 /* Gap utility */
 .gap-3 {
