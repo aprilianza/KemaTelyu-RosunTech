@@ -98,7 +98,7 @@
           </button>
           
         
-          <div class="modern-modal-image">
+          <div class="modern-modal-image" style="position: relative;">
             <img :src="`http://localhost:8888/${selectedEvent.fotoPath}`" alt="Event Image" />
           </div>
 
@@ -111,7 +111,7 @@
                 <span>{{ formatDate(selectedEvent.date) }}</span>
               </div>
               <div class="metadata-item">
-                <span class="metadata-icon clock-icon"></span>
+               <span class="metadata-icon clock-icon"></span>
                 <span>{{ selectedEvent.time }}</span>
               </div>
               <div class="metadata-item">
@@ -174,6 +174,17 @@ export default {
     }
     this.fetchCurrentUser();
     this.fetchEvents();
+
+    this.$swal.fire({
+    toast: true,
+    position: 'top-end',
+    icon: 'success',
+    title: `Selamat datang, ${this.user.name}!`,
+    showConfirmButton: false,
+    timer: 2500,
+    timerProgressBar: true
+  });
+
     this.loadFontAwesome();
   },
   methods: {
@@ -647,14 +658,24 @@ image-wrapper img {
 .modern-modal {
   background-color: white;
   width: 90%;
-  max-width: 700px;
+  max-width: 800px;
   border-radius: 1.5rem;
   overflow: hidden;
   z-index: 1052;
   position: relative;
   box-shadow: 0 15px 30px rgba(0, 0, 0, 0.2);
-  display: flex;
-  flex-direction: column;
+  overflow: hidden;
+  max-height: 90vh;
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE 10+ */
+
+  /* Tidak perlu overflow-y di sini */
+  position: relative;
+  box-shadow: 0 15px 30px rgba(0, 0, 0, 0.2);
+}
+
+.modern-modal::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, Opera */
 }
 
 /* Enhanced Close Button */
@@ -795,28 +816,42 @@ image-wrapper img {
   padding: 2rem 2.5rem 3rem 2.5rem;
   display: flex;
   flex-direction: column;
+  overflow-y: auto;
+  max-height: calc(90vh - 400px); /* Sesuaikan dengan tinggi gambar/modal */
+
+  /* Hilangkan scrollbar di sini juga */
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none;
+}
+
+.modern-modal-content::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, Opera */
 }
 
 .modal-event-title {
-  font-size: 2rem;
-  font-weight: 700;
-  margin-bottom: 1rem;
+ font-size: 2.4rem;
+  font-weight: 800;
+  margin-bottom: 1.4rem;
   color: #b30202;
+  letter-spacing: 0.03em;
+  text-shadow: 1px 1px 2px rgba(179, 2, 2, 0.6);
 }
 
 .modal-event-metadata {
-  display: flex;
-  gap: 2rem;
-  margin-bottom: 1.5rem;
-  color: #555;
+   display: flex;
+  gap: 2.8rem;
+  margin-bottom: 2.5rem;
+  color: #444;
+  font-weight: 600;
+  font-size: 1.1rem;
+  justify-content: flex-start;
   flex-wrap: wrap;
 }
 
 .metadata-item {
-  display: flex;
+ display: flex;
   align-items: center;
-  gap: 0.5rem;
-  font-weight: 500;
+  gap: 0.6rem;
 }
 
 .section-header {
@@ -847,11 +882,15 @@ image-wrapper img {
 
 /* Custom icons instead of FontAwesome */
 .metadata-icon {
-  width: 22px;
-  height: 22px;
-  background-position: center;
+  display: inline-block;
+  width: 24px;
+  height: 24px;
   background-repeat: no-repeat;
+  background-position: center;
   background-size: contain;
+  color: #b30202;
+  min-width: 24px;
+  text-align: center;
 }
 
 .calendar-icon {
@@ -867,12 +906,14 @@ image-wrapper img {
 }
 
 .modal-event-description {
-  flex-grow: 1;
-  font-size: 1rem;
-  line-height: 1.6;
+  font-size: 1.15rem;
+  line-height: 1.7;
   color: #333;
-  margin-bottom: 2rem;
+  margin-bottom: 3rem;
+  border-top: 1px solid #eee;
+  padding-top: 1.6rem;
 }
+
 
 .modern-modal-actions {
   display: flex;
@@ -883,7 +924,7 @@ image-wrapper img {
   background-color: #b30202;
   color: white;
   border: none;
-  padding: 0.75rem 2rem;
+  padding: 0.75rem 2.2rem;
   border-radius: 3rem;
   font-weight: 700;
   font-size: 1.1rem;
@@ -902,6 +943,18 @@ image-wrapper img {
 
 .d-flex.justify-content-end.gap-3.mt-auto {
   padding: 0 1rem 1rem 1rem;
+}
+
+.calendar-icon {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='currentColor' class='bi bi-calendar' viewBox='0 0 16 16'%3E%3Cpath d='M3.5 0a.5.5 0 0 1 .5.5V1h8V.5a.5.5 0 0 1 1 0V1h1a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V3a2 2 0 0 1 2-2h1V.5a.5.5 0 0 1 .5-.5zM1 4v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V4H1z'/%3E%3C/svg%3E");
+}
+
+.clock-icon {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='currentColor' class='bi bi-clock' viewBox='0 0 16 16'%3E%3Cpath d='M8 3.5a.5.5 0 0 0-1 0V9a.5.5 0 0 0 .252.434l3.5 2a.5.5 0 0 0 .496-.868L8 8.71V3.5z'/%3E%3Cpath d='M8 16A8 8 0 1 0 8 0a8 8 0 0 0 0 16zm7-8A7 7 0 1 1 1 8a7 7 0 0 1 14 0z'/%3E%3C/svg%3E");
+}
+
+.users-icon {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='currentColor' class='bi bi-people' viewBox='0 0 16 16'%3E%3Cpath d='M15 14s1 0 1-1-1-4-5-4-5 3-5 4 1 1 1 1h8zm-7.978-1A.261.261 0 0 1 7 12.996c.001-.264.167-1.03.76-1.72C8.312 10.629 9.282 10 11 10c1.717 0 2.687.63 3.24 1.276.593.69.758 1.457.76 1.72l-.008.002a.274.274 0 0 1-.014.002H7.022zM11 7a2 2 0 1 0 0-4 2 2 0 0 0 0 4zm3-2a3 3 0 1 1-6 0 3 3 0 0 1 6 0zM6.936 9.28a5.88 5.88 0 0 0-1.23-.247A7.35 7.35 0 0 0 5 9c-4 0-5 3-5 4 0 .667.333 1 1 1h4.216A2.238 2.238 0 0 1 5 13c0-1.01.377-2.042 1.09-2.904.243-.294.526-.569.846-.816zM4.92 10A5.493 5.493 0 0 0 4 13H1c0-.26.164-1.03.76-1.724.545-.636 1.492-1.256 3.16-1.275zM1.5 5.5a3 3 0 1 1 6 0 3 3 0 0 1-6 0zm3-2a2 2 0 1 0 0 4 2 2 0 0 0 0-4z'/%3E%3C/svg%3E");
 }
 
 /* Animation delays for staggered effect */
