@@ -3,7 +3,7 @@
     <Sidebar />
 
     <div class="content-wrapper container">
-      <div class="row mb-5 animate__animated animate__fadeIn">
+      <div class="row g-4 mb-5 animate__animated animate__fadeIn">
         <div class="col-lg-6 col-md-12 mb-3">
           <div class="card user-profile-card h-100 animate__animated animate__fadeInLeft">
             <div class="card-body">
@@ -187,18 +187,98 @@ export default {
     },
     async registerToEvent(eventId) {
       try {
+        const event = this.events.find(e => e.id === eventId);
+    if (!event) {
+      this.$swal.fire({
+        icon: 'error',
+        title: 'Error',
+        text: 'Event tidak ditemukan.',
+        confirmButtonText: 'OK'
+      });
+      return;
+    }
+
+    // Hitung jumlah peserta yang sudah daftar dengan status APPROVED atau PENDING
+    const currentRegistrations = this.events.find(e => e.id === eventId)?.registrations || [];
+    const registeredCount = currentRegistrations.filter(r => r.status === 'APPROVED' || r.status === 'PENDING').length;
+
+    if (registeredCount >= event.maxParticipant) {
+      this.$swal.fire({
+        icon: 'error',
+        title: 'Pendaftaran Gagal',
+        text: 'Maaf, kapasitas peserta untuk event ini sudah penuh.',
+        confirmButtonText: 'OK'
+      });
+      return; // stop proses pendaftaran
+    }
+
         const token = localStorage.getItem('token');
         if (!token) throw new Error("User belum login");
         const res = await api.post(`/api/events/${eventId}/register`, {}, {
           headers: { Authorization: `Bearer ${token}` }
         });
 
-        alert(res.data.message || 'Berhasil daftar event!');
+      if (res.data.status) {
+      if (res.data.status === 'PENDING') {
+        // Notifikasi pendaftaran PENDING
+        this.$swal.fire({
+          icon: 'info',
+          title: 'Pendaftaran Berhasil',
+          text: `Pendaftaran Anda sudah masuk, ditunggu persetujuannya ya`,
+          confirmButtonText: 'OK'
+        });
+      } else if (res.data.status === 'APPROVED') {
+        this.$swal.fire({
+          icon: 'success',
+          title: 'Pendaftaran Disetujui',
+          text: 'Pendaftaran berhasil dan disetujui!',
+          confirmButtonText: 'OK'
+        });
+      }else if (res.data.status === 'REJECTED') {
+        this.$swal.fire({
+          icon: 'error',
+          title: 'Pendaftaran Ditolak',
+          text: 'Maaf, pendaftaran Anda ditolak oleh staff.',
+          confirmButtonText: 'OK'
+        });
+      }  else {
+        this.$swal.fire({
+          icon: 'info',
+          title: 'Pendaftaran Berhasil',
+          text: `Pendaftaran Anda sudah masuk, ditunggu persetujuannya ya`,
+          confirmButtonText: 'OK'
+        });
+      }
+    } else if (res.data.message) {
+      this.$swal.fire({
+        icon: 'success',
+        title: 'Berhasil',
+        text: res.data.message,
+        confirmButtonText: 'OK'
+      });
+    } else {
+      this.$swal.fire({
+        icon: 'success',
+        title: 'Berhasil',
+        text: 'Berhasil daftar event!',
+        confirmButtonText: 'OK'
+      });
+    }
         this.closeModal();
         this.fetchEvents();
       } catch (error) {
         console.error('Gagal mendaftar:', error);
-        alert('Pendaftaran gagal.');
+        let message = 'Pendaftaran gagal.';
+    if (error.response && error.response.data && error.response.data.message) {
+      message = error.response.data.message;
+    }
+
+    this.$swal.fire({
+      icon: 'error',
+      title: 'Pendaftaran Gagal',
+      text: message,
+      confirmButtonText: 'OK'
+    });
       }
     },
     openModal(event) {
@@ -232,7 +312,7 @@ export default {
 @import 'https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css';
 
 .content-wrapper {
-  padding-top: 80px;
+  padding-top: 120px; /* tingkatkan dari 80px ke 100px atau lebih */
   padding-bottom: 3rem;
 }
 
