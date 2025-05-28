@@ -118,7 +118,7 @@ export default {
 
         Toast.fire({
           icon: 'success',
-          title: 'Logged out successfully',
+          title: 'Logout Berhasil',
         });
 
         setTimeout(() => {
