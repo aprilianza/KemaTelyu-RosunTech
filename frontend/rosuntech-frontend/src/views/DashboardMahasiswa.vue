@@ -7,19 +7,22 @@
         <div class="col-lg-6 col-md-12 mb-3">
           <div class="card user-profile-card h-100 animate__animated animate__fadeInLeft">
             <div class="card-body">
-              <div class="row align-items-center">
-                <div class="col-auto">
+              <div class="row align-items-center user-profile-row">
+              <div class="col-auto">
+                <div class="profile-photo-container">
                   <img :src="profilePhoto" class="profile-photo rounded-circle" alt="Profile Photo" />
                 </div>
+            </div>
                 <div class="col text-start">
-                  <h3>{{ user.name }}</h3>
+                  <h3 class="fw-bold mb-2">{{ user.name }}</h3>
                   <p><strong>NIM:</strong> {{ user.nim }}</p>
-                  <p><strong>Fakultas:</strong> {{ user.fakultas }}</p>
+                  <span class="division-badge">{{ user.fakultas }}</span>
                 </div>
               </div>
             </div>
           </div>
         </div>
+        
 
         <div class="col-lg-3 col-md-6 mb-3">
           <div class="card total-event-card h-100 animate__animated animate__fadeInRight">
@@ -40,15 +43,28 @@
         </div>
       </div>
 
-      <h2 class="mb-4 animate__animated animate__fadeIn">Events</h2>
-      <div class="row justify-content-center g-4 mb-5">
+     <div class="events-section">
+  <div class="section-header d-flex justify-content-between align-items-center mb-4">
+    <h5 class="section-title mb-0 text-uppercase fw-semibold">
+      <i class="bi bi-calendar-event me-2"></i>EVENTS
+    </h5>
+  </div>
+</div>
+
+     <div v-if="loadingEvents" class="text-center py-5">
+    <div class="spinner-border text-primary" role="status">
+      <span class="visually-hidden">Loading...</span>
+    </div>
+    </div>
+      <div v-else class="row justify-content-center g-4 mb-5">
         <div class="col-12 col-md-6" v-for="(event, index) in events" :key="event.id">
           <div class="event-card d-flex flex-column animate__animated animate__fadeIn" 
                :style="{'animation-delay': index * 0.1 + 's'}">
-            <div class="image-wrapper mb-3 hover-zoom">
+            <div class="image-wrapper hover-zoom">
               <img :src="`http://localhost:8888/${event.fotoPath}`" alt="Event Image" />
             </div>
-            <h5 class="event-title mb-1 text-truncate">{{ event.title }}</h5>
+           
+            <h5 class="event-title">{{ event.title }}</h5>
             <a href="#" class="text-start see-more mb-3" @click.prevent="openModal(event)">
               lihat detail
             </a>
@@ -69,7 +85,8 @@
           <button type="button" class="modern-modal-close" @click="closeModal">
             <span class="close-icon">&times;</span>
           </button>
-
+          
+        
           <div class="modern-modal-image">
             <img :src="`http://localhost:8888/${selectedEvent.fotoPath}`" alt="Event Image" />
           </div>
@@ -88,7 +105,7 @@
               </div>
               <div class="metadata-item">
                 <span class="metadata-icon users-icon"></span>
-                <span>{{ selectedEvent.createdByName }}</span>
+                <span>{{ selectedEvent.maxParticipant}}</span>
               </div>
             </div>
 
@@ -106,6 +123,7 @@
       </div>
     </div>
   </div>
+
 </template>
 
 <script>
@@ -214,28 +232,57 @@ export default {
 @import 'https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css';
 
 .content-wrapper {
-  flex-grow: 1;
-  margin-top: 100px;
+  padding-top: 80px;
+  padding-bottom: 3rem;
 }
 
 /* Profile */
-.profile-photo {
-  width: 150px;
-  height: 150px;
-  object-fit: cover;
-  transition: transform 0.3s ease;
+
+.profile-photo-container {
+  display: inline-block;
+  padding: 4px;
+  border-radius: 50%;
+  background-image: linear-gradient(45deg, #b30202, #dd3232);
+  box-shadow: 0 4px 10px rgba(179, 2, 2, 0.3);
 }
+
+.profile-photo {
+  width: 172px;  /* dikurangi padding border */
+  height: 172px;
+  object-fit: cover;
+  border: 4px solid white;
+  transition: transform 0.3s ease;
+  border-radius: 50%;
+}
+
 
 .profile-photo:hover {
   transform: scale(1.05);
 }
 
+.user-info h3 {
+  font-weight: 700;
+  font-size: 1.75rem;
+  color: #212121;
+  margin-bottom: 0.5rem;
+}
+
+.user-info p {
+  font-size: 1.1rem;
+  margin-bottom: 0.3rem;
+  color: #444;
+}
+
 /* Card for User Profile */
+.user-profile-row {
+  gap: 1.5rem; /* beri jarak antara foto dan info */
+}
+
 .user-profile-card {
-  background-color: #ffffff;
+  background-color: #fff;
   border-radius: 1rem;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
   padding: 20px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
   transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 
@@ -288,17 +335,62 @@ h1 {
   font-size: 125px;
 }
 
+image-wrapper img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.5s ease;
+}
+
+.image-wrapper:hover img {
+  transform: scale(1.05);
+}
+
+.division-badge {
+  display: inline-block;
+  background-color: rgba(179, 2, 2, 0.1);
+  color: #b30202;
+  padding: 0.5rem 1rem;
+  border-radius: 2rem;
+  font-weight: 600;
+  width: fit-content;
+  font-size: 1rem;
+}
+
 /* Event Card */
-.event-card {
-  background-color: v-bind('$colors.fourth');
-  border-radius: 1.5rem;
-  padding: 1.5rem;
+.event-date-overlay {
+ position: absolute;
+  position: absolute;
+  top: 15px;
+  right: 15px;
+  background-color: white;
+  color: v-bind('$colors.primary');
+  border-radius: 8px;
+  padding: 0.5rem;
   display: flex;
   flex-direction: column;
-  height: 100%;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
-  animation: popupEffect 0.6s ease-out forwards;
+  align-items: center;
+  min-width: 50px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.event-date-overlay .date {
+  font-size: 1.2rem;
+  line-height: 1;
+}
+
+.event-date-overlay .month {
+  font-size: 0.8rem;
+  text-transform: uppercase;
+}
+
+.event-card {
+  background: linear-gradient(135deg, #2c3e50, v-bind('$colors.primary'));
+  border-radius: 12px;
+  overflow: hidden;
+  transition: all 0.3s ease;
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.15);
+
 }
 
 @keyframes popupEffect {
@@ -313,14 +405,25 @@ h1 {
 }
 
 .event-card:hover {
-  transform: translateY(-7px);
-  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.15);
+  transform: translateY(-5px);
+  box-shadow: 0 15px 30px rgba(0,0,0,0.2);
 }
 
 .image-wrapper {
-  width: 100%;
+  height: 180px;
   overflow: hidden;
-  border-radius: 1rem;
+
+}
+
+.image-wrapper img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.5s ease;
+}
+
+.image-wrapper:hover img {
+  transform: scale(1.05);
 }
 
 .hover-zoom img {
@@ -335,31 +438,41 @@ h1 {
 }
 
 .event-title {
-  color: #ffffff;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: white;
+  margin: 0.5rem 1rem 0 1rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .see-more {
-  color: rgba(255, 255, 255, 0.7);
+  color: rgba(243, 196, 196, 0.77);
   font-size: 0.9rem;
   text-decoration: none;
-  text-align: center;
-  transition: color 0.3s ease;
+  margin-left: 1rem;
+  margin-top: 0.25rem;
+  display: inline-block;
+  cursor: pointer;
 }
 
 .see-more:hover {
-  color: #ffffff;
+  color:rgb(240, 240, 240);
   text-decoration: underline;
 }
 
 .date-badge,
 .time-badge {
-  background-color: #ffffff;
-  color: v-bind('$colors.primary');
+  background-color: #fff;
+  color: #b30202;
   border-radius: 2rem;
   padding: 0.5rem 1rem;
   font-weight: 600;
   font-size: 0.9rem;
-  transition: transform 0.3s ease;
+  margin-right: 0.5rem;
+  cursor: default;
+  user-select: none;
 }
 
 .date-badge:hover,
@@ -380,6 +493,13 @@ h1 {
   z-index: 1050;
 }
 
+.modern-modal-body {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2rem;
+  padding: 2rem;
+}
+
 .modern-modal-backdrop {
   position: fixed;
   top: 0;
@@ -394,12 +514,14 @@ h1 {
 .modern-modal {
   background-color: white;
   width: 90%;
-  max-width: 800px;
+  max-width: 700px;
   border-radius: 1.5rem;
   overflow: hidden;
   z-index: 1052;
   position: relative;
   box-shadow: 0 15px 30px rgba(0, 0, 0, 0.2);
+  display: flex;
+  flex-direction: column;
 }
 
 /* Enhanced Close Button */
@@ -407,23 +529,25 @@ h1 {
   position: absolute;
   top: 15px;
   right: 15px;
-  background-color: rgba(0, 0, 0, 0.6);
-  border: 2px solid white;
+  background-color: rgba(179, 2, 2, 0.8);
+  border: none;
   width: 36px;
   height: 36px;
   border-radius: 50%;
+  font-size: 24px;
+  color: white;
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.3);
   display: flex;
   align-items: center;
   justify-content: center;
-  cursor: pointer;
+  transition: transform 0.3s ease, background-color 0.3s ease;
   z-index: 1060;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
-  transition: all 0.3s ease;
 }
 
 .modern-modal-close:hover {
-  background-color: rgba(0, 0, 0, 0.8);
-  transform: scale(1.1);
+  background-color: #b30202;
+  transform: scale(1.15);
 }
 
 .close-icon {
@@ -435,45 +559,96 @@ h1 {
 
 .modern-modal-image {
   width: 100%;
-  height: auto;
-  overflow: hidden;
+  max-height: 400px; /* batas tinggi modal */
+  overflow-y: auto;  /* hanya scroll vertikal */
+  overflow-x: hidden; /* hilangkan scroll horizontal */
+  border-top-left-radius: 1.5rem;
+  border-top-right-radius: 1.5rem;
+  background-color: #f0f0f0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 0; /* hilangkan padding supaya foto penuh */
+  box-sizing: border-box;
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none;  /* Internet Explorer 10+ */
 }
+
+.modern-modal-image::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, Opera */
+}
+
 
 .modern-modal-image img {
-  width: 100%;
-  height: auto;
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  display: block;
 }
 
+.modern-modal-image:hover img {
+  transform: scale(1.05);
+}
+
+
 .modern-modal-content {
-  padding: 2rem;
+  padding: 2rem 2.5rem 3rem 2.5rem;
+  display: flex;
+  flex-direction: column;
 }
 
 .modal-event-title {
-  font-size: 1.8rem;
+  font-size: 2rem;
   font-weight: 700;
-  margin-bottom: 1.5rem;
-  color: #333;
+  margin-bottom: 1rem;
+  color: #b30202;
 }
 
 .modal-event-metadata {
   display: flex;
-  flex-wrap: wrap;
-  gap: 1.5rem;
+  gap: 2rem;
   margin-bottom: 1.5rem;
-  color: #666;
+  color: #555;
+  flex-wrap: wrap;
 }
 
 .metadata-item {
   display: flex;
   align-items: center;
   gap: 0.5rem;
+  font-weight: 500;
 }
+
+.section-header {
+  border-bottom: 2px solid rgba(179, 2, 2, 0.2);
+  padding-bottom: 0.75rem;
+}
+
+.section-title {
+  color: #b30202;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  position: relative;
+  padding-left: 0.6rem;
+}
+
+.section-title::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  height: 100%;
+  width: 4px;
+  background-color: #b30202;
+  border-radius: 4px;
+}
+
 
 /* Custom icons instead of FontAwesome */
 .metadata-icon {
-  display: inline-block;
-  width: 20px;
-  height: 20px;
+  width: 22px;
+  height: 22px;
   background-position: center;
   background-repeat: no-repeat;
   background-size: contain;
@@ -492,33 +667,41 @@ h1 {
 }
 
 .modal-event-description {
-  margin-bottom: 2rem;
+  flex-grow: 1;
+  font-size: 1rem;
   line-height: 1.6;
-  color: #555;
+  color: #333;
+  margin-bottom: 2rem;
 }
 
 .modern-modal-actions {
   display: flex;
   justify-content: flex-end;
-  gap: 1rem;
-  margin-top: 2rem;
 }
 
 .register-btn {
-  background-color: v-bind('$colors.primary');
+  background-color: #b30202;
   color: white;
   border: none;
-  padding: 0.5rem 1.5rem;
-  border-radius: 2rem;
-  font-weight: 600;
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  padding: 0.75rem 2rem;
+  border-radius: 3rem;
+  font-weight: 700;
+  font-size: 1.1rem;
+  cursor: pointer;
+  transition: background-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.row.align-items-center {
+  gap: 1rem; /* beri jarak antar kolom */
 }
 
 .register-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-  background-color: v-bind('$colors.primary');
-  opacity: 0.9;
+  background-color: #dd3232;
+  box-shadow: 0 6px 12px rgba(179, 2, 2, 0.4);
+}
+
+.d-flex.justify-content-end.gap-3.mt-auto {
+  padding: 0 1rem 1rem 1rem;
 }
 
 /* Animation delays for staggered effect */
