@@ -7,45 +7,60 @@
     <div class="content-wrapper container">
       <!-- Header Section -->
 
+      
+
       <!-- History Events Section -->
       <div class="row justify-content-center g-4 mb-5">
-        <div class="col-12 col-md-6" v-for="(event, index) in historyEvents" :key="event.id">
-          <div class="event-card history-event-card d-flex flex-column animate__animated animate__fadeIn"
-               :style="{'animation-delay': index * 0.1 + 's'}">
-            <h5 class="event-title mb-3">{{ event.title }}</h5>
-            <p class="event-date mb-2">Tanggal Registrasi: {{ event.dateCreated }}</p>
-            
-            <!-- Status Badge -->
-            <div class="d-flex align-items-center mb-3">
-             <span :class="['status-badge', 
-              event.status === 'Diterima' ? 'status-approved' : 
-              event.status === 'Menunggu' ? 'status-pending' : 'status-rejected']">
-              {{ event.status }}
-            </span>
-            </div>
 
-            <!-- Action Buttons -->
-            <div class="d-flex justify-content-end gap-3 mt-auto">
-              <button
-                v-if="event.status === 'Diterima'"
-                class="btn action-btn download-btn "
-                 @click="downloadCertificate(event)"
-              >
-                Download
-              </button>
-              <button
-                v-if="event.status === 'Menunggu'"
-                class="btn action-btn cancel-btn"
-                @click="cancelRegistration(event.id)"
-              >
-                Batal
-              </button>
-            </div>
-          </div>
+         <div v-if="historyEvents.length === 0" class="text-center text-muted mb-3 col-12">
+             Belum ada data history registrasi.
         </div>
+
+  <div v-if="historyEvents.length > 0">
+  <div class="col-12 col-md-6" v-for="(event, index) in historyEvents" :key="event.id">
+    <div class="event-card history-event-card d-flex flex-column animate__animated animate__fadeIn" :style="{'animation-delay': index * 0.1 + 's'}">
+      <h5 class="event-title mb-3">{{ event.title }}</h5>
+      <p class="event-date mb-2">Tanggal Registrasi: {{ event.dateCreated }}</p>
+
+      <!-- Status Badge -->
+      <div class="d-flex align-items-center mb-3">
+        <span :class="[
+            'status-badge',
+            event.status === 'Diterima'
+              ? 'status-approved'
+              : event.status === 'Menunggu'
+              ? 'status-pending'
+              : 'status-rejected',
+          ]"
+        >
+          {{ event.status }}
+        </span>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="d-flex justify-content-end gap-3 mt-auto">
+        <button
+          v-if="event.status === 'Diterima' && event.certificateId"
+          class="btn action-btn download-btn"
+          @click="downloadCertificate(event)"
+        >
+          Download
+        </button>
+        <button
+          v-if="event.status === 'Menunggu'"
+          class="btn action-btn cancel-btn"
+          @click="cancelRegistration(event.id)"
+        >
+          Batal
+        </button>
       </div>
     </div>
   </div>
+</div>
+
+    </div>
+  </div>
+</div>
 </template>
 
 <script>
@@ -60,7 +75,7 @@ export default {
   },
   data() {
     return {
-      registrations: [],
+      historyEvents: [],
       previousRegistrations: [],
       error: null,
       loading: false,
@@ -122,21 +137,28 @@ export default {
   }
 },
     async fetchRegistrations() {
+
   this.loading = true;
   this.error = null;
   try {
     const response = await getMyRegistrations(); // panggil API dari registration.js
-    const newRegs = response.data.message.map(reg => {
+    console.log('Response data:', response.data);
+    console.log('Message array:', response.data?.message);
+    const registrations = response.data.message || response.data || [];
+    const newRegs = registrations.map(reg => {
+      console.log('REG DATA:', reg);
       let statusText = '';
       if (reg.status === 'APPROVED') statusText = 'Diterima';
       else if (reg.status === 'PENDING') statusText = 'Menunggu';
       else if (reg.status === 'REJECTED') statusText = 'Ditolak';
 
       return {
-        id: reg.id,
-        title: reg.eventTitle,
-        dateCreated: reg.date,
+        id: reg.eventId || reg.id || 0,                 // pakai eventId untuk id
+        title: reg.eventName || reg.eventTitle || 'Tidak diketahui',           // pakai eventName untuk judul event
+        description: reg.eventDesc,        // kalau perlu tampilkan deskripsi
+        dateCreated: reg.registrationAt || reg.date || '',  // tanggal pendaftaran
         status: statusText,
+        certificateId: reg.certificateId ?? null,
       };
     });
 
@@ -148,12 +170,14 @@ export default {
       }
     });
 
-    this.registrations = newRegs;
+    this.historyEvents = newRegs;
     this.previousRegistrations = [...newRegs];
     localStorage.setItem('historyEvents', JSON.stringify(newRegs));
   } catch (error) {
     this.error = 'Gagal mengambil data registrasi.';
     console.error('Error fetchRegistrations:', error);
+  } finally {
+    this.loading = false;
   }
 },
 
@@ -177,10 +201,10 @@ export default {
     },
 
 async downloadCertificate(event) {
-  console.log('Download certificate called for event id:', event.id);
+  
   try {
     // Request file PDF dari backend, response bertipe blob
-    const response = await api.get(`/certificates/${event.id}/download`, {
+    const response = await api.get(`/api/certificates/${event.certificateId}/download`, {
       responseType: 'blob' // sangat penting agar respon diterima sebagai file/binary
     });
 
@@ -201,7 +225,7 @@ async downloadCertificate(event) {
     this.$swal.fire({
       icon: 'success',
       title: 'Download Berhasil',
-      text: 'Sertifikat sudah tersimpan di direktori perangkat Anda.',
+      text: 'Sertifikat sudah tersimpan di perangkat Anda.',
       confirmButtonText: 'OK'
     });
 
@@ -244,10 +268,10 @@ async downloadCertificate(event) {
   padding: 1.5rem;
   display: flex;
   flex-direction: column;
-  height: 100%;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
   transition: transform 0.3s ease, box-shadow 0.3s ease;
   animation: popupEffect 0.6s ease-out forwards;
+  margin-bottom: 1rem;
 }
 
 @keyframes popupEffect {
@@ -293,7 +317,7 @@ async downloadCertificate(event) {
 }
 
 .status-rejected {
-  background-color: #dc3545; /* merah */
+  background-color: #f87171; /* merah */
   color: white;
 }
 
