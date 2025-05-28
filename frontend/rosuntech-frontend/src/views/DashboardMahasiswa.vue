@@ -34,7 +34,7 @@
         </div>
 
         <div class="col-lg-3 col-md-6 mb-3" @click="$router.push({ name: 'History' })">
-          <div class="card history-card h-100 animate__animated animate__fadeInRight">
+          <div class="card history-card h-100 animate__animated animate__fadeInRight" style="animation-delay: 0.2s;">
             <div class="card-body d-flex flex-column align-items-center justify-content-center">
               <img src="@/assets/img/history.png" alt="History" class="history-icon" />
               <h5 class="mt-3">Riwayat</h5>
@@ -71,13 +71,24 @@
 
           
 
-            <div class="d-flex justify-content-end gap-3 mt-auto">
-              <span class="badge date-badge">{{ formatDate(event.date) }}</span>
-              <span class="badge time-badge">{{ event.time }}</span>
-            </div>
+            <div class="d-flex justify-content-end align-items-center gap-2 mt-auto event-date-time-wrapper">
+            <div class="time-box-small shadow-glow">
+              <svg class="clock-icon-small" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10"></circle>
+              <polyline points="12 6 12 12 16 14"></polyline>
+              </svg>
+           <span class="time-text-small">{{ event.time }}</span>
           </div>
+            <div class="date-box-small shadow-glow">
+              <div class="date-day-small">{{ new Date(event.date).getDate() }}</div>
+              <div class="date-month-year-small">
+      {{ new Date(event.date).toLocaleDateString('id-ID', { month: 'short', year: 'numeric' }) }}
+    </div>
+            </div>
         </div>
       </div>
+      </div>
+    </div>
 
       <div v-if="selectedEvent" class="modern-modal-container animate__animated animate__fadeIn">
         <div class="modern-modal-backdrop" @click="closeModal"></div>
@@ -249,21 +260,7 @@ export default {
           confirmButtonText: 'OK'
         });
       }
-    } else if (res.data.message) {
-      this.$swal.fire({
-        icon: 'success',
-        title: 'Berhasil',
-        text: res.data.message,
-        confirmButtonText: 'OK'
-      });
-    } else {
-      this.$swal.fire({
-        icon: 'success',
-        title: 'Berhasil',
-        text: 'Berhasil daftar event!',
-        confirmButtonText: 'OK'
-      });
-    }
+    } 
         this.closeModal();
         this.fetchEvents();
       } catch (error) {
@@ -298,6 +295,42 @@ export default {
         document.head.appendChild(link);
       }
     },
+    async cancelRegistration(eventId) {
+    const confirmed = await this.$swal.fire({
+      icon: 'warning',
+      title: 'Batalkan Pendaftaran',
+      text: 'Apakah Anda yakin ingin membatalkan pendaftaran event ini?',
+      showCancelButton: true,
+      confirmButtonText: 'Ya, batalkan',
+      cancelButtonText: 'Tidak',
+      reverseButtons: true,
+    });
+
+    if (confirmed.isConfirmed) {
+      try {
+        // Panggil API hapus registration
+        await this.$api.delete(`/registrations/${eventId}`);
+
+        // Refresh data registrasi (fetch ulang dari backend)
+        await this.fetchRegistrations();
+
+        this.$swal.fire({
+          icon: 'success',
+          title: 'Pendaftaran berhasil dibatalkan',
+          timer: 2000,
+          showConfirmButton: false,
+        });
+      } catch (error) {
+        console.error('Gagal membatalkan pendaftaran:', error);
+        this.$swal.fire({
+          icon: 'error',
+          title: 'Gagal membatalkan pendaftaran',
+          text: 'Silakan coba lagi nanti',
+        });
+      }
+    }
+  },
+    
     formatDate(dateStr) {
       return new Date(dateStr).toLocaleDateString('id-ID', {
         day: 'numeric', month: 'long', year: 'numeric'
@@ -372,8 +405,18 @@ export default {
 }
 
 /* History & Total Event Card */
-.history-card,
+.history-card {
+  background-color: rgba(229, 26, 26, 0.94);
+  color: white;
+  border-radius: 1rem;
+  box-shadow: 0 4px 8px rgba(222, 11, 11, 0.47);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  cursor: pointer;
+}
+
+
 .total-event-card {
+  transform: translateY(-8px);
   background-color: v-bind('$colors.primary');
   color: white;
   border-radius: 1rem;
@@ -382,18 +425,28 @@ export default {
   transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 
-.history-card:hover,
 .total-event-card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+  transform: translateY(-8px);
+  box-shadow: 0 8px 20px rgba(26, 26, 26, 0.2);
 }
 
+
+
+.history-card:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 8px 20px rgba(223, 9, 9, 0.2);
+}
+
+
+
 .total-event-card {
+  transform: translateY(-8px);
   cursor: default;
 }
 
 .history-card .card-body,
 .total-event-card .card-body {
+  transform: translateY(-8px);
   text-align: center;
 }
 
@@ -404,7 +457,7 @@ export default {
 }
 
 .history-card:hover .history-icon {
-  transform: scale(1.1);
+   transform: translateY(-8px);
 }
 
 h5 {
@@ -485,7 +538,7 @@ image-wrapper img {
 }
 
 .event-card:hover {
-  transform: translateY(-5px);
+  transform: translateY(-8px);
   box-shadow: 0 15px 30px rgba(0,0,0,0.2);
 }
 
@@ -628,6 +681,73 @@ image-wrapper img {
 .modern-modal-close:hover {
   background-color: #b30202;
   transform: scale(1.15);
+}
+
+.event-date-time-wrapper {
+  padding: 0 1rem 1rem 1rem;
+  user-select: none;
+  display: flex;
+  justify-content: flex-end;
+  align-items: flex-end; /* pastikan elemen rata bawah */
+  gap: 0.75rem; /* jarak antar kotak */
+}
+
+.date-box-small {
+ background: rgba(255, 255, 255, 0.15);
+  border-radius: 8px;
+  color: white;
+  padding: 0.5rem 0.8rem; /* padding bawah ditambah agar kotak lebih tinggi */
+  text-align: center;
+  box-shadow: 0 0 8px rgba(0,0,0,0.2);
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.date-box:hover, .time-box:hover {
+  transform: scale(1.05);
+  cursor: default;
+  box-shadow: 0 0 20px rgba(244, 67, 54, 0.8);
+}
+
+.date-day-small {
+  font-weight: 700;
+  font-size: 1.5rem;
+  line-height: 1;
+  margin-bottom: 0;
+}
+
+.date-month-year-small {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  opacity: 0.85;
+  letter-spacing: 0.1em;
+  margin-top: 0;
+}
+
+.time-box-small {
+  display: flex;
+  align-items: center; /* vertical tengah isi jam */
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 8px;
+  padding: 0.5rem 0.9rem; /* padding bawah ditambah sama dengan date-box */
+  box-shadow: 0 0 8px rgba(0,0,0,0.2);
+  gap: 0.4rem;
+}
+
+.clock-icon-small {
+  width: 18px;
+  height: 18px;
+  stroke: white;
+  opacity: 0.8;
+}
+
+.time-text-small {
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: white;
+  line-height: 1;
 }
 
 .close-icon {
