@@ -21,13 +21,10 @@ export async function getEventParticipants(eventId) {
 }
 
 export async function updateParticipantStatus(registrationId, status) {
-  let action;
-  if (status === 'APPROVED') {
-    action = 'approve';
-  } else if (status === 'REJECTED') {
-    action = 'reject';
-  } else {
+  if (!['APPROVED', 'REJECTED'].includes(status))
     throw new Error('Status must be "APPROVED" or "REJECTED"');
-  }
-  return api.patch(`/api/events/participants/${registrationId}/${action}`);
+
+  const action = status === 'APPROVED' ? 'approve' : 'reject';
+  // ⬇️ ganti path ke controller yang baru
+  return api.patch(`/api/registrations/${registrationId}/${action}`);
 }
