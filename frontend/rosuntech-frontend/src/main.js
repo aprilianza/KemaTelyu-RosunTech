@@ -6,6 +6,8 @@ import Swal from 'sweetalert2'
 import colors from './utils/colors'
 import { library } from '@fortawesome/fontawesome-svg-core'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
+import 'bootstrap-icons/font/bootstrap-icons.css';
+
 import { 
   faHome, 
   faHistory, 

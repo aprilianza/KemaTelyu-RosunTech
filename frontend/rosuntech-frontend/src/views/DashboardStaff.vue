@@ -46,6 +46,19 @@
                   <span class="date">{{ formatDate(event.date).day }}</span>
                   <span class="month">{{ formatDate(event.date).month }}</span>
                 </div>
+                <div class="event-actions-dropdown">
+                  <button class="btn btn-sm btn-actions" @click.stop="toggleActionsMenu(event.id)">
+                    <i class="bi bi-three-dots-vertical"></i>
+                  </button>
+                  <div v-if="showActionsMenu === event.id" class="actions-menu" @click.stop>
+                    <button class="action-item" @click="openEditModal(event)">
+                      <i class="bi bi-pencil me-2"></i>Edit
+                    </button>
+                    <button class="action-item text-danger" @click="confirmDeleteEvent(event.id)">
+                      <i class="bi bi-trash me-2"></i>Hapus
+                    </button>
+                  </div>
+                </div>
               </div>
               <div class="card-body d-flex flex-column">
                 <div class="badges-container mb-2">
@@ -54,8 +67,7 @@
                 </div>
                 <h5 class="event-title mb-2">{{ event.title }}</h5>
                 <p class="event-description text-truncate mb-3">{{ event.description }}</p>
-                <div class="mt-auto d-flex justify-content-between">
-                  <button class="btn btn-outline-light btn-sm" @click="confirmDeleteEvent(event.id)"><i class="bi bi-trash me-1"></i> Hapus</button>
+                <div class="mt-auto d-flex justify-content-end">
                   <button class="btn btn-light btn-sm" @click="openModal(event)"><i class="bi bi-eye me-1"></i> Detail</button>
                 </div>
               </div>
@@ -64,7 +76,7 @@
         </div>
       </div>
 
-      <!-- Modern Modal -->
+      <!-- Detail Event Modal -->
       <div v-if="selectedEvent" class="modern-modal-container animate__animated animate__fadeIn">
         <div class="modern-modal-backdrop" @click="closeModal"></div>
         <div class="modern-modal animate__animated animate__zoomIn">
@@ -174,20 +186,72 @@
           </div>
         </div>
       </div>
+
+      <!-- Edit Event Modal -->
+      <div v-if="showEditModal" class="modern-modal-container animate__animated animate__fadeIn">
+        <div class="modern-modal-backdrop" @click="closeEditModal"></div>
+        <div class="modern-modal animate__animated animate__zoomIn">
+          <button type="button" class="modern-modal-close" @click="closeEditModal">
+            <span class="close-icon">&times;</span>
+          </button>
+
+          <div class="modern-modal-content">
+            <h2 class="modal-event-title mb-4">Edit Event</h2>
+
+            <form @submit.prevent="handleUpdateEvent">
+              <div class="row g-3">
+                <div class="col-md-6">
+                  <label for="edit-title" class="form-label">Judul Event</label>
+                  <input type="text" class="form-control" id="edit-title" v-model="editForm.title" required>
+                </div>
+                <div class="col-md-6">
+                  <label for="edit-max-participant" class="form-label">Maksimal Peserta</label>
+                  <input type="number" class="form-control" id="edit-max-participant" v-model="editForm.maxParticipant" min="1" required>
+                </div>
+                <div class="col-md-6">
+                  <label for="edit-date" class="form-label">Tanggal</label>
+                  <input type="date" class="form-control" id="edit-date" v-model="editForm.date" required>
+                </div>
+                <div class="col-md-6">
+                  <label for="edit-time" class="form-label">Waktu</label>
+                  <input type="time" class="form-control" id="edit-time" v-model="editForm.time" required>
+                </div>
+                <div class="col-12">
+                  <label for="edit-description" class="form-label">Deskripsi</label>
+                  <textarea class="form-control" id="edit-description" rows="3" v-model="editForm.description" required></textarea>
+                </div>
+                <div class="col-12">
+                  <label for="edit-image" class="form-label">Gambar Event</label>
+                  <input type="file" class="form-control" id="edit-image" @change="handleImageChange" accept="image/*">
+                  <div class="form-text">Biarkan kosong jika tidak ingin mengubah gambar</div>
+                </div>
+                <div class="col-12 mt-4">
+                  <div class="d-flex justify-content-end gap-2">
+                    <button type="button" class="btn btn-outline-secondary" @click="closeEditModal">Batal</button>
+                    <button type="submit" class="btn btn-primary" :disabled="updatingEvent">
+                      <span v-if="updatingEvent" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                      Simpan Perubahan
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </template>
 
-<!-- DashboardStaff.vue -->
 <script>
 import SidebarStaff from '@/components/SidebarStaff.vue';
 import axios from 'axios';
 import Swal from 'sweetalert2';
-// Alias agar tidak bentrok dengan method lokal
-import {
-  getEventsStaff,
-  deleteEvent,
-  updateParticipantStatus as apiUpdateParticipantStatus
+import { 
+  getEventsStaff, 
+  deleteEvent, 
+  updateParticipantStatus as apiUpdateParticipantStatus,
+  updateEvent
 } from '@/api/event';
 
 export default {
@@ -205,11 +269,27 @@ export default {
       },
       events: [],
       selectedEvent: null,
+      showActionsMenu: null,
+      showEditModal: false,
+      updatingEvent: false,
+      editForm: {
+        id: null,
+        title: '',
+        description: '',
+        date: '',
+        time: '',
+        maxParticipant: 10,
+        image: null
+      }
     };
   },
   async mounted() {
     await this.checkAuthentication();
     await this.fetchEvents();
+    document.addEventListener('click', this.closeActionsMenu);
+  },
+  beforeUnmount() {
+    document.removeEventListener('click', this.closeActionsMenu);
   },
   methods: {
     /* AUTENTIKASI & FETCH EVENTS */
@@ -282,26 +362,88 @@ export default {
       }
     },
 
-    async showAuthError(title, text) {
-      await Swal.fire({
-        icon: 'error',
-        title,
-        text,
-        confirmButtonText: 'Ke Halaman Login',
-        allowOutsideClick: false,
-        customClass: { confirmButton: 'btn btn-danger' },
-      });
+    /* EVENT ACTIONS */
+    toggleActionsMenu(eventId) {
+      this.showActionsMenu = this.showActionsMenu === eventId ? null : eventId;
     },
 
-    clearAuthData() {
-      localStorage.removeItem('token');
-      localStorage.removeItem('user');
+    closeActionsMenu() {
+      this.showActionsMenu = null;
     },
 
-    redirectToLogin() {
-      this.isLoading = false;
-      this.isAuthenticated = false;
-      this.$router.push('/');
+    openEditModal(event) {
+      this.editForm = {
+        id: event.id,
+        title: event.title,
+        description: event.description,
+        date: event.date.split('T')[0],
+        time: event.time.substring(0, 5),
+        maxParticipant: event.maxParticipant,
+        image: null
+      };
+      this.showEditModal = true;
+      this.closeActionsMenu();
+    },
+
+    closeEditModal() {
+      this.showEditModal = false;
+      this.editForm = {
+        id: null,
+        title: '',
+        description: '',
+        date: '',
+        time: '',
+        maxParticipant: 10,
+        image: null
+      };
+    },
+
+    handleImageChange(event) {
+      this.editForm.image = event.target.files[0];
+    },
+
+    async handleUpdateEvent() {
+      this.updatingEvent = true;
+      try {
+        const formData = new FormData();
+        formData.append('title', this.editForm.title);
+        formData.append('description', this.editForm.description);
+        formData.append('date', this.editForm.date);
+        formData.append('time', this.editForm.time + ':00');
+        formData.append('maxParticipant', this.editForm.maxParticipant);
+        if (this.editForm.image) {
+          formData.append('image', this.editForm.image);
+        }
+
+        const resp = await updateEvent(this.editForm.id, formData);
+        
+        // Update local events data
+        const updatedEvent = resp.data.message;
+        const index = this.events.findIndex(e => e.id === updatedEvent.id);
+        if (index !== -1) {
+          this.events[index] = updatedEvent;
+        }
+
+        Swal.fire({
+          toast: true,
+          position: 'top-end',
+          icon: 'success',
+          title: 'Event berhasil diperbarui',
+          showConfirmButton: false,
+          timer: 2000
+        });
+
+        this.closeEditModal();
+      } catch (error) {
+        console.error(error);
+        Swal.fire({
+          icon: 'error',
+          title: 'Gagal memperbarui event',
+          text: error.response?.data?.message || 'Terjadi kesalahan saat memperbarui event'
+        });
+      } finally {
+        this.updatingEvent = false;
+      }
     },
 
     /* MODAL */
@@ -364,6 +506,7 @@ export default {
           await deleteEvent(eventId);
           this.events = this.events.filter(e => e.id !== eventId);
           if (this.selectedEvent?.id === eventId) this.closeModal();
+          if (this.showEditModal && this.editForm.id === eventId) this.closeEditModal();
           Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: 'Event berhasil dihapus', showConfirmButton: false, timer: 2000 });
         } catch (error) {
           console.error(error);
@@ -411,6 +554,29 @@ export default {
         default:         return 'badge bg-secondary';
       }
     },
+
+    /* AUTH HELPERS */
+    async showAuthError(title, text) {
+      await Swal.fire({
+        icon: 'error',
+        title,
+        text,
+        confirmButtonText: 'Ke Halaman Login',
+        allowOutsideClick: false,
+        customClass: { confirmButton: 'btn btn-danger' },
+      });
+    },
+
+    clearAuthData() {
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+    },
+
+    redirectToLogin() {
+      this.isLoading = false;
+      this.isAuthenticated = false;
+      this.$router.push('/');
+    },
   },
 
   beforeRouteEnter(to, from, next) {
@@ -430,7 +596,6 @@ export default {
   },
 };
 </script>
-
 <style scoped>
 .content-wrapper {
   flex-grow: 1;
@@ -518,7 +683,7 @@ export default {
 
 /* Event Cards */
 .event-card {
-  background: linear-gradient(135deg, #2c3e50, v-bind('$colors.primary'));
+  background: linear-gradient(135deg, #2c3e50, #b30202);
   border-radius: 12px;
   overflow: hidden;
   transition: all 0.3s ease;
@@ -533,6 +698,7 @@ export default {
 .image-wrapper {
   height: 180px;
   overflow: hidden;
+  position: relative;
 }
 
 .image-wrapper img {
@@ -551,7 +717,7 @@ export default {
   top: 15px;
   right: 15px;
   background-color: white;
-  color: v-bind('$colors.primary');
+  color: #b30202;
   border-radius: 8px;
   padding: 0.5rem;
   display: flex;
@@ -570,6 +736,94 @@ export default {
 .event-date-overlay .month {
   font-size: 0.8rem;
   text-transform: uppercase;
+}
+
+/* Event Actions Dropdown */
+.event-actions-dropdown {
+  position: absolute;
+  top: 15px;
+  left: 15px;
+  z-index: 10;
+}
+
+.btn-actions {
+  background-color: rgba(255, 255, 255, 0.9);
+  border: none;
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  color: #333;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+}
+
+.btn-actions:hover {
+  background-color: white;
+  transform: scale(1.1);
+  color: #b30202;
+}
+
+.btn-actions:focus {
+  outline: none;
+}
+
+.actions-menu {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  min-width: 140px;
+  z-index: 100;
+  overflow: hidden;
+  margin-top: 5px;
+  animation: fadeIn 0.2s ease-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.action-item {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  padding: 8px 16px;
+  text-align: left;
+  border: none;
+  background: none;
+  transition: background-color 0.2s ease;
+  color: #495057;
+  font-size: 0.9rem;
+  white-space: nowrap;
+}
+
+.action-item i {
+  font-size: 1rem;
+  margin-right: 8px;
+}
+
+.action-item:hover {
+  background-color: #f8f9fa;
+  color: #b30202;
+}
+
+.actions-menu::before {
+  content: '';
+  position: absolute;
+  top: -5px;
+  left: 15px;
+  width: 0;
+  height: 0;
+  border-left: 5px solid transparent;
+  border-right: 5px solid transparent;
+  border-bottom: 5px solid white;
 }
 
 .card-body {
@@ -607,15 +861,6 @@ export default {
 .event-description {
   color: rgba(255, 255, 255, 0.7);
   font-size: 0.9rem;
-}
-
-.btn-outline-light {
-  border-color: rgba(255, 255, 255, 0.3);
-  color: rgba(255, 255, 255, 0.9);
-}
-
-.btn-outline-light:hover {
-  background-color: rgba(255, 255, 255, 0.1);
 }
 
 /* Modern Modal Styles */
@@ -758,7 +1003,7 @@ export default {
   gap: 0.5rem;
 }
 
-/* Custom icons instead of FontAwesome */
+/* Custom icons */
 .metadata-icon {
   display: inline-block;
   width: 20px;
@@ -852,6 +1097,114 @@ export default {
   border-color: #dd3232;
 }
 
+/* Edit Modal Specific Styles */
+.modern-modal-content form {
+  padding: 0;
+}
+
+.modern-modal-content .form-label {
+  font-weight: 600;
+  color: #495057;
+  margin-bottom: 0.5rem;
+}
+
+.modern-modal-content .form-control {
+  border: 1px solid #ced4da;
+  border-radius: 8px;
+  padding: 0.75rem 1rem;
+  transition: all 0.3s ease;
+}
+
+.modern-modal-content .form-control:focus {
+  border-color: #b30202;
+  box-shadow: 0 0 0 0.25rem rgba(179, 2, 2, 0.25);
+}
+
+.modern-modal-content textarea.form-control {
+  min-height: 120px;
+}
+
+.modern-modal-content .form-text {
+  color: #6c757d;
+  font-size: 0.85rem;
+  margin-top: 0.25rem;
+}
+
+/* Loading state for update button */
+.btn-primary:disabled {
+  background-color: #b30202;
+  opacity: 0.8;
+}
+
+.spinner-border {
+  vertical-align: middle;
+  margin-right: 5px;
+}
+
+/* Form validation states */
+.is-invalid {
+  border-color: #dc3545 !important;
+}
+
+.invalid-feedback {
+  color: #dc3545;
+  font-size: 0.85rem;
+  margin-top: 0.25rem;
+}
+
+/* Edit modal specific adjustments */
+#edit-image {
+  padding: 0.5rem;
+}
+
+/* Button hover effects */
+.btn-outline-secondary:hover {
+  background-color: #6c757d;
+  color: white;
+}
+
+.btn-primary {
+  background-color: #b30202;
+  border-color: #b30202;
+}
+
+.btn-primary:hover {
+  background-color: #dd3232;
+  border-color: #dd3232;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .modern-modal {
+    width: 95%;
+    max-height: 85vh;
+  }
+  
+  .modal-event-metadata {
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+  
+  .event-actions-dropdown {
+    top: 10px;
+    left: 10px;
+  }
+  
+  .btn-actions {
+    width: 28px;
+    height: 28px;
+    font-size: 0.9rem;
+  }
+  
+  .modern-modal-content {
+    padding: 1.5rem;
+  }
+  
+  .modal-event-title {
+    font-size: 1.5rem;
+  }
+}
+
 /* Animation delays for staggered effect */
 .animate__fadeIn {
   --animate-duration: 0.6s;
@@ -863,5 +1216,49 @@ export default {
 
 body.modal-open {
   overflow: hidden;
+}
+
+/* Date and time picker styling */
+input[type="date"]::-webkit-calendar-picker-indicator,
+input[type="time"]::-webkit-calendar-picker-indicator {
+  filter: invert(0.5);
+  cursor: pointer;
+}
+
+input[type="date"]:focus::-webkit-calendar-picker-indicator,
+input[type="time"]:focus::-webkit-calendar-picker-indicator {
+  filter: invert(0.5) drop-shadow(0 0 2px rgba(179, 2, 2, 0.5));
+}
+
+/* File input customization */
+.form-control[type="file"] {
+  padding: 0.375rem;
+}
+
+.form-control[type="file"]::file-selector-button {
+  padding: 0.375rem 0.75rem;
+  margin-right: 0.75rem;
+  background-color: #f8f9fa;
+  border: 1px solid #ced4da;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+}
+
+.form-control[type="file"]::file-selector-button:hover {
+  background-color: #e9ecef;
+  border-color: #adb5bd;
+}
+
+/* Status badges */
+.badge.bg-success {
+  background-color: #28a745 !important;
+}
+
+.badge.bg-secondary {
+  background-color: #6c757d !important;
+}
+
+.badge.bg-danger {
+  background-color: #dc3545 !important;
 }
 </style>
