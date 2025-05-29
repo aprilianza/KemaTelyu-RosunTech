@@ -69,224 +69,145 @@
 </div>
 </div>
 </template>
-
 <script>
 import Sidebar from '@/components/Sidebar.vue';
-import api from '@/api/axios';
-import { getMyRegistrations } from '@/api/registration';
+import { getMyRegistrations, deleteRegistration } from '@/api/registration';
 
 export default {
   name: 'HistoryRegisteredEvents',
-  components: {
-    Sidebar
-  },
+  components: { Sidebar },
+
   data() {
     return {
-      historyEvents: [],
+      historyEvents        : [],
       previousRegistrations: [],
-      error: null,
-      loading: false,
-      user: JSON.parse(localStorage.getItem('user')) || { name: 'User', nim: '', fakultas: '' },
+      error   : null,
+      loading : false,
+      user    : JSON.parse(localStorage.getItem('user')) || { name: 'User' },
     };
   },
-  created() {
-    this.loadFromLocalStorage();
-  },
-  mounted() {
-    this.loadAnimateCSS();
-    this.fetchRegistrations();
-    this.pollingInterval = setInterval(() => {
-      this.fetchRegistrations();
-    }, 30000);
-  },
 
-  beforeUnmount() {
-    clearInterval(this.pollingInterval);
+  created() { this.restoreLocal(); },
+  mounted() {
+    this.injectAnimateCSS();
+    this.fetchRegistrations();
+    this.poller = setInterval(this.fetchRegistrations, 30_000);
   },
+  beforeUnmount() { clearInterval(this.poller); },
 
   methods: {
-     loadFromLocalStorage() {
-      const saved = localStorage.getItem('historyEvents');
-      if (saved) {
-        try {
-          this.registrations = JSON.parse(saved);
-          this.previousRegistrations = [...this.registrations];
-        } catch {
-          this.registrations = [];
-          this.previousRegistrations = [];
-        }
-      }
-    },
-    async fetchHistoryEvents() {
-  try {
-    const response = await getMyRegistrations();
-    const newEvents = response.data.message.map(reg => {
-      let statusText = '';
-      if (reg.status === 'APPROVED') statusText = 'Diterima';
-      else if (reg.status === 'PENDING') statusText = 'Menunggu';
-      else if (reg.status === 'REJECTED') statusText = 'Ditolak';
-
-      return {
-        id: reg.id,
-        title: reg.eventTitle,
-        dateCreated: reg.date,
-        status: statusText,
-      };
-    });
-
-    // ...set state dan localStorage seperti biasa
-    this.historyEvents = newEvents;
-    this.previousEvents = [...newEvents];
-    localStorage.setItem('historyEvents', JSON.stringify(this.historyEvents));
-
-  } catch (error) {
-    console.error('Gagal fetch history registrasi:', error);
-    // fallback handling (misal localStorage atau dummy data)
-  }
-},
-    async fetchRegistrations() {
-
-  this.loading = true;
-  this.error = null;
-  try {
-    const response = await getMyRegistrations(); // panggil API dari registration.js
-    console.log('Response data:', response.data);
-    console.log('Message array:', response.data?.message);
-    const registrations = response.data.message || response.data || [];
-    const newRegs = registrations.map(reg => {
-      console.log('REG DATA:', reg);
-      let statusText = '';
-      if (reg.status === 'APPROVED') statusText = 'Diterima';
-      else if (reg.status === 'PENDING') statusText = 'Menunggu';
-      else if (reg.status === 'REJECTED') statusText = 'Ditolak';
-
-      return {
-        id: reg.eventId || reg.id || 0,                 // pakai eventId untuk id
-        title: reg.eventName || reg.eventTitle || 'Tidak diketahui',           // pakai eventName untuk judul event
-        description: reg.eventDesc,        // kalau perlu tampilkan deskripsi
-        dateCreated: reg.registrationAt || reg.date || '',  // tanggal pendaftaran
-        status: statusText,
-        certificateId: reg.certificateId ?? null,
-      };
-    });
-
-    // Notifikasi perubahan status
-    newRegs.forEach(newReg => {
-      const oldReg = this.previousRegistrations.find(e => e.id === newReg.id);
-      if (oldReg && oldReg.status !== newReg.status) {
-        this.showStatusPopup(newReg);
-      }
-    });
-
-    this.historyEvents = newRegs;
-    this.previousRegistrations = [...newRegs];
-    localStorage.setItem('historyEvents', JSON.stringify(newRegs));
-  } catch (error) {
-    this.error = 'Gagal mengambil data registrasi.';
-    console.error('Error fetchRegistrations:', error);
-  } finally {
-    this.loading = false;
-  }
-},
-
-    showStatusPopup(event) {
-    this.$swal.fire({
-      icon: event.status === 'Diterima' ? 'success' :
-          event.status === 'Menunggu' ? 'info' : 'error',
-      title: `Status Anda: ${event.status}`,
-      text: `Status registrasi untuk "${event.title}" sekarang adalah "${event.status}".`,
-      confirmButtonText: 'OK'
-    });
-  },
-     loadAnimateCSS() {
-      if (!document.getElementById('animate-css')) {
-        const link = document.createElement('link');
-        link.id = 'animate-css';
-        link.rel = 'stylesheet';
-        link.href = 'https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css';
-        document.head.appendChild(link);
-      }
-    },
-
-async downloadCertificate(event) {
-  
-  try {
-    // Request file PDF dari backend, response bertipe blob
-    const response = await api.get(`/api/certificates/${event.certificateId}/download`, {
-      responseType: 'blob' // sangat penting agar respon diterima sebagai file/binary
-    });
-
-    // Buat URL sementara dari blob
-    const url = window.URL.createObjectURL(new Blob([response.data], { type: 'application/pdf' }));
-
-    // Buat elemen <a> untuk trigger download
-    const link = document.createElement('a');
-    link.href = url;
-    link.setAttribute('download', `${this.user.name}-${event.title}.pdf`); // nama file yang diunduh
-    document.body.appendChild(link);
-    link.click();
-
-    // Bersihkan elemen dan URL object
-    document.body.removeChild(link);
-    window.URL.revokeObjectURL(url);
-
-    this.$swal.fire({
-      icon: 'success',
-      title: 'Download Berhasil',
-      text: 'Sertifikat sudah tersimpan di perangkat Anda.',
-      confirmButtonText: 'OK'
-    });
-
-  } catch (error) {
-    console.error('Gagal download sertifikat:', error);
-    this.$swal.fire({
-      icon: 'error',
-      title: 'Gagal Download',
-      text: 'Tidak dapat mengunduh sertifikat saat ini. Silakan coba lagi.',
-      confirmButtonText: 'OK'
-    });
-  }
-},
-    async cancelRegistration(eventId) {
-    const confirmed = await this.$swal.fire({
-      icon: 'warning',
-      title: 'Batalkan Pendaftaran',
-      text: 'Apakah Anda yakin ingin membatalkan pendaftaran event ini?',
-      showCancelButton: true,
-      cancelButtonText: 'Tidak',
-      confirmButtonText: 'Ya',
-      
-    });
-
-    if (confirmed.isConfirmed) {
+    /* ---------------- localStorage ---------------- */
+    restoreLocal() {
       try {
-        // Panggil API hapus registration
-        await this.$api.delete(`/registrations/${eventId}`);
+        const saved = JSON.parse(localStorage.getItem('historyEvents') || '[]');
+        this.historyEvents         = saved;
+        this.previousRegistrations = [...saved];
+      } catch { /* ignore */ }
+    },
 
-        // Refresh data registrasi (fetch ulang dari backend)
+    /* ---------------- FETCH list ---------------- */
+    async fetchRegistrations() {
+      this.loading = true;
+      try {
+        const { data } = await getMyRegistrations();
+        const list = Array.isArray(data) ? data : data?.message || [];
+        const map  = { APPROVED:'Diterima', PENDING:'Menunggu', REJECTED:'Ditolak' };
+
+        const mapped = list.map(r => ({
+          id           : r.registrationId,
+          eventId      : r.eventId,
+          title        : r.eventName,
+          description  : r.eventDesc,
+          dateCreated  : r.registrationAt,
+          status       : map[r.status] || r.status,
+          certificateId: r.certificateId ?? null,
+        }));
+
+        mapped.forEach(n => {
+          const old = this.previousRegistrations.find(o => o.id === n.id);
+          if (old && old.status !== n.status) this.statusPopup(n);
+        });
+
+        this.historyEvents         = mapped;
+        this.previousRegistrations = [...mapped];
+        localStorage.setItem('historyEvents', JSON.stringify(mapped));
+      } catch (e) {
+        console.error(e);
+        this.error = 'Gagal mengambil data registrasi.';
+      } finally { this.loading = false; }
+    },
+
+    /* ---------------- CANCEL ---------------- */
+    async cancelRegistration(id) {
+      const ok = await this.$swal.fire({
+        icon:'warning', title:'Batalkan Pendaftaran', text:'Yakin?',
+        showCancelButton:true, confirmButtonText:'Ya', cancelButtonText:'Tidak'
+      });
+      if (!ok.isConfirmed) return;
+
+      try {
+        await deleteRegistration(id);
         await this.fetchRegistrations();
-
-        this.$swal.fire({
-          icon: 'success',
-          title: 'Pendaftaran berhasil dibatalkan',
-          timer: 2000,
-          showConfirmButton: false,
-        });
-      } catch (error) {
-        console.error('Gagal membatalkan pendaftaran:', error);
-        this.$swal.fire({
-          icon: 'error',
-          title: 'Gagal membatalkan pendaftaran',
-          text: 'Silakan coba lagi nanti',
-        });
+        this.$swal.fire({ icon:'success', title:'Berhasil dibatalkan',
+                          timer:1600, showConfirmButton:false });
+      } catch (e) {
+        console.error(e);
+        this.$swal.fire({ icon:'error', title:'Gagal', text:'Silakan coba lagi.' });
       }
-    }
+    },
+
+    /* ---------------- DOWNLOAD ---------------- */
+    async downloadCertificate(ev) {
+      try {
+        const { default: api } = await import('@/api/axios');
+        const res  = await api.get(
+          `/api/certificates/${ev.certificateId}/download`,
+          { responseType:'blob' });
+
+        const blob = res.data instanceof Blob
+                   ? res.data
+                   : new Blob([res.data], { type:'application/pdf' });
+
+        /* FE bikin nama file sendiri */
+        const clean = str => str.replace(/\s+/g, '_');
+        const filename = `${clean(this.user.name)}-${clean(ev.title)}-${ev.certificateId}.pdf`;
+
+        const url  = URL.createObjectURL(blob);
+        const link = Object.assign(document.createElement('a'),
+                                   { href:url, download:filename });
+        document.body.appendChild(link);
+        link.click();
+        setTimeout(() => { URL.revokeObjectURL(url); link.remove(); }, 8000);
+
+        this.$swal.fire({ icon:'success', title:'Download Berhasil',
+                          text:'Sertifikat tersimpan.' });
+
+      } catch (e) {
+        console.error(e);
+        this.$swal.fire({ icon:'error', title:'Gagal Download', text:'Silakan coba lagi.' });
+      }
+    },
+
+    /* ---------------- Misc helpers ---------------- */
+    statusPopup(ev) {
+      const icon = ev.status === 'Diterima' ? 'success'
+                : ev.status === 'Menunggu' ? 'info' : 'error';
+      this.$swal.fire({ icon, title:`Status: ${ev.status}`,
+                        text:`"${ev.title}" sekarang ${ev.status}.` });
+    },
+    injectAnimateCSS() {
+      if (!document.getElementById('animate-css')) {
+        const l=document.createElement('link');
+        l.id='animate-css'; l.rel='stylesheet';
+        l.href='https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css';
+        document.head.appendChild(l);
+      }
+    },
   },
-    
-  }
-  
 };
 </script>
+
+
 
 <style scoped>
 /* Import Animate.css */
