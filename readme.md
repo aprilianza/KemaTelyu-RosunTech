@@ -39,7 +39,7 @@ Accept: application/json
 ```
 ```json
 {
-  "email": "athila@telyu.ac.id",
+  "email": "yolanda.rahma.chrysti@telyu.ac.id",
   "password": "password123"
 }
 ```
