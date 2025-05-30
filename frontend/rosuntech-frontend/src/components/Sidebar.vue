@@ -91,6 +91,7 @@ export default {
     },
   },
   methods: {
+
     toggleSidebar() {
       this.isOpen = !this.isOpen;
     },
@@ -133,6 +134,28 @@ export default {
       }
     },
   },
+        customClass: {
+          confirmButton: 'btn btn-danger me-2',
+          cancelButton: 'btn btn-secondary'
+        },
+        buttonsStyling: false
+      }).then(result => {
+        if (result.isConfirmed) {
+          this.clearAuthData();
+          Swal.fire({
+        toast: true,
+        position: 'top-end',
+        icon: 'info',
+        title: 'Anda telah logout',
+        showConfirmButton: false,
+        timer: 2000,
+        timerProgressBar: true
+      });
+          this.$router.push({ name: 'Login' });
+        }
+      });
+    }
+  }
 };
 </script>
 
@@ -307,6 +330,7 @@ export default {
   color: #374151;
   transform: translateX(4px);
 }
+
 
 .nav-link.router-link-exact-active,
 .nav-link.router-link-active {

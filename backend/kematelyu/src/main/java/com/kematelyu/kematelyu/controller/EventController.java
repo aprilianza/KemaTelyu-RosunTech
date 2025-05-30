@@ -27,6 +27,7 @@ public class EventController {
         this.service = service;
     }
 
+    /* ---------- helper ---------- */
     private ResponseEntity<Map<String, Object>> ok(Object data) {
         Map<String, Object> body = new LinkedHashMap<>();
         body.put("code", 200);
@@ -34,6 +35,11 @@ public class EventController {
         body.put("message", data);
         return ResponseEntity.ok(body);
     }
+
+    /*
+     * ======================================================================
+     * CRUD EVENT – hanya STAFF
+     */
 
     @PostMapping
     public ResponseEntity<Map<String, Object>> createEvent(@RequestBody CreateEventRequest dto) {
@@ -70,9 +76,8 @@ public class EventController {
         old.setMaxParticipant(dto.getMaxParticipant());
 
         String foto = dto.getFotoPath();
-        if (foto != null && !foto.startsWith("events/")) {
+        if (foto != null && !foto.startsWith("events/"))
             foto = "events/" + foto;
-        }
         old.setFotoPath(foto);
 
         Event updated = service.createEvent(dto, old.getCreatedBy().getId());
@@ -96,12 +101,22 @@ public class EventController {
         return ok("Event berhasil dihapus oleh pembuatnya.");
     }
 
+    /*
+     * ======================================================================
+     * REGISTRASI MAHASISWA KE EVENT
+     */
+
     @PostMapping("/{id}/register")
     public ResponseEntity<Map<String, Object>> registerToEvent(@PathVariable Long id) {
         Long userId = (Long) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         Registration reg = service.registerToEventByUser(userId, id);
         return ok("Pendaftaran berhasil, status: " + reg.getStatus());
     }
+
+    /*
+     * ======================================================================
+     * INFORMASI PESERTA
+     */
 
     @GetMapping("/{id}/participants")
     public ResponseEntity<Map<String, Object>> getParticipants(@PathVariable Long id) {
@@ -115,28 +130,10 @@ public class EventController {
         return ok(service.getParticipantsByStatus(eventId, status));
     }
 
-    @PatchMapping("/participants/{registrationId}/approve")
-    public ResponseEntity<Map<String, Object>> approveParticipant(@PathVariable Long registrationId) {
-        String role = SecurityContextHolder.getContext().getAuthentication()
-                .getAuthorities().iterator().next().getAuthority();
-        if (!"ROLE_STAFF".equals(role))
-            throw new ForbiddenException("Hanya staff yang boleh meng-approve pendaftaran.");
-
-        Registration r = service.approveParticipant(registrationId);
-        return ok("Berhasil approve peserta: " + r.getMahasiswa().getName());
-    }
-
-    @PatchMapping("/participants/{registrationId}/reject")
-    public ResponseEntity<Map<String, Object>> rejectParticipant(@PathVariable Long registrationId) {
-        String role = SecurityContextHolder.getContext().getAuthentication()
-                .getAuthorities().iterator().next().getAuthority();
-        if (!"ROLE_STAFF".equals(role))
-            throw new ForbiddenException("Hanya staff yang boleh menolak pendaftaran.");
-
-        Registration r = service.rejectParticipant(registrationId);
-        return ok("Pendaftaran ditolak untuk: " + r.getMahasiswa().getName());
-    }
-
+    /*
+     * ======================================================================
+     * CERTIFICATE
+     */
 
     @PostMapping("/{id}/generate-certificate")
     public ResponseEntity<Map<String, Object>> generateCertificate(
@@ -144,6 +141,11 @@ public class EventController {
             @RequestParam String nim) {
         return ok(service.generateCertificate(id, nim));
     }
+
+    /*
+     * ======================================================================
+     * DETAIL & LIST MY EVENTS
+     */
 
     @GetMapping("/{id}/detail")
     public EventDetailDTO getEventDetail(@PathVariable Long id) {
@@ -163,13 +165,6 @@ public class EventController {
         }
 
         Long userId = (Long) principal;
-
-        List<EventFullDTO> events = service.getEventsByStaff(userId);
-
-        Map<String, Object> result = new LinkedHashMap<>();
-        result.put("code", 200);
-        result.put("status", "OK");
-        result.put("message", events);
-        return ResponseEntity.ok(result);
+        return ok(service.getEventsByStaff(userId));
     }
 }
