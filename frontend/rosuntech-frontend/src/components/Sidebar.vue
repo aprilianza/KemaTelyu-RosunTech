@@ -3,64 +3,73 @@
     <!-- Header dengan Hamburger + Judul + Page Name -->
     <div class="sidebar-header">
       <div class="d-flex align-items-center">
-        <button
-          class="btn open-sidebar-btn"
-          @click="toggleSidebar"
-          :aria-expanded="isOpen"
-          v-html="sidebarButtonIcon"
-        ></button>
-        <span class="sidebar-title">
-          <span class="text-kema">Kema</span><span class="text-telyu">telyu</span>
+        <button class="btn open-sidebar-btn" @click="toggleSidebar" :aria-expanded="isOpen" v-html="sidebarButtonIcon"></button>
+        <span class="sidebar-title"> 
+          <span class="text-kema">Kema</span><span class="text-telyu">telyu</span> 
         </span>
       </div>
       <div class="page-name">
         <span class="page-name-text">{{ currentPageName }}</span>
       </div>
     </div>
-    
-    <!-- Backdrop overlay -->
-      <div v-if="isOpen" class="sidebar-backdrop" @click="toggleSidebar"></div>
+
+    <!-- Backdrop Overlay -->
+    <div v-if="isOpen" class="sidebar-backdrop" @click="toggleSidebar"></div>
 
     <!-- Sidebar -->
     <div :class="['sidebar', isOpen ? 'open' : '']">
-    
+      <!-- Brand Section -->
+      <div class="sidebar-brand">
+        <div class="brand-icon">
+          <div class="brand-dot"></div>
+        </div>
+        <span class="brand-text">
+          <span class="text-kema">Kema</span><span class="text-telyu">telyu</span>
+        </span>
+      </div>
 
       <!-- Menu -->
       <nav class="sidebar-nav">
-      <ul class="nav flex-column mt-5">
-        <li class="nav-item">
-          <router-link class="nav-link d-flex align-items-center" :to="{ name: 'Home' }">
-            <font-awesome-icon :icon="['fas', 'home']" class="menu-icon" />
-            <span class="nav-text">Home</span>
-          </router-link>
-        </li>
-        <li class="nav-item">
-          <router-link class="nav-link d-flex align-items-center" :to="{ name: 'History' }">
-            <font-awesome-icon :icon="['fas', 'history']" class="menu-icon" />
-            <span class="nav-text">Riwayat</span>
-          </router-link>
-        </li>
-        <!-- You can add more menu items here with icons -->
-      </ul>
-    </nav>
+        <ul class="nav flex-column">
+          <li class="nav-item">
+            <router-link class="nav-link" :to="{ name: 'Home' }">
+              <div class="nav-icon-wrapper">
+                <font-awesome-icon :icon="['fas', 'home']" class="menu-icon" />
+              </div>
+              <span class="nav-text">Dashboard</span>
+              <div class="nav-indicator"></div>
+            </router-link>
+          </li>
+          <li class="nav-item">
+            <router-link class="nav-link" :to="{ name: 'History' }">
+              <div class="nav-icon-wrapper">
+                <font-awesome-icon :icon="['fas', 'history']" class="menu-icon" />
+              </div>
+              <span class="nav-text">Riwayat</span>
+              <div class="nav-indicator"></div>
+            </router-link>
+          </li>
+        </ul>
+      </nav>
 
       <!-- Logout di bagian bawah sidebar -->
-      <div class="mt-auto p-3">
-        <a href="#" @click.prevent="confirmLogout" class="nav-link d-flex align-items-center text-danger">
-        <div class="nav-icon-wrapper">
-          <font-awesome-icon :icon="['fas', 'sign-out-alt']" class="menu-icon" />
-        </div>
+      <div class="sidebar-footer">
+        <a href="#" @click.prevent="logout" class="logout-link">
+          <div class="nav-icon-wrapper">
+            <font-awesome-icon :icon="['fas', 'sign-out-alt']" class="menu-icon" />
+          </div>
           <span class="nav-text">Logout</span>
         </a>
       </div>
     </div>
   </div>
 </template>
+
 <script>
 import Swal from 'sweetalert2';
 
 export default {
-  name: 'SidebarAll',
+  name: 'SidebarStaff',
   data() {
     return {
       isOpen: false,
@@ -68,104 +77,109 @@ export default {
   },
   computed: {
     sidebarButtonIcon() {
-      return this.isOpen ? '&laquo;' : '&#9776;';
+      return this.isOpen ? '&times;' : '&#9776;';
     },
+
     currentPageName() {
-      // Get current route name and format it
       const routeName = this.$route.name || '';
+      if(routeName === 'Home') {
+        return 'Dashboard';
+      }else if(routeName === 'History') {
+        return 'Riwayat';
+      }
       return routeName;
-    }
+    },
   },
   methods: {
 
     toggleSidebar() {
       this.isOpen = !this.isOpen;
     },
-     /* menghapus token & profil di localStorage */
     clearAuthData() {
       localStorage.removeItem('token');
       localStorage.removeItem('user');
     },
-   confirmLogout() {
-      Swal.fire({
-        title: 'Apakah anda yakin ingin logout?',
-        icon: 'warning',
+
+    async logout() {
+      const result = await Swal.fire({
+        title: 'Konfirmasi Logout',
+        text: 'Apakah anda yakin ingin logout?',
+        icon: 'question',
         showCancelButton: true,
+        confirmButtonColor: '#d33',
+        cancelButtonColor: '#3085d6',
         confirmButtonText: 'Ya',
         cancelButtonText: 'Batal',
-        customClass: {
-          confirmButton: 'btn btn-danger me-2',
-          cancelButton: 'btn btn-secondary'
-        },
-        buttonsStyling: false
-      }).then(result => {
-        if (result.isConfirmed) {
-          this.clearAuthData();
-          Swal.fire({
-        toast: true,
-        position: 'top-end',
-        icon: 'info',
-        title: 'Anda telah logout',
-        showConfirmButton: false,
-        timer: 2000,
-        timerProgressBar: true
       });
-          this.$router.push({ name: 'Login' });
-        }
-      });
-    }
-  }
+
+      if (result.isConfirmed) {
+        this.clearAuthData();
+
+        const Toast = Swal.mixin({
+          toast: true,
+          position: 'top-end',
+          showConfirmButton: false,
+          timer: 2000,
+          timerProgressBar: true,
+        });
+
+        Toast.fire({
+          icon: 'success',
+          title: 'Logout Berhasil',
+        });
+
+        setTimeout(() => {
+          this.$router.push('/');
+        }, 1000);
+      }
+    },
+  },
 };
 </script>
 
 <style scoped>
-/* Header dengan hamburger, title, dan page name */
 .sidebar-header {
   display: flex;
   align-items: center;
-  justify-content: space-between; /* atur elemen kiri dan kanan */
-  padding: 15px 20px;
-  background-color: #ffffff;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  justify-content: space-between;
+  padding: 16px 24px;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
   z-index: 1001;
   position: fixed;
   top: 0;
   left: 0;
   width: 100%;
+  transition: all 0.3s ease;
 }
-
-
 
 .open-sidebar-btn {
-  font-size: 24px;
+  font-size: 20px;
   background-color: transparent;
   border: none;
-  color: #333;
+  color: #374151;
   cursor: pointer;
-  margin-right: 10px;
+  margin-right: 12px;
+  padding: 8px;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
 }
 
-.sidebar-header > .d-flex.align-items-center {
-  gap: 20px; /* beri jarak antar hamburger dan judul */
-}
-
-.sidebar-header .sidebar-title {
-  margin-left: 10px; /* bisa sesuaikan jika perlu */
-  flex-grow: 1; /* supaya judul mengambil ruang maksimal */
-}
-
-.page-name {
-  margin-left: auto; /* dorong tulisan Home ke kanan */
-  padding-right: 20px; /* beri jarak dari tepi kanan */
-  font-weight: 700;
-  color: #b30202; /* warna merah */
-  font-size: 18px;
+.open-sidebar-btn:hover {
+  background-color: rgba(0, 0, 0, 0.05);
+  transform: translateY(-1px);
 }
 
 .sidebar-title {
-  margin-left: 10px;
-  font-weight: bold;
-  font-size: 30px;
+  font-weight: 700;
+  font-size: 28px;
+  letter-spacing: -0.5px;
 }
 
 .text-kema {
@@ -176,46 +190,92 @@ export default {
   color: v-bind('$colors.third');
 }
 
-/* Page Name Styling */
 .page-name {
   display: flex;
   align-items: center;
 }
 
 .page-name-text {
-  font-weight: bold;
-  font-size: 24px;
-  background: linear-gradient(90deg, v-bind('$colors.primary'), v-bind('$colors.third'));
+  font-weight: 600;
+  font-size: 20px;
+  background: linear-gradient(135deg, v-bind('$colors.primary'), v-bind('$colors.third'));
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
-  padding-right: 20px;
+  padding-right: 24px;
 }
 
-/* Sidebar styles */
-.sidebar {
-  background-color: #ffffff; /* Disamakan dengan header */
+.sidebar-backdrop {
   position: fixed;
-  top: 60px;
-  left: -250px;
-  width: 250px;
-  height: calc(100vh - 60px);
-  transition: left 0.3s ease;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.3);
+  z-index: 999;
+  opacity: 0;
+  animation: fadeIn 0.3s ease forwards;
+}
+
+@keyframes fadeIn {
+  to {
+    opacity: 1;
+  }
+}
+
+.sidebar {
+  background: linear-gradient(145deg, #ffffff 0%, #f8fafc 100%);
+  position: fixed;
+  top: 0;
+  left: -280px;
+  width: 280px;
+  height: 100vh;
+  transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
   z-index: 1000;
   display: flex;
   flex-direction: column;
-  padding-top: 10px;
-  overflow-y: auto;
-  box-shadow: 1px 0 4px rgba(0, 0, 0, 0.1); /* Agar lebih jelas batasnya */
+  overflow: hidden;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  border-right: 1px solid rgba(0, 0, 0, 0.05);
 }
 
 .sidebar.open {
   left: 0;
+  transform: translateX(0);
 }
 
-/* Navigation Items */
-.nav-item {
-  margin-bottom: 10px;
+.sidebar-brand {
+  display: flex;
+  align-items: center;
+  padding: 32px 24px 24px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+  margin-bottom: 8px;
+}
+
+.brand-icon {
+  width: 40px;
+  height: 40px;
+  background: linear-gradient(135deg, v-bind('$colors.primary'), v-bind('$colors.third'));
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 12px;
+  position: relative;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.brand-dot {
+  width: 8px;
+  height: 8px;
+  background: white;
+  border-radius: 50%;
+}
+
+.brand-text {
+  font-weight: 700;
+  font-size: 20px;
+  letter-spacing: -0.3px;
 }
 
 .sidebar-nav {
@@ -270,11 +330,12 @@ export default {
   transition: all 0.2s ease;
 }
 
+.nav-link.router-link-active .nav-icon-wrapper {
+  background: rgba(255, 255, 255, 0.2);
+}
+
 .menu-icon {
-  font-size: 18px;
-  width: 25px;
-  margin-right: 12px;
-  text-align: center;
+  font-size: 16px;
 }
 
 .nav-text {
@@ -294,7 +355,6 @@ export default {
   background: rgba(255, 255, 255, 0.8);
 }
 
-/* Footer / Logout */
 .sidebar-footer {
   padding: 24px 16px 32px;
   border-top: 1px solid rgba(0, 0, 0, 0.05);
@@ -337,7 +397,6 @@ export default {
   }
 }
 
-/* Smooth animations */
 * {
   box-sizing: border-box;
 }
@@ -345,24 +404,4 @@ export default {
 .sidebar * {
   transition: all 0.2s ease;
 }
-
-.sidebar-backdrop {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
-  background: rgba(0, 0, 0, 0.61); /* hitam transparan */
-  z-index: 999; /* pastikan di bawah sidebar tapi di atas konten */
-  opacity: 0;
-  animation: fadeIn 0.3s ease forwards;
-}
-
-@keyframes fadeIn {
-  to {
-    opacity: 1;
-  }
-}
-
-
 </style>

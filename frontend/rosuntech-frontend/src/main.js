@@ -17,7 +17,6 @@ import {
   faUsers,
   faPlus,
   faCalendarPlus,
-  faEdit
 } from '@fortawesome/free-solid-svg-icons'
 
 library.add(
@@ -29,7 +28,6 @@ library.add(
   faUsers,
   faPlus,
   faCalendarPlus,
-  faEdit
 )
 
 // Buat aplikasi Vue dan simpan ke dalam variabel app

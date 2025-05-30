@@ -14,7 +14,7 @@
           </div>
           <div class="col-12 col-md-8">
             <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center">
-              <div class="user-info mb-3 mb-md-0">
+              <div class="user-info mb-3 mb-md-0 text-center text-md-start">
                 <h3 class="fw-bold mb-2">{{ user.name }}</h3>
                 <div class="division-badge"><i class="bi bi-building me-2"></i>{{ user.division }}</div>
               </div>
@@ -582,18 +582,27 @@ export default {
   beforeRouteEnter(to, from, next) {
     const token = localStorage.getItem('token');
     const userData = localStorage.getItem('user');
-    if (!token) { next('/'); return; }
+    
+    if (!token) {
+      next('/');
+      return;
+    }
+
     if (userData) {
       try {
-        const u = JSON.parse(userData);
-        if (!u.role || u.role.toUpperCase() !== 'STAFF') { next('/'); return; }
-      } catch {
+        const user = JSON.parse(userData);
+        if (!user.role || user.role.toUpperCase() !== 'STAFF') {
+          next('/');
+          return;
+        }
+      } catch (error) {
         next('/');
         return;
       }
     }
+
     next();
-  },
+  }
 };
 </script>
 <style scoped>
@@ -621,6 +630,8 @@ export default {
   color: #212121;
   font-size: 1.75rem;
 }
+
+
 
 .division-badge {
   display: inline-block;
