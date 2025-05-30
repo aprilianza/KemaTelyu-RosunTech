@@ -26,7 +26,7 @@ import java.util.stream.Collectors;
  */
 @RestController
 @RequestMapping("/api/registrations")
-@CrossOrigin(origins = "http://localhost:8888") // sesuaikan origin FE
+@CrossOrigin
 public class RegistrationController {
 
     private final UserRepository userRepo;

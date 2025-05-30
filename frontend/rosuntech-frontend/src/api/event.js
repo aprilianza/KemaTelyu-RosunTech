@@ -21,10 +21,10 @@ export async function getEventParticipants(eventId) {
 }
 
 export async function updateParticipantStatus(registrationId, status) {
-  if (!['APPROVED', 'REJECTED'].includes(status))
+  if (!['APPROVED', 'REJECTED'].includes(status)) {
     throw new Error('Status must be "APPROVED" or "REJECTED"');
   }
-  return api.patch(`/api/events/participants/${registrationId}/${action}`);
+  return api.patch(`/api/events/participants/${registrationId}/${status}`);
 }
 
 export async function updateEvent(id, payload) {

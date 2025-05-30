@@ -1,5 +1,24 @@
 package com.kematelyu.kematelyu.controller;
 
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
 import com.kematelyu.kematelyu.dto.CreateEventRequest;
 import com.kematelyu.kematelyu.dto.EventDetailDTO;
 import com.kematelyu.kematelyu.dto.EventFullDTO;
@@ -7,14 +26,6 @@ import com.kematelyu.kematelyu.exception.ForbiddenException;
 import com.kematelyu.kematelyu.model.Event;
 import com.kematelyu.kematelyu.model.Registration;
 import com.kematelyu.kematelyu.service.EventService;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.web.bind.annotation.*;
-
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
 
 @RestController
 @RequestMapping("/api/events")
@@ -67,20 +78,57 @@ public class EventController {
     @PutMapping("/{id}")
     public ResponseEntity<Map<String, Object>> update(@PathVariable Long id,
             @RequestBody CreateEventRequest dto) {
+        Long userId = (Long) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        String role = SecurityContextHolder.getContext().getAuthentication()
+                .getAuthorities().iterator().next().getAuthority();
+        if (!"ROLE_STAFF".equals(role))
+            throw new ForbiddenException("Hanya akun STAFF yang boleh mengedit event");
 
         Event old = service.byId(id);
+        if (!old.getCreatedBy().getId().equals(userId))
+            throw new ForbiddenException("Staff ini tidak berhak mengedit event yang dibuat oleh staff lain.");
+
+        // Overwrite semua field
         old.setTitle(dto.getTitle());
         old.setDescription(dto.getDescription());
         old.setDate(dto.getDate());
         old.setTime(dto.getTime());
         old.setMaxParticipant(dto.getMaxParticipant());
-
         String foto = dto.getFotoPath();
         if (foto != null && !foto.startsWith("events/"))
             foto = "events/" + foto;
         old.setFotoPath(foto);
 
-        Event updated = service.createEvent(dto, old.getCreatedBy().getId());
+        Event updated = service.saveEvent(old);
+        return ok(updated);
+    }
+
+    @PatchMapping("/{id}")
+    public ResponseEntity<Map<String, Object>> patch(@PathVariable Long id,
+            @RequestBody CreateEventRequest dto) {
+        Long userId = (Long) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        String role = SecurityContextHolder.getContext().getAuthentication()
+                .getAuthorities().iterator().next().getAuthority();
+        if (!"ROLE_STAFF".equals(role))
+            throw new ForbiddenException("Hanya akun STAFF yang boleh mengedit event");
+
+        Event old = service.byId(id);
+        if (!old.getCreatedBy().getId().equals(userId))
+            throw new ForbiddenException("Staff ini tidak berhak mengedit event yang dibuat oleh staff lain.");
+
+        // Partial update: hanya yang non-null
+        if (dto.getTitle() != null) old.setTitle(dto.getTitle());
+        if (dto.getDescription() != null) old.setDescription(dto.getDescription());
+        if (dto.getDate() != null) old.setDate(dto.getDate());
+        if (dto.getTime() != null) old.setTime(dto.getTime());
+        if (dto.getMaxParticipant() != null) old.setMaxParticipant(dto.getMaxParticipant());
+        if (dto.getFotoPath() != null) {
+            String foto = dto.getFotoPath();
+            if (!foto.startsWith("events/")) foto = "events/" + foto;
+            old.setFotoPath(foto);
+        }
+
+        Event updated = service.saveEvent(old);
         return ok(updated);
     }
 
