@@ -20,13 +20,20 @@ export async function getEventParticipants(eventId) {
   return api.get(`/api/events/${eventId}/participants`);
 }
 
-export async function updateParticipantStatus(registrationId, status) {
-  if (!['APPROVED', 'REJECTED'].includes(status)) {
-    throw new Error('Status must be "APPROVED" or "REJECTED"');
-  }
-  return api.patch(`/api/events/participants/${registrationId}/${status}`);
-}
+export async function updateParticipantStatus(registrationId, rawStatus) {
+  const normalized = rawStatus.toUpperCase();
 
+  let action;
+  if (['APPROVED', 'APPROVE'].includes(normalized)) {
+    action = 'approve';
+  } else if (['REJECTED', 'REJECT'].includes(normalized)) {
+    action = 'reject';
+  } else {
+    throw new Error('Status must be APPROVE/APPROVED or REJECT/REJECTED');
+  }
+
+  return api.patch(`/api/registrations/${registrationId}/${action}`);
+}
 export async function updateEvent(id, payload) {
   return api.put(`/api/events/${id}`, payload);
 
