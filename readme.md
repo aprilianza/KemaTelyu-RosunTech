@@ -9,7 +9,7 @@ Sistem E-Ticketing dan Sertifikasi Digital untuk kegiatan kemahasiswaan Tel-U.
 
 ## KemaTelyu API – README v1.1 (30 May 2025)
 
-> **Dokumen ini menimpa total versi lama.** Semua contoh diambil **mentah‑mentah** (100 %) dari koleksi Postman `KemaTelyu API.postman_collection.json`—tidak ada yang dipotong atau disingkat.
+> **Dokumen ini menimpa total versi lama.** Semua contoh diambil **mentah‑mentah** (100 %) dari koleksi Postman `KemaTelyu SPEC API.postman_collection.json`—tidak ada yang dipotong atau disingkat.
 
 ---
 ## 🔐 Header Umum
