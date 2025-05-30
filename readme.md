@@ -7,7 +7,7 @@ Sistem E-Ticketing dan Sertifikasi Digital untuk kegiatan kemahasiswaan Tel-U.
 - `frontend/`: Vue.js untuk tampilan mahasiswa & staff
 - `backend/`: Spring Boot + MySQL untuk autentikasi, event, registrasi, dan sertifikat
 
-# KemaTelyu API – README v1.1 (30 May 2025)
+## KemaTelyu API – README v1.1 (30 May 2025)
 
 > **Dokumen ini menimpa total versi lama.** Semua contoh diambil **mentah‑mentah** (100 %) dari koleksi Postman `KemaTelyu API.postman_collection.json`—tidak ada yang dipotong atau disingkat.
 
@@ -389,6 +389,7 @@ bearerToken = <jwt>
 ## 8  Changelog <a id="8-changelog"></a>
 | Version | Date | Notes |
 |---------|------|-------|
+| 1.0     | 22‑05‑2025 | Initial spec generated from Postman collection |
 | **1.1** | 2025‑05‑30 | Spec sepenuhnya diganti dengan endpoint Postman v2.1. Contoh payload **FULL** tanpa pemotongan. |
 
 
