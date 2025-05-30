@@ -98,7 +98,7 @@ public class EventService {
         return repo.save(e);
     }
 
-    /* -------------------- SAVE (for PATCH) -------------------- */
+    /* -------------------- SAVE (for PUT & PATCH) -------------------- */
 
     public Event saveEvent(Event e) {
         return repo.save(e);

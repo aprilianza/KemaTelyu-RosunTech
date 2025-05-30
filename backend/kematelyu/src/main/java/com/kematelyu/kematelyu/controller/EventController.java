@@ -1,4 +1,3 @@
-// src/main/java/com/kematelyu/kematelyu/controller/EventController.java
 package com.kematelyu.kematelyu.controller;
 
 import java.util.LinkedHashMap;
@@ -14,6 +13,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -62,8 +62,7 @@ public class EventController {
             throw new ForbiddenException("Hanya akun STAFF yang boleh membuat event");
 
         Event ev = service.createEvent(dto, userId);
-        EventFullDTO full = service.getEventByIdAsDTO(ev.getId());
-        return ok(full);
+        return ok(ev);
     }
 
     @GetMapping
@@ -76,8 +75,7 @@ public class EventController {
         return service.getEventByIdAsDTO(id);
     }
 
-    // GANTI DI SINI: dari @PutMapping jadi @PatchMapping
-    @PatchMapping("/{id}")
+    @PutMapping("/{id}")
     public ResponseEntity<Map<String, Object>> update(@PathVariable Long id,
             @RequestBody CreateEventRequest dto) {
         Long userId = (Long) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
@@ -90,7 +88,35 @@ public class EventController {
         if (!old.getCreatedBy().getId().equals(userId))
             throw new ForbiddenException("Staff ini tidak berhak mengedit event yang dibuat oleh staff lain.");
 
-        // Partial update: hanya field non-null
+        // Overwrite semua field
+        old.setTitle(dto.getTitle());
+        old.setDescription(dto.getDescription());
+        old.setDate(dto.getDate());
+        old.setTime(dto.getTime());
+        old.setMaxParticipant(dto.getMaxParticipant());
+        String foto = dto.getFotoPath();
+        if (foto != null && !foto.startsWith("events/"))
+            foto = "events/" + foto;
+        old.setFotoPath(foto);
+
+        Event updated = service.saveEvent(old);
+        return ok(service.getEventByIdAsDTO(updated.getId()));
+    }
+
+    @PatchMapping("/{id}")
+    public ResponseEntity<Map<String, Object>> patch(@PathVariable Long id,
+            @RequestBody CreateEventRequest dto) {
+        Long userId = (Long) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        String role = SecurityContextHolder.getContext().getAuthentication()
+                .getAuthorities().iterator().next().getAuthority();
+        if (!"ROLE_STAFF".equals(role))
+            throw new ForbiddenException("Hanya akun STAFF yang boleh mengedit event");
+
+        Event old = service.byId(id);
+        if (!old.getCreatedBy().getId().equals(userId))
+            throw new ForbiddenException("Staff ini tidak berhak mengedit event yang dibuat oleh staff lain.");
+
+        // Partial update: hanya yang non-null
         if (dto.getTitle() != null) old.setTitle(dto.getTitle());
         if (dto.getDescription() != null) old.setDescription(dto.getDescription());
         if (dto.getDate() != null) old.setDate(dto.getDate());
@@ -103,8 +129,7 @@ public class EventController {
         }
 
         Event updated = service.saveEvent(old);
-        EventFullDTO full = service.getEventByIdAsDTO(updated.getId());
-        return ok(full);
+        return ok(service.getEventByIdAsDTO(updated.getId()));
     }
 
     @DeleteMapping("/{id}")
