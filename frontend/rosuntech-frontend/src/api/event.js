@@ -35,6 +35,5 @@ export async function updateParticipantStatus(registrationId, rawStatus) {
   return api.patch(`/api/registrations/${registrationId}/${action}`);
 }
 export async function updateEvent(id, payload) {
-  return api.put(`/api/events/${id}`, payload);
-
+  return api.patch(`/api/events/${id}`, payload);
 }

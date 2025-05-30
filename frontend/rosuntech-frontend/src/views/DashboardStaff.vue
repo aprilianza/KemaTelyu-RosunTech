@@ -1,245 +1,256 @@
 <template>
   <div class="d-flex">
-    <!-- Sidebar -->
-    <SidebarStaff />
-    <!-- Main Content -->
-    <div class="content-wrapper container py-5">
-      <!-- User Info + Create Button -->
-      <div class="user-profile-container mb-5">
-        <div class="row g-4 align-items-center">
-          <div class="col-12 col-md-4 text-center">
-            <div class="profile-photo-container">
-              <img :src="`http://localhost:8888/${user.photo}`" class="img-fluid rounded-circle profile-photo shadow" alt="User Photo" />
-            </div>
-          </div>
-          <div class="col-12 col-md-8">
-            <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center">
-              <div class="user-info mb-3 mb-md-0 text-center text-md-start">
-                <h3 class="fw-bold mb-2">{{ user.name }}</h3>
-                <div class="division-badge"><i class="bi bi-building me-2"></i>{{ user.division }}</div>
-              </div>
-              <router-link to="/CreateEvent" class="btn btn-lg create-event-btn"> <i class="bi bi-plus-circle me-2"></i>Buat Event </router-link>
-            </div>
-          </div>
+    <!-- Loading Screen untuk seluruh halaman -->
+    <div v-if="isLoading" class="loading-overlay">
+      <div class="loading-content">
+        <div class="spinner-border text-primary mb-3" style="width: 3rem; height: 3rem;" role="status">
+          <span class="visually-hidden">Loading...</span>
         </div>
-      </div>
-
-      <!-- Event List -->
-      <div class="events-section">
-        <div class="section-header d-flex justify-content-between align-items-center mb-4">
-          <h5 class="section-title mb-0"><i class="bi bi-calendar-event me-2"></i>Event yang Anda Buat</h5>
-          <div class="event-counter badge bg-light text-primary">{{ events.length }} Event</div>
-        </div>
-
-        <div v-if="loadingEvents" class="text-center py-5">
-          <div class="spinner-border text-primary" role="status">
-            <span class="visually-hidden">Loading...</span>
-          </div>
-        </div>
-
-        <div v-else class="row justify-content-center g-4 mb-5">
-          <div class="col-12 col-md-6 col-lg-4" v-for="event in events" :key="event.id">
-            <div class="event-card d-flex flex-column h-100">
-              <div class="image-wrapper mb-3 position-relative">
-                <img :src="getEventImage(event.fotoPath)" alt="Event Image" class="rounded-top" />
-                <div class="event-date-overlay">
-                  <span class="date">{{ formatDate(event.date).day }}</span>
-                  <span class="month">{{ formatDate(event.date).month }}</span>
-                </div>
-                <div class="event-actions-dropdown">
-                  <button class="btn btn-sm btn-actions" @click.stop="toggleActionsMenu(event.id)">
-                    <i class="bi bi-three-dots-vertical"></i>
-                  </button>
-                  <div v-if="showActionsMenu === event.id" class="actions-menu" @click.stop>
-                    <button class="action-item" @click="openEditModal(event)">
-                      <i class="bi bi-pencil me-2"></i>Edit
-                    </button>
-                    <button class="action-item text-danger" @click="confirmDeleteEvent(event.id)">
-                      <i class="bi bi-trash me-2"></i>Hapus
-                    </button>
-                  </div>
-                </div>
-              </div>
-              <div class="card-body d-flex flex-column">
-                <div class="badges-container mb-2">
-                  <span class="badge time-badge me-2"> <i class="bi bi-clock me-1"></i>{{ formatTime(event.time) }} </span>
-                  <span class="badge participant-badge"> <i class="bi bi-people me-1"></i>Maks {{ event.maxParticipant }} </span>
-                </div>
-                <h5 class="event-title mb-2">{{ event.title }}</h5>
-                <p class="event-description text-truncate mb-3">{{ event.description }}</p>
-                <div class="mt-auto d-flex justify-content-end">
-                  <button class="btn btn-light btn-sm" @click="openModal(event)"><i class="bi bi-eye me-1"></i> Detail</button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Detail Event Modal -->
-      <div v-if="selectedEvent" class="modern-modal-container animate__animated animate__fadeIn">
-        <div class="modern-modal-backdrop" @click="closeModal"></div>
-        <div class="modern-modal animate__animated animate__zoomIn">
-          <button type="button" class="modern-modal-close" @click="closeModal">
-            <span class="close-icon">&times;</span>
-          </button>
-
-          <div class="modern-modal-image">
-            <img :src="getEventImage(selectedEvent.fotoPath)" alt="Event Image" />
-            <div class="event-date-badge">
-              <div class="date-content">
-                <span class="day">{{ formatDate(selectedEvent.date).day }}</span>
-                <span class="month">{{ formatDate(selectedEvent.date).month }}</span>
-                <span class="year">{{ formatDate(selectedEvent.date).year }}</span>
-              </div>
-            </div>
-          </div>
-
-          <div class="modern-modal-content">
-            <h2 class="modal-event-title">{{ selectedEvent.title }}</h2>
-
-            <div class="modal-event-metadata">
-              <div class="metadata-item">
-                <span class="metadata-icon calendar-icon"></span>
-                <span>{{ formatFullDate(selectedEvent.date) }}</span>
-              </div>
-              <div class="metadata-item">
-                <span class="metadata-icon clock-icon"></span>
-                <span>{{ formatTime(selectedEvent.time) }}</span>
-              </div>
-              <div class="metadata-item">
-                <span class="metadata-icon users-icon"></span>
-                <span>Maks {{ selectedEvent.maxParticipant }} Peserta</span>
-              </div>
-            </div>
-
-            <div class="modal-event-description">
-              <p>{{ selectedEvent.description }}</p>
-            </div>
-
-            <!-- Participants Section -->
-            <div class="participants-section mt-4">
-              <h4 class="participants-title">
-                <i class="bi bi-people-fill me-2"></i>Peserta
-                <span class="participant-count">({{ selectedEvent.participants.length }})</span>
-              </h4>
-
-              <div class="table-responsive mt-3">
-                <table class="table table-hover">
-                  <thead>
-                    <tr>
-                      <th scope="col">No</th>
-                      <th scope="col">Nama</th>
-                      <th scope="col">Email</th>
-                      <th scope="col">NIM</th>
-                      <th scope="col">Fakultas</th>
-                      <th scope="col">Status</th>
-                      <th scope="col">Aksi</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr v-for="(participant, idx) in selectedEvent.participants" :key="participant.id">
-                      <td>{{ idx + 1 }}</td>
-                      <td>
-                        <div class="d-flex align-items-center">
-                          <img :src="getUserImage(participant.fotoPath)" class="rounded-circle me-2" width="30" height="30" alt="Foto Peserta">
-                          {{ participant.name }}
-                        </div>
-                      </td>
-                      <td>{{ participant.email }}</td>
-                      <td>{{ participant.nim }}</td>
-                      <td>{{ participant.fakultas }}</td>
-                      <td>
-                        <span :class="getStatusBadgeClass(getRegistrationStatus(participant.nim))">
-                          {{ formatStatus(getRegistrationStatus(participant.nim)) }}
-                        </span>
-                      </td>
-                      <td>
-                        <div class="btn-group">
-                          <button 
-                            class="btn btn-sm btn-success" 
-                            @click="updateParticipantStatus(participant.nim, 'APPROVED')" 
-                            :disabled="getRegistrationStatus(participant.nim) === 'APPROVED'">
-                            <i class="bi bi-check-circle"></i>
-                          </button>                          
-                          <button
-                            class="btn btn-sm btn-danger" 
-                            @click="updateParticipantStatus(participant.nim, 'REJECTED')" 
-                            :disabled="getRegistrationStatus(participant.nim) === 'REJECTED'">
-                            <i class="bi bi-x-circle"></i>
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                    <tr v-if="selectedEvent.participants.length === 0">
-                      <td colspan="7" class="text-center py-3">Belum ada peserta yang terdaftar</td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-            </div>
-
-            <div class="modern-modal-actions">
-              <button class="btn btn-outline-danger" @click="closeModal">Tutup</button>
-              <button class="btn btn-danger" @click="confirmDeleteEvent(selectedEvent.id)">Hapus Event</button>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Edit Event Modal -->
-      <div v-if="showEditModal" class="modern-modal-container animate__animated animate__fadeIn">
-        <div class="modern-modal-backdrop" @click="closeEditModal"></div>
-        <div class="modern-modal animate__animated animate__zoomIn">
-          <button type="button" class="modern-modal-close" @click="closeEditModal">
-            <span class="close-icon">&times;</span>
-          </button>
-
-          <div class="modern-modal-content">
-            <h2 class="modal-event-title mb-4">Edit Event</h2>
-
-            <form @submit.prevent="handleUpdateEvent">
-              <div class="row g-3">
-                <div class="col-md-6">
-                  <label for="edit-title" class="form-label">Judul Event</label>
-                  <input type="text" class="form-control" id="edit-title" v-model="editForm.title" required>
-                </div>
-                <div class="col-md-6">
-                  <label for="edit-max-participant" class="form-label">Maksimal Peserta</label>
-                  <input type="number" class="form-control" id="edit-max-participant" v-model="editForm.maxParticipant" min="1" required>
-                </div>
-                <div class="col-md-6">
-                  <label for="edit-date" class="form-label">Tanggal</label>
-                  <input type="date" class="form-control" id="edit-date" v-model="editForm.date" required>
-                </div>
-                <div class="col-md-6">
-                  <label for="edit-time" class="form-label">Waktu</label>
-                  <input type="time" class="form-control" id="edit-time" v-model="editForm.time" required>
-                </div>
-                <div class="col-12">
-                  <label for="edit-description" class="form-label">Deskripsi</label>
-                  <textarea class="form-control" id="edit-description" rows="3" v-model="editForm.description" required></textarea>
-                </div>
-                <div class="col-12">
-                  <label for="edit-image" class="form-label">Gambar Event</label>
-                  <input type="file" class="form-control" id="edit-image" @change="handleImageChange" accept="image/*">
-                  <div class="form-text">Biarkan kosong jika tidak ingin mengubah gambar</div>
-                </div>
-                <div class="col-12 mt-4">
-                  <div class="d-flex justify-content-end gap-2">
-                    <button type="button" class="btn btn-outline-secondary" @click="closeEditModal">Batal</button>
-                    <button type="submit" class="btn btn-primary" :disabled="updatingEvent">
-                      <span v-if="updatingEvent" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-                      Simpan Perubahan
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </form>
-          </div>
-        </div>
+        <h5 class="text-center">Memuat Dashboard...</h5>
+        <p class="text-muted text-center">Mohon tunggu sebentar</p>
       </div>
     </div>
+
+    <!-- Main Content - hanya tampil jika sudah selesai loading -->
+    <template v-else-if="isAuthenticated">
+      <!-- Sidebar -->
+      <SidebarStaff />
+      <!-- Main Content -->
+      <div class="content-wrapper container py-5">
+        <!-- User Info + Create Button -->
+        <div class="user-profile-container mb-5">
+          <div class="row g-4 align-items-center">
+            <div class="col-12 col-md-4 text-center">
+              <div class="profile-photo-container">
+                <img :src="`http://localhost:8888/${user.photo}`" class="img-fluid rounded-circle profile-photo shadow" alt="User Photo" />
+              </div>
+            </div>
+            <div class="col-12 col-md-8">
+              <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center">
+                <div class="user-info mb-3 mb-md-0 text-center text-md-start">
+                  <h3 class="fw-bold mb-2">{{ user.name }}</h3>
+                  <div class="division-badge"><i class="bi bi-building me-2"></i>{{ user.division }}</div>
+                </div>
+                <router-link to="/CreateEvent" class="btn btn-lg create-event-btn"> <i class="bi bi-plus-circle me-2"></i>Buat Event </router-link>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Event List -->
+        <div class="events-section">
+          <div class="section-header d-flex justify-content-between align-items-center mb-4">
+            <h5 class="section-title mb-0"><i class="bi bi-calendar-event me-2"></i>Event yang Anda Buat</h5>
+            <div class="event-counter badge bg-light text-primary">{{ events.length }} Event</div>
+          </div>
+
+          <!-- Loading untuk refresh event saja -->
+          <div v-if="loadingEvents" class="text-center py-4">
+            <div class="spinner-border text-primary" role="status">
+              <span class="visually-hidden">Memuat ulang event...</span>
+            </div>
+            <p class="text-muted mt-2 mb-0">Memuat ulang data event...</p>
+          </div>
+
+          <div v-else class="row justify-content-center g-4 mb-5">
+            <div class="col-12 col-md-6 col-lg-4" v-for="event in events" :key="event.id">
+              <div class="event-card d-flex flex-column h-100">
+                <div class="image-wrapper mb-3 position-relative">
+                  <img :src="getEventImage(event.fotoPath)" alt="Event Image" class="rounded-top" />
+                  <div class="event-date-overlay">
+                    <span class="date">{{ formatDate(event.date).day }}</span>
+                    <span class="month">{{ formatDate(event.date).month }}</span>
+                  </div>
+                  <div class="event-actions-dropdown">
+                    <button class="btn btn-sm btn-actions" @click.stop="toggleActionsMenu(event.id)">
+                      <i class="bi bi-three-dots-vertical"></i>
+                    </button>
+                    <div v-if="showActionsMenu === event.id" class="actions-menu" @click.stop>
+                      <button class="action-item" @click="openEditModal(event)">
+                        <i class="bi bi-pencil me-2"></i>Edit
+                      </button>
+                      <button class="action-item text-danger" @click="confirmDeleteEvent(event.id)">
+                        <i class="bi bi-trash me-2"></i>Hapus
+                      </button>
+                    </div>
+                  </div>
+                </div>
+                <div class="card-body d-flex flex-column">
+                  <div class="badges-container mb-2">
+                    <span class="badge time-badge me-2"> <i class="bi bi-clock me-1"></i>{{ formatTime(event.time) }} </span>
+                    <span class="badge participant-badge"> <i class="bi bi-people me-1"></i>Maks {{ event.maxParticipant }} </span>
+                  </div>
+                  <h5 class="event-title mb-2">{{ event.title }}</h5>
+                  <p class="event-description text-truncate mb-3">{{ event.description }}</p>
+                  <div class="mt-auto d-flex justify-content-end">
+                    <button class="btn btn-light btn-sm" @click="openModal(event)"><i class="bi bi-eye me-1"></i> Detail</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Detail Event Modal -->
+        <div v-if="selectedEvent" class="modern-modal-container animate__animated animate__fadeIn">
+          <div class="modern-modal-backdrop" @click="closeModal"></div>
+          <div class="modern-modal animate__animated animate__zoomIn">
+            <button type="button" class="modern-modal-close" @click="closeModal">
+              <span class="close-icon">&times;</span>
+            </button>
+
+            <div class="modern-modal-image">
+              <img :src="getEventImage(selectedEvent.fotoPath)" alt="Event Image" />
+              <div class="event-date-badge">
+                <div class="date-content">
+                  <span class="day">{{ formatDate(selectedEvent.date).day }}</span>
+                  <span class="month">{{ formatDate(selectedEvent.date).month }}</span>
+                  <span class="year">{{ formatDate(selectedEvent.date).year }}</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="modern-modal-content">
+              <h2 class="modal-event-title">{{ selectedEvent.title }}</h2>
+
+              <div class="modal-event-metadata">
+                <div class="metadata-item">
+                  <span class="metadata-icon calendar-icon"></span>
+                  <span>{{ formatFullDate(selectedEvent.date) }}</span>
+                </div>
+                <div class="metadata-item">
+                  <span class="metadata-icon clock-icon"></span>
+                  <span>{{ formatTime(selectedEvent.time) }}</span>
+                </div>
+                <div class="metadata-item">
+                  <span class="metadata-icon users-icon"></span>
+                  <span>Maks {{ selectedEvent.maxParticipant }} Peserta</span>
+                </div>
+              </div>
+
+              <div class="modal-event-description">
+                <p>{{ selectedEvent.description }}</p>
+              </div>
+
+              <!-- Participants Section -->
+              <div class="participants-section mt-4">
+                <h4 class="participants-title">
+                  <i class="bi bi-people-fill me-2"></i>Peserta
+                  <span class="participant-count">({{ selectedEvent.participants.length }})</span>
+                </h4>
+
+                <div class="table-responsive mt-3">
+                  <table class="table table-hover">
+                    <thead>
+                      <tr>
+                        <th scope="col">No</th>
+                        <th scope="col">Nama</th>
+                        <th scope="col">Email</th>
+                        <th scope="col">NIM</th>
+                        <th scope="col">Fakultas</th>
+                        <th scope="col">Status</th>
+                        <th scope="col">Aksi</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr v-for="(participant, idx) in selectedEvent.participants" :key="participant.id">
+                        <td>{{ idx + 1 }}</td>
+                        <td>
+                          <div class="d-flex align-items-center">
+                            <img :src="getUserImage(participant.fotoPath)" class="rounded-circle me-2" width="30" height="30" alt="Foto Peserta">
+                            {{ participant.name }}
+                          </div>
+                        </td>
+                        <td>{{ participant.email }}</td>
+                        <td>{{ participant.nim }}</td>
+                        <td>{{ participant.fakultas }}</td>
+                        <td>
+                          <span :class="getStatusBadgeClass(getRegistrationStatus(participant.nim))">
+                            {{ formatStatus(getRegistrationStatus(participant.nim)) }}
+                          </span>
+                        </td>
+                        <td>
+                          <div class="btn-group">
+                            <button 
+                              class="btn btn-sm btn-success" 
+                              @click="updateParticipantStatus(participant.nim, 'APPROVED')" 
+                              :disabled="getRegistrationStatus(participant.nim) === 'APPROVED'">
+                              <i class="bi bi-check-circle"></i>
+                            </button>                          
+                            <button
+                              class="btn btn-sm btn-danger" 
+                              @click="updateParticipantStatus(participant.nim, 'REJECTED')" 
+                              :disabled="getRegistrationStatus(participant.nim) === 'REJECTED'">
+                              <i class="bi bi-x-circle"></i>
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                      <tr v-if="selectedEvent.participants.length === 0">
+                        <td colspan="7" class="text-center py-3">Belum ada peserta yang terdaftar</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              <div class="modern-modal-actions">
+                <button class="btn btn-outline-danger" @click="closeModal">Tutup</button>
+                <button class="btn btn-danger" @click="confirmDeleteEvent(selectedEvent.id)">Hapus Event</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Edit Event Modal -->
+        <div v-if="showEditModal" class="modern-modal-container animate__animated animate__fadeIn">
+          <div class="modern-modal-backdrop" @click="closeEditModal"></div>
+          <div class="modern-modal animate__animated animate__zoomIn">
+            <button type="button" class="modern-modal-close" @click="closeEditModal">
+              <span class="close-icon">&times;</span>
+            </button>
+
+            <div class="modern-modal-content">
+              <h2 class="modal-event-title mb-4">Edit Event</h2>
+
+              <form @submit.prevent="handleUpdateEvent">
+                <div class="row g-3">
+                  <div class="col-md-6">
+                    <label for="edit-title" class="form-label">Judul Event</label>
+                    <input type="text" class="form-control" id="edit-title" v-model="editForm.title" required>
+                  </div>
+                  <div class="col-md-6">
+                    <label for="edit-max-participant" class="form-label">Maksimal Peserta</label>
+                    <input type="number" class="form-control" id="edit-max-participant" v-model="editForm.maxParticipant" min="1" required>
+                  </div>
+                  <div class="col-md-6">
+                    <label for="edit-date" class="form-label">Tanggal</label>
+                    <input type="date" class="form-control" id="edit-date" v-model="editForm.date" required>
+                  </div>
+                  <div class="col-md-6">
+                    <label for="edit-time" class="form-label">Waktu</label>
+                    <input type="time" class="form-control" id="edit-time" v-model="editForm.time" required>
+                  </div>
+                  <div class="col-12">
+                    <label for="edit-description" class="form-label">Deskripsi</label>
+                    <textarea class="form-control" id="edit-description" rows="3" v-model="editForm.description" required></textarea>
+                  </div>
+                  <div class="col-12 mt-4">
+                    <div class="d-flex justify-content-end gap-2">
+                      <button type="button" class="btn btn-outline-secondary" @click="closeEditModal">Batal</button>
+                      <button type="submit" class="btn btn-primary" :disabled="updatingEvent">
+                        <span v-if="updatingEvent" class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                        {{ updatingEvent ? 'Menyimpan...' : 'Simpan Perubahan' }}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+    </template>
   </div>
 </template>
 
@@ -278,20 +289,37 @@ export default {
         description: '',
         date: '',
         time: '',
-        maxParticipant: 10,
-        image: null
+        maxParticipant: 10
       }
     };
   },
   async mounted() {
-    await this.checkAuthentication();
-    await this.fetchEvents();
+    await this.initializePage();
     document.addEventListener('click', this.closeActionsMenu);
   },
   beforeUnmount() {
     document.removeEventListener('click', this.closeActionsMenu);
   },
   methods: {
+    /* INITIALIZATION */
+    async initializePage() {
+      try {
+        this.isLoading = true;
+        
+        // Check authentication first
+        await this.checkAuthentication();
+        
+        // Jika authenticated, fetch events
+        if (this.isAuthenticated) {
+          await this.fetchEvents();
+        }
+      } catch (error) {
+        console.error('Error initializing page:', error);
+      } finally {
+        this.isLoading = false;
+      }
+    },
+
     /* AUTENTIKASI & FETCH EVENTS */
     async checkAuthentication() {
       try {
@@ -329,7 +357,6 @@ export default {
             photo: resp.data.fotoPath || this.user.photo,
           };
           this.isAuthenticated = true;
-          this.isLoading = false;
         } else {
           await this.showAuthError('Autentikasi Gagal', 'Gagal memverifikasi kredensial Anda');
           this.redirectToLogin();
@@ -362,6 +389,11 @@ export default {
       }
     },
 
+    // Method untuk refresh events saja (tanpa full page loading)
+    async refreshEvents() {
+      await this.fetchEvents();
+    },
+
     /* EVENT ACTIONS */
     toggleActionsMenu(eventId) {
       this.showActionsMenu = this.showActionsMenu === eventId ? null : eventId;
@@ -378,8 +410,7 @@ export default {
         description: event.description,
         date: event.date.split('T')[0],
         time: event.time.substring(0, 5),
-        maxParticipant: event.maxParticipant,
-        image: null
+        maxParticipant: event.maxParticipant
       };
       this.showEditModal = true;
       this.closeActionsMenu();
@@ -393,35 +424,43 @@ export default {
         description: '',
         date: '',
         time: '',
-        maxParticipant: 10,
-        image: null
+        maxParticipant: 10
       };
-    },
-
-    handleImageChange(event) {
-      this.editForm.image = event.target.files[0];
     },
 
     async handleUpdateEvent() {
       this.updatingEvent = true;
       try {
-        const formData = new FormData();
-        formData.append('title', this.editForm.title);
-        formData.append('description', this.editForm.description);
-        formData.append('date', this.editForm.date);
-        formData.append('time', this.editForm.time + ':00');
-        formData.append('maxParticipant', this.editForm.maxParticipant);
-        if (this.editForm.image) {
-          formData.append('image', this.editForm.image);
-        }
+        // Siapkan payload dalam format JSON (bukan FormData)
+        const payload = {
+          title: this.editForm.title,
+          description: this.editForm.description,
+          date: this.editForm.date,
+          time: this.editForm.time + ':00',
+          maxParticipant: parseInt(this.editForm.maxParticipant)
+        };
 
-        const resp = await updateEvent(this.editForm.id, formData);
+        const resp = await updateEvent(this.editForm.id, payload);
         
-        // Update local events data
+        // Update local events data dengan response dari server
         const updatedEvent = resp.data.message;
         const index = this.events.findIndex(e => e.id === updatedEvent.id);
         if (index !== -1) {
-          this.events[index] = updatedEvent;
+          // Preserve participants data yang mungkin sudah ada
+          this.events[index] = {
+            ...this.events[index],
+            ...updatedEvent,
+            participants: updatedEvent.participants || this.events[index].participants
+          };
+        }
+
+        // Update selectedEvent jika sedang dibuka modalnya
+        if (this.selectedEvent && this.selectedEvent.id === updatedEvent.id) {
+          this.selectedEvent = {
+            ...this.selectedEvent,
+            ...updatedEvent,
+            participants: updatedEvent.participants || this.selectedEvent.participants
+          };
         }
 
         Swal.fire({
@@ -435,7 +474,7 @@ export default {
 
         this.closeEditModal();
       } catch (error) {
-        console.error(error);
+        console.error('Error updating event:', error);
         Swal.fire({
           icon: 'error',
           title: 'Gagal memperbarui event',
@@ -507,7 +546,14 @@ export default {
           this.events = this.events.filter(e => e.id !== eventId);
           if (this.selectedEvent?.id === eventId) this.closeModal();
           if (this.showEditModal && this.editForm.id === eventId) this.closeEditModal();
-          Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: 'Event berhasil dihapus', showConfirmButton: false, timer: 2000 });
+          Swal.fire({ 
+            toast: true, 
+            position: 'top-end', 
+            icon: 'success', 
+            title: 'Event berhasil dihapus', 
+            showConfirmButton: false, 
+            timer: 2000 
+          });
         } catch (error) {
           console.error(error);
           Swal.fire({ icon: 'error', title: 'Error', text: 'Gagal menghapus event.' });
@@ -533,8 +579,11 @@ export default {
 
         // Toast dengan message dari backend
         Swal.mixin({
-          toast: true, position: 'top-end', showConfirmButton: false,
-          timer: 3000, timerProgressBar: true
+          toast: true, 
+          position: 'top-end', 
+          showConfirmButton: false,
+          timer: 3000, 
+          timerProgressBar: true
         }).fire({
           icon: 'success',
           title: resp.data.message
@@ -606,10 +655,38 @@ export default {
 };
 </script>
 <style scoped>
-.content-wrapper {
-  flex-grow: 1;
-  margin-top: 80px;
+.loading-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(5px);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
 }
+
+.loading-content {
+  text-align: center;
+  background: white;
+  padding: 2rem;
+  border-radius: 10px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+}
+
+.loading-content h5 {
+  color: #333;
+  margin-bottom: 0.5rem;
+}
+
+.loading-content .text-muted {
+  color: #666;
+  font-size: 0.9rem;
+}
+
 
 /* User Profile */
 .profile-photo-container {
