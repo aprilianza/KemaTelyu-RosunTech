@@ -1,17 +1,33 @@
 package com.kematelyu.kematelyu.service;
 
-import com.kematelyu.kematelyu.dto.*;
-import com.kematelyu.kematelyu.exception.ResourceNotFoundException;
-import com.kematelyu.kematelyu.model.*;
-import com.kematelyu.kematelyu.repository.*;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
-
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
 import java.util.stream.Collectors;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import com.kematelyu.kematelyu.dto.CertificateDTO;
+import com.kematelyu.kematelyu.dto.CreateEventRequest;
+import com.kematelyu.kematelyu.dto.CreatedByDTO;
+import com.kematelyu.kematelyu.dto.EventDetailDTO;
+import com.kematelyu.kematelyu.dto.EventFullDTO;
+import com.kematelyu.kematelyu.dto.ParticipantDTO;
+import com.kematelyu.kematelyu.dto.RegistrationDTO;
+import com.kematelyu.kematelyu.exception.ResourceNotFoundException;
+import com.kematelyu.kematelyu.model.Certificate;
+import com.kematelyu.kematelyu.model.Event;
+import com.kematelyu.kematelyu.model.Mahasiswa;
+import com.kematelyu.kematelyu.model.Registration;
+import com.kematelyu.kematelyu.model.Staff;
+import com.kematelyu.kematelyu.model.User;
+import com.kematelyu.kematelyu.repository.CertificateRepository;
+import com.kematelyu.kematelyu.repository.EventRepository;
+import com.kematelyu.kematelyu.repository.MahasiswaRepository;
+import com.kematelyu.kematelyu.repository.RegistrationRepository;
+import com.kematelyu.kematelyu.repository.StaffRepository;
 
 @Service
 public class EventService {
@@ -79,6 +95,12 @@ public class EventService {
         e.setMaxParticipant(dto.getMaxParticipant());
         e.setCreatedBy(staff);
 
+        return repo.save(e);
+    }
+
+    /* -------------------- SAVE (for PUT & PATCH) -------------------- */
+
+    public Event saveEvent(Event e) {
         return repo.save(e);
     }
 
