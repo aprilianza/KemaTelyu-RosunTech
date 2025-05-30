@@ -2,6 +2,7 @@ package com.kematelyu.kematelyu.controller;
 
 import com.kematelyu.kematelyu.dto.CertificateDTO;
 import com.kematelyu.kematelyu.exception.ForbiddenException;
+import com.kematelyu.kematelyu.exception.NotFoundException;
 import com.kematelyu.kematelyu.exception.UnauthorizedException;
 import com.kematelyu.kematelyu.model.Certificate;
 import com.kematelyu.kematelyu.model.Event;
@@ -10,8 +11,12 @@ import com.kematelyu.kematelyu.service.CertificateService;
 import com.kematelyu.kematelyu.util.CertificatePdfGenerator;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.Resource;
-import org.springframework.http.*;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
@@ -41,6 +46,10 @@ public class CertificateController {
     public ResponseEntity<Map<String, Object>> list(Authentication auth) {
         Long userId = extractUserId(auth);
 
+        // pastikan akun MAHASISWA
+        if (!hasRole(auth, "ROLE_MAHASISWA"))
+            throw new ForbiddenException("Hanya akun MAHASISWA yang boleh mengakses sertifikat");
+
         List<CertificateDTO> dtoList = certService.getCertificatesByMahasiswaId(userId)
                 .stream()
                 .map(c -> {
@@ -64,9 +73,21 @@ public class CertificateController {
 
         Long userId = extractUserId(auth);
 
-        Certificate cert = certService.findById(id);
+        // pastikan akun MAHASISWA
+        if (!hasRole(auth, "ROLE_MAHASISWA"))
+            throw new ForbiddenException("Hanya akun MAHASISWA yang boleh mengunduh sertifikat");
+
+        // pastikan sertifikat ada
+        Certificate cert;
+        try {
+            cert = certService.findById(id);
+        } catch (IllegalArgumentException ex) {
+            throw new NotFoundException("Certificate tidak ditemukan");
+        }
+
+        // pastikan sertifikat milik user
         if (!Objects.equals(cert.getMahasiswa().getId(), userId))
-            throw new ForbiddenException("Certificate does not belong to current user");
+            throw new ForbiddenException("Certificate tidak dimiliki oleh pengguna saat ini");
 
         /* generate PDF di memori */
         byte[] pdf = CertificatePdfGenerator.generate(cert);
@@ -99,6 +120,14 @@ public class CertificateController {
         } catch (NumberFormatException ex) {
             throw new UnauthorizedException("Token tidak valid");
         }
+    }
+
+    private static boolean hasRole(Authentication auth, String role) {
+        if (auth == null) return false;
+        for (GrantedAuthority ga : auth.getAuthorities()) {
+            if (role.equals(ga.getAuthority())) return true;
+        }
+        return false;
     }
 
     /* (masih dipakai di tempat lain) */
