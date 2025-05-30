@@ -79,8 +79,14 @@ export default {
     sidebarButtonIcon() {
       return this.isOpen ? '&times;' : '&#9776;';
     },
+
     currentPageName() {
       const routeName = this.$route.name || '';
+      if(routeName === 'DashboardStaff') {
+        return 'Dashboard';
+      }else if(routeName === 'CreateEvent') {
+        return 'Buat Event';
+      }
       return routeName;
     },
   },
