@@ -3,11 +3,10 @@
     <!-- Loading Screen untuk seluruh halaman -->
     <div v-if="isLoading" class="loading-overlay">
       <div class="loading-content">
-        <div class="spinner-border text-primary mb-3" style="width: 3rem; height: 3rem;" role="status">
+        <div class="spinner-border text-danger mb-3" style="width: 3rem; height: 3rem;" role="status">
           <span class="visually-hidden">Loading...</span>
         </div>
         <h5 class="text-center">Memuat Dashboard...</h5>
-        <p class="text-muted text-center">Mohon tunggu sebentar</p>
       </div>
     </div>
 
@@ -16,7 +15,7 @@
       <!-- Sidebar -->
       <SidebarStaff />
       <!-- Main Content -->
-      <div class="content-wrapper container py-5">
+      <div class="content-wrapper container py-5 mt-5">
         <!-- User Info + Create Button -->
         <div class="user-profile-container mb-5">
           <div class="row g-4 align-items-center">
@@ -678,14 +677,10 @@ export default {
 }
 
 .loading-content h5 {
-  color: #333;
+  color: v-bind('$colors.primary');
   margin-bottom: 0.5rem;
 }
 
-.loading-content .text-muted {
-  color: #666;
-  font-size: 0.9rem;
-}
 
 
 /* User Profile */
