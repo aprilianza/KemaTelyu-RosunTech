@@ -18,7 +18,7 @@
         </div>
 
   <div v-if="historyEvents.length > 0" class="history-grid">
-  <div class="col-12 col-md-6" v-for="(event, index) in historyEvents" :key="event.id">
+  <div class="col-20" v-for="(event, index) in historyEvents" :key="event.id">
   <div class="event-card history-event-card animate__animated animate__fadeIn" 
     :class="{
     'bg-approved': event.status === 'Diterima',
@@ -216,8 +216,10 @@ export default {
 .content-wrapper {
   flex-grow: 1;
   margin-top: 90px;
-  max-width: 900px;
+  max-width: 1000px;
   padding: 0 15px;
+  margin-left: auto;
+  margin-right: auto;
 }
 
 .history-wrapper {
@@ -226,10 +228,12 @@ export default {
 
 .history-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(600px, max-content));
+  grid-template-columns: repeat(auto-fill, minmax(400px, 1fr)); /* responsif */
   justify-content: start;
   gap: 2rem; /* jarak antar card */
   padding: 0;
+  width: 100%; /* pastikan memenuhi container */
+  box-sizing: border-box;
 }
 
 .history-header {
@@ -243,13 +247,13 @@ export default {
 
 /* Event Card for History */
 .event-card {
-  width: 1200px;
   display: flex !important;
   flex-direction: column !important;
-  max-width: 850px !important;
   border-radius: 20px !important;
   padding: 1.7rem 1.8rem !important;
   transition: transform 0.3s ease, box-shadow 0.3s ease !important;
+ 
+  box-sizing: border-box;
 }
 
 @keyframes popupEffect {

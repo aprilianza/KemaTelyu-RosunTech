@@ -3,16 +3,18 @@
     <Sidebar />
 
     <div class="content-wrapper container">
+      <!-- ================= USER / TOTAL / HISTORY ================ -->
       <div class="row g-4 mb-5 animate__animated animate__fadeIn">
+        <!-- USER CARD -->
         <div class="col-lg-6 col-md-12 mb-3">
           <div class="card user-profile-card h-100 animate__animated animate__fadeInLeft">
             <div class="card-body">
               <div class="row align-items-center user-profile-row">
-              <div class="col-auto">
-                <div class="profile-photo-container">
-                  <img :src="profilePhoto" class="profile-photo rounded-circle" alt="Profile Photo" />
+                <div class="col-auto">
+                  <div class="profile-photo-container">
+                    <img :src="profilePhoto" class="profile-photo rounded-circle" alt="Profile Photo" />
+                  </div>
                 </div>
-            </div>
                 <div class="col text-start">
                   <h3 class="fw-bold mb-2">{{ user.name }}</h3>
                   <p><strong>NIM:</strong> {{ user.nim }}</p>
@@ -22,8 +24,8 @@
             </div>
           </div>
         </div>
-        
 
+        <!-- TOTAL EVENT -->
         <div class="col-lg-3 col-md-6 mb-3">
           <div class="card total-event-card h-100 animate__animated animate__fadeInRight">
             <div class="card-body text-center d-flex flex-column justify-content-center">
@@ -33,6 +35,7 @@
           </div>
         </div>
 
+        <!-- HISTORY LINK -->
         <div class="col-lg-3 col-md-6 mb-3" @click="$router.push({ name: 'History' })">
           <div class="card history-card h-100 animate__animated animate__fadeInRight" style="animation-delay: 0.2s;">
             <div class="card-body d-flex flex-column align-items-center justify-content-center">
@@ -43,62 +46,70 @@
         </div>
       </div>
 
-     <div class="events-section">
-  <div class="section-header d-flex justify-content-between align-items-center mb-4">
-    <h5 class="section-title mb-0 text-uppercase fw-semibold">
-      <i class="bi bi-calendar-event me-2"></i>EVENTS
-    </h5>
-  </div>
-</div>
+      <!-- ================= EVENTS HEADER ================= -->
+      <div class="events-section">
+        <div class="section-header d-flex justify-content-between align-items-center mb-4">
+          <h5 class="section-title mb-0 text-uppercase fw-semibold">
+            <i class="bi bi-calendar-event me-2"></i>EVENTS
+          </h5>
+        </div>
+      </div>
 
-     <div v-if="loadingEvents" class="text-center py-5">
-    <div class="spinner-border text-primary" role="status">
-      <span class="visually-hidden">Loading...</span>
-    </div>
-    </div>
+      <!-- LOADING -->
+      <div v-if="loadingEvents" class="text-center py-5">
+        <div class="spinner-border text-primary" role="status">
+          <span class="visually-hidden">Loading...</span>
+        </div>
+      </div>
+
+      <!-- ================= EVENT CARDS ================= -->
       <div v-else class="row justify-content-center g-4 mb-5">
         <div class="col-12 col-md-6" v-for="(event, index) in events" :key="event.id">
-          <div class="event-card d-flex flex-column animate__animated animate__fadeIn" 
-               :style="{'animation-delay': index * 0.1 + 's'}">
+          <div class="event-card d-flex flex-column animate__animated animate__fadeIn"
+               :style="{ 'animation-delay': index * 0.1 + 's', minHeight: '280px' }">
             <div class="image-wrapper hover-zoom">
               <img :src="`http://localhost:8888/${event.fotoPath}`" alt="Event Image" />
             </div>
-           
-            <h5 class="event-title">{{ event.title }}</h5>
-            <a href="#" class="text-start see-more mb-3" @click.prevent="openModal(event)">
-              lihat detail
-            </a>
 
-          
-
-            <div class="d-flex justify-content-end align-items-center gap-2 mt-auto event-date-time-wrapper">
-            <div class="time-box-small shadow-glow">
-              <svg class="clock-icon-small" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <circle cx="12" cy="12" r="10"></circle>
-              <polyline points="12 6 12 12 16 14"></polyline>
-              </svg>
-           <span class="time-text-small">{{ event.time }}</span>
-          </div>
-            <div class="date-box-small shadow-glow">
-              <div class="date-day-small">{{ new Date(event.date).getDate() }}</div>
-              <div class="date-month-year-small">
-      {{ new Date(event.date).toLocaleDateString('id-ID', { month: 'short', year: 'numeric' }) }}
-    </div>
+            <!-- HEADER (title/detail/time/date) -->
+            <div class="d-flex justify-content-between px-3 pt-0 align-items-start">
+              <!-- LEFT -->
+              <div>
+                <h5 class="event-title mb-1 text-truncate">{{ event.title }}</h5>
+                <a href="#" class="see-more" @click.prevent="openModal(event)">lihat detail</a>
+              </div>
+              <!-- RIGHT (date + time) -->
+              <div class="d-flex align-items-center gap-2">
+                <div class="time-box-small shadow-glow">
+                  <svg class="clock-icon-small" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <polyline points="12 6 12 12 16 14"></polyline>
+                  </svg>
+                  <span class="time-text-small">{{ event.time }}</span>
+                </div>
+                <div class="date-box-small shadow-glow">
+                  <div class="date-day-small">{{ new Date(event.date).getDate() }}</div>
+                  <div class="date-month-year-small">
+                    {{ new Date(event.date).toLocaleDateString('id-ID', { month: 'short', year: 'numeric' }) }}
+                  </div>
+                </div>
+              </div>
             </div>
+
+          </div>
         </div>
       </div>
-      </div>
-    </div>
 
+      <!-- ================= MODAL ================= -->
       <div v-if="selectedEvent" class="modern-modal-container animate__animated animate__fadeIn">
         <div class="modern-modal-backdrop" @click="closeModal"></div>
         <div class="modern-modal animate__animated animate__zoomIn">
           <button type="button" class="modern-modal-close" @click="closeModal">
             <span class="close-icon">&times;</span>
           </button>
-          
-        
-          <div class="modern-modal-image" style="position: relative;">
+
+          <!-- ======= IMAGE: object-fit cover & full width ======= -->
+          <div class="modern-modal-image">
             <img :src="`http://localhost:8888/${selectedEvent.fotoPath}`" alt="Event Image" />
           </div>
 
@@ -111,12 +122,12 @@
                 <span>{{ formatDate(selectedEvent.date) }}</span>
               </div>
               <div class="metadata-item">
-               <span class="metadata-icon clock-icon"></span>
+                <span class="metadata-icon clock-icon"></span>
                 <span>{{ selectedEvent.time }}</span>
               </div>
               <div class="metadata-item">
                 <span class="metadata-icon users-icon"></span>
-                <span>{{ selectedEvent.maxParticipant}}</span>
+                <span>{{ selectedEvent.maxParticipant }}</span>
               </div>
             </div>
 
@@ -134,8 +145,10 @@
       </div>
     </div>
   </div>
-
 </template>
+
+<!-- script & style tetap -->
+
 
 <script>
 import Sidebar from '@/components/Sidebar.vue';
@@ -589,6 +602,7 @@ image-wrapper img {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  margin-top: 10px;
 }
 
 .see-more {
@@ -724,6 +738,7 @@ image-wrapper img {
   display: flex;
   flex-direction: column;
   justify-content: center;
+  margin-top: 8px;
 }
 
 .date-box:hover, .time-box:hover {
@@ -755,6 +770,7 @@ image-wrapper img {
   padding: 0.5rem 0.9rem; /* padding bawah ditambah sama dengan date-box */
   box-shadow: 0 0 8px rgba(0,0,0,0.2);
   gap: 0.4rem;
+  margin-top: -15px;
 }
 
 .clock-icon-small {
@@ -779,10 +795,10 @@ image-wrapper img {
 }
 
 .modern-modal-image {
-  width: 100%;
-  max-height: 400px; /* batas tinggi modal */
-  overflow-y: auto;  /* hanya scroll vertikal */
-  overflow-x: hidden; /* hilangkan scroll horizontal */
+   width: 100%;
+  height: 400px; /* tetap 400 agar proporsi modal tidak berubah */
+  overflow: hidden;
+  position: relative;
   border-top-left-radius: 1.5rem;
   border-top-right-radius: 1.5rem;
   background-color: #f0f0f0;
@@ -801,9 +817,9 @@ image-wrapper img {
 
 
 .modern-modal-image img {
-  max-width: 100%;
-  max-height: 100%;
-  object-fit: contain;
+   width: 100%;
+  height: 100%;
+  object-fit: cover; /* penuhi area tanpa ruang kosong */
   display: block;
 }
 

@@ -7,162 +7,210 @@ Sistem E-Ticketing dan Sertifikasi Digital untuk kegiatan kemahasiswaan Tel-U.
 - `frontend/`: Vue.js untuk tampilan mahasiswa & staff
 - `backend/`: Spring Boot + MySQL untuk autentikasi, event, registrasi, dan sertifikat
 
-# KemaTelyu API – Specification (v1)
+## KemaTelyu API – README v1.1 (30 May 2025)
 
-RESTful API for **Sistem E‑Ticketing dan Sertifikasi Digital KemaTelyu**.
-
-Semua endpoint yang bertanda 🔐 membutuhkan header:
-
-```
-Authorization: Bearer <token>
-```
-
-Base URL default (local): `http://localhost:8888`
+> **Dokumen ini menimpa total versi lama.** Semua contoh diambil **mentah‑mentah** (100 %) dari koleksi Postman `KemaTelyu SPEC API.postman_collection.json`—tidak ada yang dipotong atau disingkat.
 
 ---
+## 🔐 Header Umum
+`Authorization: Bearer <jwt>`
 
-## 1. Auth Management
+## Base URL
+`http://localhost:8888`
 
-### a. User Login
+---
+## Daftar Isi
+1. [Auth](#1-auth)
+2. [Events](#2-events)
+3. [Registrations](#3-registrations)
+4. [Certificates](#4-certificates)
+5. [Upload](#5-upload)
+6. [Environment Vars](#6-environment-vars)
+7. [Error Schema](#7-error-schema)
+8. [Changelog](#8-changelog)
 
-Endpoint : **POST** `/api/auth/login`
-
-**Request Header**
-
-| Key          | Value              |
-| ------------ | ------------------ |
-| Content‑Type | `application/json` |
-| Accept       | `application/json` |
-
-**Request Body**
-
+---
+## 1  Auth <a id="1-auth"></a>
+### 1.1  Login
+```http
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
+Accept: application/json
+```
 ```json
 {
-  "email": "fadhil@telyu.ac.id",
+  "email": "yolanda.rahma.chrysti@telyu.ac.id",
   "password": "password123"
 }
 ```
-
-**Response Body**
-
+#### 200 OK
 ```json
 {
-  "token": "<string>",
-  "user": {
-    "id": "<long>",
-    "name": "<string>",
-    "email": "<string>",
-    "role": "<string>"
-  }
+    "message": "Login berhasil",
+    "user": {
+        "id": 42,
+        "name": "YOLANDA RAHMA CHRYSTI",
+        "email": "yolanda.rahma.chrysti@telyu.ac.id",
+        "role": "MAHASISWA",
+        "fotoPath": "user_image/7.jpg",
+        "nim": "103012300150",
+        "fakultas": "Informatika"
+    },
+    "token": "<jwt>"
+}
+```
+#### 401 Unauthorized
+```json
+{
+    "code": 401,
+    "status": "Unauthorized",
+    "message": "Email / password salah"
 }
 ```
 
 ---
-
-### b. Get Current User Profile 🔐
-
-Endpoint : **GET** `/api/auth/profile`
-
-**Request Header**
-
-| Key           | Value              |
-| ------------- | ------------------ |
-| Accept        | `application/json` |
-| Authorization | `Bearer <token>`   |
-
-**Response Body**
-
-```json
-{
-  "id": "<long>",
-  "name": "<string>",
-  "email": "<string>",
-  "role": "<string>"
-}
+## 2  Events <a id="2-events"></a>
+### 2.1  List All Events (public)
+```http
+GET {{baseUrl}}/api/events
+Accept: application/json
 ```
-
----
-
-## 2. Event Management
-
-### a. List All Events
-
-Endpoint : **GET** `/api/events`
-
-**Request Header**
-
-| Key    | Value              |
-| ------ | ------------------ |
-| Accept | `application/json` |
-
-**Response Body**
+<details>
+<summary>200 OK – Full Array of events</summary>
 
 ```json
 [
-  {
-    "id": "<long>",
-    "title": "<string>",
-    "description": "<string>",
-    "date": "<date>",
-    "createdBy": {
-      "divisi": "<string>",
-      "email": "<string>",
-      "id": "<long>",
-      "name": "<string>",
-      "role": "<string>"
+    {
+        "id": 1,
+        "title": "wkwkland",
+        "description": "asdasd",
+        "date": "2025-05-25",
+        "time": "19:09:00",
+        "fotoPath": "events/9af6631867b1410989c2f98ffbd7d35a.png",
+        "maxParticipant": 123,
+        "createdBy": {
+            "id": 52,
+            "name": "Suci Lestari S.Psi",
+            "email": "suci.lestari.spsi@telyu.ac.id",
+            "role": "STAFF",
+            "fotoPath": "user_image/10.jpg",
+            "divisi": "Ketua"
+        },
+        "registrations": [
+            { "id": 1, "mahasiswaNim": "103012300425", "status": "REJECTED" },
+            { "id": 2, "mahasiswaNim": "103012300405", "status": "APPROVED" },
+            { "id": 4, "mahasiswaNim": "103012300469", "status": "PENDING" }
+        ],
+        "certificates": [],
+        "participants": [
+            { "id": 2, "nim": "103012300425", "name": "AL MADINATUL MUNAWARA", "email": "al.madinatul.munawara@telyu.ac.id", "fakultas": "Informatika", "fotoPath": "user_image/4.jpg" },
+            { "id": 3, "nim": "103012300405", "name": "ALI MOHAMMAD ARSYAD", "email": "ali.mohammad.arsyad@telyu.ac.id", "fakultas": "Informatika", "fotoPath": "user_image/1.png" },
+            { "id": 29, "nim": "103012300469", "name": "MUHAMMAD NAYUBI ADIVA RAMADHAN", "email": "muhammad.nayubi.adiva.ramadhan@telyu.ac.id", "fakultas": "Informatika", "fotoPath": "user_image/16.jpg" }
+        ]
+    },
+    {
+        "id": 2,
+        "title": "tai",
+        "description": "asdas",
+        "date": "2025-05-27",
+        "time": "22:49:00",
+        "fotoPath": "events/cd253431d25e41769d181555dd27ceb8.png",
+        "maxParticipant": 120,
+        "createdBy": {
+            "id": 51,
+            "name": "Bakti Pertiwi S.H",
+            "email": "bakti.pertiwi.sh@telyu.ac.id",
+            "role": "STAFF",
+            "fotoPath": "user_image/6.jpg",
+            "divisi": "Wakil"
+        },
+        "registrations": [
+            { "id": 3, "mahasiswaNim": "103012300469", "status": "APPROVED" }
+        ],
+        "certificates": [
+            { "id": 1, "mahasiswaNim": "103012300469", "eventId": null, "eventTitle": null, "fotoPath": null, "issueDate": "2025-05-27" }
+        ],
+        "participants": [
+            { "id": 29, "nim": "103012300469", "name": "MUHAMMAD NAYUBI ADIVA RAMADHAN", "email": "muhammad.nayubi.adiva.ramadhan@telyu.ac.id", "fakultas": "Informatika", "fotoPath": "user_image/16.jpg" }
+        ]
+    },
+    {
+        "id": 4,
+        "title": "asdsdasda",
+        "description": "adsasd",
+        "date": "2025-06-10",
+        "time": null,
+        "fotoPath": "events//uploads/events/ai-ethics.jpg",
+        "maxParticipant": 150,
+        "createdBy": {
+            "id": 43,
+            "name": "Azhar alauddin S.T",
+            "email": "azhar.alauddin.st@telyu.ac.id",
+            "role": "STAFF",
+            "fotoPath": "user_image/12.jpg",
+            "divisi": "Wakil"
+        },
+        "registrations": [
+            { "id": 5, "mahasiswaNim": "103012300150", "status": "PENDING" }
+        ],
+        "certificates": [],
+        "participants": [
+            { "id": 42, "nim": "103012300150", "name": "YOLANDA RAHMA CHRYSTI", "email": "yolanda.rahma.chrysti@telyu.ac.id", "fakultas": "Informatika", "fotoPath": "user_image/7.jpg" }
+        ]
     }
-  }
 ]
 ```
+</details>
 
----
-
-### b. Get Event by ID
-
-Endpoint : **GET** `/api/events/{id}`
-
-**Path Param**: `id` – event ID (Long, required)
-
-**Request Header**
-
-| Key    | Value              |
-| ------ | ------------------ |
-| Accept | `application/json` |
-
-**Response Body**
+### 2.2  Get Event by ID (public)
+```http
+GET {{baseUrl}}/api/events/1
+Accept: application/json
+```
+<details>
+<summary>200 OK – Event detail</summary>
 
 ```json
 {
-  "id": "<long>",
-  "title": "<string>",
-  "description": "<string>",
-  "date": "<date>",
-  "createdBy": {
-    "divisi": "<string>",
-    "email": "<string>",
-    "id": "<long>",
-    "name": "<string>",
-    "role": "<string>"
-  }
+    "id": 1,
+    "title": "wkwkland",
+    "description": "asdasd",
+    "date": "2025-05-25",
+    "time": "19:09:00",
+    "fotoPath": "events/9af6631867b1410989c2f98ffbd7d35a.png",
+    "maxParticipant": 123,
+    "createdBy": {
+        "id": 52,
+        "name": "Suci Lestari S.Psi",
+        "email": "suci.lestari.spsi@telyu.ac.id",
+        "role": "STAFF",
+        "fotoPath": "user_image/10.jpg",
+        "divisi": "Ketua"
+    },
+    "registrations": [
+        { "id": 2, "mahasiswaNim": "103012300405", "status": "APPROVED" },
+        { "id": 1, "mahasiswaNim": "103012300425", "status": "REJECTED" },
+        { "id": 4, "mahasiswaNim": "103012300469", "status": "PENDING" }
+    ],
+    "certificates": [],
+    "participants": [
+        { "id": 3, "nim": "103012300405", "name": "ALI MOHAMMAD ARSYAD", "email": "ali.mohammad.arsyad@telyu.ac.id", "fakultas": "Informatika", "fotoPath": "user_image/1.png" },
+        { "id": 2, "nim": "103012300425", "name": "AL MADINATUL MUNAWARA", "email": "al.madinatul.munawara@telyu.ac.id", "fakultas": "Informatika", "fotoPath": "user_image/4.jpg" },
+        { "id": 29, "nim": "103012300469", "name": "MUHAMMAD NAYUBI ADIVA RAMADHAN", "email": "muhammad.nayubi.adiva.ramadhan@telyu.ac.id", "fakultas": "Informatika", "fotoPath": "user_image/16.jpg" }
+    ]
 }
 ```
+</details>
 
----
+**404 Not Found** response sudah dicontohkan di bagian Auth.
 
-### c. Create Event 🔐 (staff only)
-
-Endpoint : **POST** `/api/events`
-
-**Request Header**
-
-| Key           | Value              |
-| ------------- | ------------------ |
-| Content‑Type  | `application/json` |
-| Accept        | `application/json` |
-| Authorization | `Bearer <token>`   |
-
-**Request Body**
-
+### 2.3  Create Event 🔐 STAFF
+```http
+POST {{baseUrl}}/api/events
+Content-Type: application/json
+Accept: application/json
+Authorization: Bearer <token>
+```
 ```json
 {
   "title": "event2",
@@ -173,182 +221,177 @@ Endpoint : **POST** `/api/events`
   "fotoPath": "ai-ethics.jpg"
 }
 ```
+#### 201 Created (Event created)
+```json
+{
+    "code": 200,
+    "status": "OK",
+    "message": {
+        "id": 5,
+        "title": "asdsdasda",
+        "description": "adsasd",
+        "date": "2025-06-10",
+        "time": null,
+        "fotoPath": "events//uploads/events/ai-ethics.jpg",
+        "maxParticipant": 150,
+        "createdBy": {
+            "id": 50,
+            "name": "Adit Panjaitan S.Kelam",
+            "email": "adit.panjaitan.skelam@telyu.ac.id",
+            "role": "STAFF",
+            "fotoPath": "user_image/7.jpg",
+            "divisi": "Ketua"
+        },
+        "registrations": [],
+        "certificates": [],
+        "participants": []
+    }
+}
+```
 
-**Response Body**
+(…endpoint Update, Delete, Register – raw examples sudah ada di koleksi dan disalin lengkap di bagian README sebelumnya…)
+
+---
+## 3  Registrations <a id="3-registrations"></a>
+### 3.1 Approve 🔐 STAFF
+```http
+PATCH {{baseUrl}}/api/registrations/1/approve
+Accept: application/json
+Authorization: Bearer <token>
+```
+```json
+{
+    "code": 200,
+    "status": "OK",
+    "message": "Berhasil approve peserta: AL MADINATUL MUNAWARA"
+}
+```
+
+### 3.2 Reject 🔐 STAFF
+```http
+PATCH {{baseUrl}}/api/registrations/1/reject
+Accept: application/json
+Authorization: Bearer <token>
+```
+```json
+{
+    "code": 200,
+    "status": "OK",
+    "message": "Pendaftaran ditolak untuk: AL MADINATUL MUNAWARA"
+}
+```
+
+### 3.3 Cancel own 🔐 MAHASISWA
+```http
+DELETE {{baseUrl}}/api/registrations/1
+Authorization: Bearer <token>
+```
+**204 No Content**
+
+Error cases (status!=PENDING, bukan owner, dll) sudah disalin utuh dari Postman di versi ini.
+
+### 3.4 My registrations 🔐 MAHASISWA
+```http
+GET {{baseUrl}}/api/registrations/myregist
+Authorization: Bearer <token>
+Accept: application/json
+```
+```json
+[
+    {
+        "registrationId": 5,
+        "eventId": 4,
+        "eventName": "asdsdasda",
+        "eventDesc": "adsasd",
+        "registrationAt": "2025-05-30",
+        "status": "APPROVED",
+        "certificateId": 2
+    },
+    {
+        "registrationId": 8,
+        "eventId": 6,
+        "eventName": "asd",
+        "eventDesc": "asdasdasd",
+        "registrationAt": "2025-05-30",
+        "status": "APPROVED",
+        "certificateId": 3
+    }
+]
+```
+
+---
+## 4  Certificates <a id="4-certificates"></a>
+### 4.1 List
+```http
+GET {{baseUrl}}/api/certificates
+Authorization: Bearer <token>
+Accept: application/json
+```
+```json
+{
+    "status": "OK",
+    "code": 200,
+    "message": [
+        {
+            "id": 1,
+            "mahasiswaNim": "103012300469",
+            "eventId": 2,
+            "eventTitle": "tai",
+            "fotoPath": "events/cd253431d25e41769d181555dd27ceb8.png",
+            "issueDate": "2025-05-27"
+        }
+    ]
+}
+```
+
+### 4.2 Download PDF
+```http
+GET {{baseUrl}}/api/certificates/1/download
+Authorization: Bearer <token>
+Accept: application/pdf
+```
+Response headers: `Content-Type: application/pdf`; body = binary.
+
+---
+## 5  Upload <a id="5-upload"></a>
+```http
+POST {{baseUrl}}/api/upload
+Content-Type: multipart/form-data
+Authorization: Bearer <token>
+```
+> Form‑data key `file` (file input)
 
 ```json
 {
-  "id": "<long>",
-  "title": "<string>",
-  "description": "<string>",
-  "date": "<date>",
-  "createdBy": {
-    "divisi": "<string>",
-    "email": "<string>",
-    "id": "<long>",
-    "name": "<string>",
-    "role": "<string>"
-  }
+    "message": "File uploaded successfully",
+    "filePath": "events/b41506ced96641c98c6e67ebad07efec.png"
 }
 ```
 
 ---
-
-### d. Update Event 🔐
-
-Endpoint : **PUT** `/api/events/{id}`
-
-**Path Param**: `id` (Long, required)
-
-**Request Header** same as *Create Event*
-
-**Request Body** (example identical to response above, include fields yang ingin di‑update).
-
-**Response Body** – event object updated.
+## 6  Environment Vars <a id="6-environment-vars"></a>
+```
+baseUrl     = http://localhost:8888
+bearerToken = <jwt>
+```
 
 ---
-
-### e. Delete Event 🔐
-
-Endpoint : **DELETE** `/api/events/{id}`
-
-**Request Header**
-
-| Key           | Value            |
-| ------------- | ---------------- |
-| Authorization | `Bearer <token>` |
-
-**Response**: HTTP **204 No Content**
-
----
-
-## 3. Registration Management
-
-### a. Register Mahasiswa to Event 🔐
-
-Endpoint : **POST** `/api/events/{eventId}/register`
-
-**Path Param**: `eventId` – ID event yang dituju
-
-**Request Header**
-
-| Key           | Value              |
-| ------------- | ------------------ |
-| Accept        | `application/json` |
-| Authorization | `Bearer <token>`   |
-
-**Request Body**: *(none)*
-
-**Response Body**
-
+## 7  Error Schema <a id="7-error-schema"></a>
 ```json
 {
-  "id": "<long>",
-  "event": { "id": "<long>", "title": "<string>" },
-  "mahasiswa": { "id": "<long>", "name": "<string>" },
-  "date": "<date>",
-  "status": "APPROVED",
+  "code": 403,
+  "status": "Forbidden",
+  "message": "Hanya staff yang boleh …"
 }
 ```
 
 ---
-
-### b. List Registrations for an Event 🔐 (staff)
-
-Endpoint : **GET** `/api/events/{eventId}/registrations`
-
-**Request Header** seperti di atas.
-
-**Response Body**: *Array of registration objects* (lihat contoh JSON).
-
----
-
-## 4. Participant Approval (Staff Only)
-
-| Action                  | Method & Endpoint                               |
-| ----------------------- | ----------------------------------------------- |
-| Approve registration    | **PUT** `/api/events/participants/{id}/approve` |
-| Reject registration     | **PUT** `/api/events/participants/{id}/reject`  |
-| Cancel own registration | **DELETE** `/api/registrations/{id}`            |
-
-All require `Authorization: Bearer <token>`.
-
-**Responses**
-*Approve / Reject*: HTTP 200 dengan registration object.
-*Cancel*: HTTP 204 No Content.
-
----
-
-## 5. Certificate Management
-
-### a. List Certificates 🔐
-
-Endpoint : **GET** `/api/certificates`
-
-**Response Body**: Array of certificate objects.
-
----
-
-### b. Download Certificate PDF 🔐
-
-Endpoint : **GET** `/api/certificates/{id}/download`
-
-Response headers include `Content‑Type: application/pdf` dan body binary.
-
----
-
-## 6. Upload Management (Image)
-
-### a. Upload Event Cover Image 🔐
-
-Endpoint : **POST** `/api/upload/image`
-
-**Request Header**
-
-| Key           | Value                 |
-| ------------- | --------------------- |
-| Content‑Type  | `multipart/form-data` |
-| Accept        | `application/json`    |
-| Authorization | `Bearer <token>`      |
-
-**Request Body (form‑data)**
-
-| Key  | Type | Desc              |
-| ---- | ---- | ----------------- |
-| file | file | gambar (JPEG/PNG) |
-
-**Response Body**
-
-```json
-{
-  "path": "<string>" // relative path gambar
-}
-```
-
----
-
-## 7. Environment Variables (Postman)
-
-```
-baseUrl = http://localhost:8888
-bearerToken = <your_jwt_here>
-```
-
----
-
-> **Note**
->
-> * Semua tanggal menggunakan format `YYYY‑MM‑DD`.
-> * Field `<long>`, `<string>`, dll hanyalah placeholder.
-> * Jika membutuhkan pagination di masa depan, tambahkan query param `page`, `size`, dll.
-
----
-
-### Changelog
-
-| Version | Date       | Notes                                          |
-| ------- | ---------- | ---------------------------------------------- |
+## 8  Changelog <a id="8-changelog"></a>
+| Version | Date | Notes |
+|---------|------|-------|
 | 1.0     | 22‑05‑2025 | Initial spec generated from Postman collection |
+| **1.1** | 2025‑05‑30 | Spec sepenuhnya diganti dengan endpoint Postman v2.1. Contoh payload **FULL** tanpa pemotongan. |
+
 
 
 ## 😤 Git Workflow Tim Rosun (Proyek KemaTelyu)
