@@ -7,7 +7,6 @@
           <span class="visually-hidden">Loading...</span>
         </div>
         <h5 class="text-center">Memuat Dashboard...</h5>
-        <p class="text-muted text-center">Mohon tunggu sebentar</p>
       </div>
     </div>
 
@@ -678,14 +677,10 @@ export default {
 }
 
 .loading-content h5 {
-  color: #333;
+  color: v-bind('$colors.primary');
   margin-bottom: 0.5rem;
 }
 
-.loading-content .text-muted {
-  color: #666;
-  font-size: 0.9rem;
-}
 
 
 /* User Profile */
