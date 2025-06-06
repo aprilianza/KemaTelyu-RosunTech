@@ -103,10 +103,6 @@
                     <span class="month">{{ new Date(event.date).toLocaleDateString('id-ID', { month: 'short' }) }}</span>
                   </div>
 
-                  <!-- Registration Status Badge -->
-                  <div v-if="event.registered" class="registration-status-badge">
-                    <i class="bi bi-check-circle-fill me-1"></i>Terdaftar
-                  </div>
                 </div>
 
                 <!-- Event Content -->
@@ -125,7 +121,7 @@
                       <div class="meta-icon">
                         <i class="bi bi-clock"></i>
                       </div>
-                      <span class="meta-text">{{ event.time }}</span>
+                      <span class="meta-text">{{ event.time.substring(0, 5) }}</span>
                     </div>
                     
                     <div class="meta-item">
@@ -139,16 +135,9 @@
                   <!-- Action Button -->
                   <div class="event-actions mt-auto">
                     <button 
-                      v-if="!event.registered" 
                       class="btn btn-register" 
                       @click="registerToEvent(event.id)">
                       <i class="bi bi-plus-circle me-2"></i>Daftar Event
-                    </button>
-                    <button 
-                      v-else 
-                      class="btn btn-registered" 
-                      disabled>
-                      <i class="bi bi-check-circle me-2"></i>Sudah Terdaftar
                     </button>
                   </div>
                 </div>
@@ -188,7 +177,7 @@
                 </div>
                 <div class="metadata-item">
                   <span class="metadata-icon clock-icon"></span>
-                  <span>{{ selectedEvent.time }}</span>
+                  <span>{{ selectedEvent.time.substring(0, 5) }}</span>
                 </div>
                 <div class="metadata-item">
                   <span class="metadata-icon users-icon"></span>
@@ -199,17 +188,6 @@
               <div class="modal-event-description">
                 <h5 class="description-title">Deskripsi Event</h5>
                 <p>{{ selectedEvent.description }}</p>
-              </div>
-
-              <!-- Registration Info -->
-              <div v-if="selectedEvent.registered" class="registration-info-card">
-                <div class="registration-info-header">
-                  <i class="bi bi-check-circle-fill me-2 text-success"></i>
-                  <span class="fw-bold">Anda sudah terdaftar untuk event ini</span>
-                </div>
-                <p class="registration-info-text">
-                  Terima kasih telah mendaftar! Pastikan untuk hadir tepat waktu.
-                </p>
               </div>
 
               <div class="modern-modal-actions">
@@ -352,35 +330,12 @@ export default {
         });
 
         if (res.data.status) {
-          if (res.data.status === 'PENDING') {
-            this.$swal.fire({
-              icon: 'info',
-              title: 'Pendaftaran Berhasil',
-              text: `Pendaftaran Anda sudah masuk, ditunggu persetujuannya ya`,
-              confirmButtonText: 'OK'
-            });
-          } else if (res.data.status === 'APPROVED') {
-            this.$swal.fire({
+          this.$swal.fire({
               icon: 'success',
-              title: 'Pendaftaran Disetujui',
-              text: 'Pendaftaran berhasil dan disetujui!',
-              confirmButtonText: 'OK'
-            });
-          } else if (res.data.status === 'REJECTED') {
-            this.$swal.fire({
-              icon: 'error',
-              title: 'Pendaftaran Ditolak',
-              text: 'Maaf, pendaftaran Anda ditolak oleh staff.',
-              confirmButtonText: 'OK'
-            });
-          } else {
-            this.$swal.fire({
-              icon: 'info',
               title: 'Pendaftaran Berhasil',
               text: `Pendaftaran Anda sudah masuk, ditunggu persetujuannya ya`,
               confirmButtonText: 'OK'
             });
-          }
         } 
         this.closeModal();
         this.fetchEvents();
@@ -414,7 +369,31 @@ export default {
       return new Date(dateStr).toLocaleDateString('id-ID', {
         day: 'numeric', month: 'long', year: 'numeric'
       });
+    },
+  },
+    beforeRouteEnter(to, from, next) {
+    const token = localStorage.getItem('token');
+    const userData = localStorage.getItem('user');
+    
+    if (!token) {
+      next('/');
+      return;
     }
+
+    if (userData) {
+      try {
+        const user = JSON.parse(userData);
+        if (!user.role || user.role.toUpperCase() !== 'MAHASISWA') {
+          next('/');
+          return;
+        }
+      } catch (error) {
+        next('/');
+        return;
+      }
+    }
+
+    next();
   }
 };
 </script>
