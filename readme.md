@@ -2,6 +2,10 @@
 
 Sistem E-Ticketing dan Sertifikasi Digital untuk kegiatan kemahasiswaan Tel-U.
 
+
+https://github.com/user-attachments/assets/4c585b49-a52c-46b6-a5b0-f95273270bec
+
+
 ## Struktur Folder
 
 - `frontend/`: Vue.js untuk tampilan mahasiswa & staff
